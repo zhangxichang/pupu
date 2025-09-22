@@ -9,10 +9,10 @@ jobs:
         steps:
             - name: 克隆项目
               uses: actions/checkout@v5
-            # - name: 安装Bun
-            #   uses: oven-sh/setup-bun@v2
-            #   with:
-            #     bun-version: latest
+            - name: 安装Bun
+              uses: oven-sh/setup-bun@v2
+              with:
+                bun-version: latest
             - name: 构建
               run: bun run build
             - name: 发布
