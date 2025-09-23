@@ -9,38 +9,64 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as ViewportRouteImport } from './routes/viewport'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ViewportLoginRouteImport } from './routes/viewport/login'
 
+const ViewportRoute = ViewportRouteImport.update({
+  id: '/viewport',
+  path: '/viewport',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ViewportLoginRoute = ViewportLoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => ViewportRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/viewport': typeof ViewportRouteWithChildren
+  '/viewport/login': typeof ViewportLoginRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/viewport': typeof ViewportRouteWithChildren
+  '/viewport/login': typeof ViewportLoginRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/viewport': typeof ViewportRouteWithChildren
+  '/viewport/login': typeof ViewportLoginRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/viewport' | '/viewport/login'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/viewport' | '/viewport/login'
+  id: '__root__' | '/' | '/viewport' | '/viewport/login'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ViewportRoute: typeof ViewportRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/viewport': {
+      id: '/viewport'
+      path: '/viewport'
+      fullPath: '/viewport'
+      preLoaderRoute: typeof ViewportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,11 +74,31 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/viewport/login': {
+      id: '/viewport/login'
+      path: '/login'
+      fullPath: '/viewport/login'
+      preLoaderRoute: typeof ViewportLoginRouteImport
+      parentRoute: typeof ViewportRoute
+    }
   }
 }
 
+interface ViewportRouteChildren {
+  ViewportLoginRoute: typeof ViewportLoginRoute
+}
+
+const ViewportRouteChildren: ViewportRouteChildren = {
+  ViewportLoginRoute: ViewportLoginRoute,
+}
+
+const ViewportRouteWithChildren = ViewportRoute._addFileChildren(
+  ViewportRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ViewportRoute: ViewportRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

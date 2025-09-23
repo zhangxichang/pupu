@@ -2,7 +2,7 @@
 pub fn run() {
     #[allow(unused_mut)]
     let mut tauri = tauri::Builder::default();
-    #[cfg(all(not(debug_assertions), desktop))]
+    #[cfg(all(desktop, not(debug_assertions)))]
     {
         use tauri::Manager;
 
