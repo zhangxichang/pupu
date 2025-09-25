@@ -3,13 +3,15 @@ import { Card, CardAction, CardContent, CardDescription, CardFooter, CardHeader,
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useState } from "react";
+import { useLiveQuery } from "dexie-react-hooks";
 import { Database } from "@/database";
-import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { Account, Network } from "network";
 
-export interface Account {
-    id: string;
-    name: string;
+declare global {
+    var database: Database | null;
+    var network: Network | null;
 }
 
 export const Route = createFileRoute("/window/login")({
@@ -23,12 +25,10 @@ export const Route = createFileRoute("/window/login")({
 });
 function Component() {
     const [is_login, set_is_login] = useState(true);
-    const [accounts, set_accounts] = useState<Array<Account>>([]);
-    const [selected_account, set_selected_account] = useState<string>();
+    const [selected_account_id, set_selected_account_id] = useState("");
     const [input_account_name, set_input_account_name] = useState("");
-    useEffect(() => {
-        (async () => set_accounts(await window.database!.get_accounts()))();
-    }, []);
+    const accounts = useLiveQuery(() => database!.get_all<Account>("accounts"));
+    const navigate = useNavigate();
     return <>
         <div className="flex-1 flex items-center justify-center">
             <Card className="w-72">
@@ -40,14 +40,14 @@ function Component() {
                     </CardAction>
                 </CardHeader>
                 <CardContent>
-                    {is_login ? <Select value={selected_account} onValueChange={(e) => set_selected_account(e)}>
+                    {is_login ? <Select value={selected_account_id} onValueChange={(e) => set_selected_account_id(e)}>
                         <SelectTrigger className="w-full">
                             <SelectValue placeholder="选择账户" />
                         </SelectTrigger>
                         <SelectContent>
                             <SelectGroup>
                                 <SelectLabel>账户</SelectLabel>
-                                {accounts.map((value) => <SelectItem key={value.id} value={value.id}>{value.name}</SelectItem>)}
+                                {accounts?.map((value) => <SelectItem key={value.id} value={value.id}>{value.name}</SelectItem>)}
                             </SelectGroup>
                         </SelectContent>
                     </Select> : <div className="flex flex-col gap-2">
@@ -56,11 +56,12 @@ function Component() {
                     </div>}
                 </CardContent>
                 <CardFooter>
-                    <Button disabled={is_login ? !selected_account : !input_account_name} className="w-full" onClick={async () => {
+                    <Button disabled={is_login ? selected_account_id === "" : input_account_name === ""} className="w-full" onClick={async () => {
                         if (is_login) {
-                            console.info(selected_account);
+                            window.network = await Network.new(Account.from_json(await database!.get("accounts", selected_account_id)));
+                            navigate({ to: "/window/chat" });
                         } else {
-                            console.info(input_account_name);
+                            await database!.add("accounts", Account.new(input_account_name).json());
                             set_input_account_name("");
                         }
                     }}>{is_login ? "登录" : "注册"}</Button>

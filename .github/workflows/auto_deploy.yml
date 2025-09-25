@@ -7,12 +7,17 @@ jobs:
         name: 发布Web
         runs-on: ubuntu-latest
         steps:
-            - name: 克隆项目
-              uses: actions/checkout@v5
-            - name: 安装包管理工具
-              uses: oven-sh/setup-bun@v2
+            - uses: actions/checkout@v5
+            - uses: cargo-bins/cargo-binstall@main
+            - uses: oven-sh/setup-bun@v2
               with:
                 bun-version: latest
+            - name: 安装wasm32-unknown-unknown
+              run: rustup target install wasm32-unknown-unknown
+            - name: 安装wasm-pack
+              run: cargo binstall wasm-pack
+            - name: 构建network包
+              run: cd ./network && wasm-pack build
             - name: 安装依赖包
               run: bun install
             - name: 构建

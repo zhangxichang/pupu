@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as WindowRouteImport } from './routes/window'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as WindowLoginRouteImport } from './routes/window/login'
+import { Route as WindowChatRouteImport } from './routes/window/chat'
 
 const WindowRoute = WindowRouteImport.update({
   id: '/window',
@@ -28,29 +29,37 @@ const WindowLoginRoute = WindowLoginRouteImport.update({
   path: '/login',
   getParentRoute: () => WindowRoute,
 } as any)
+const WindowChatRoute = WindowChatRouteImport.update({
+  id: '/chat',
+  path: '/chat',
+  getParentRoute: () => WindowRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/window': typeof WindowRouteWithChildren
+  '/window/chat': typeof WindowChatRoute
   '/window/login': typeof WindowLoginRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/window': typeof WindowRouteWithChildren
+  '/window/chat': typeof WindowChatRoute
   '/window/login': typeof WindowLoginRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/window': typeof WindowRouteWithChildren
+  '/window/chat': typeof WindowChatRoute
   '/window/login': typeof WindowLoginRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/window' | '/window/login'
+  fullPaths: '/' | '/window' | '/window/chat' | '/window/login'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/window' | '/window/login'
-  id: '__root__' | '/' | '/window' | '/window/login'
+  to: '/' | '/window' | '/window/chat' | '/window/login'
+  id: '__root__' | '/' | '/window' | '/window/chat' | '/window/login'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -81,14 +90,23 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WindowLoginRouteImport
       parentRoute: typeof WindowRoute
     }
+    '/window/chat': {
+      id: '/window/chat'
+      path: '/chat'
+      fullPath: '/window/chat'
+      preLoaderRoute: typeof WindowChatRouteImport
+      parentRoute: typeof WindowRoute
+    }
   }
 }
 
 interface WindowRouteChildren {
+  WindowChatRoute: typeof WindowChatRoute
   WindowLoginRoute: typeof WindowLoginRoute
 }
 
 const WindowRouteChildren: WindowRouteChildren = {
+  WindowChatRoute: WindowChatRoute,
   WindowLoginRoute: WindowLoginRoute,
 }
 

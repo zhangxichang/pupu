@@ -1,9 +1,4 @@
-import { Dexie, type EntityTable } from "dexie";
-import type { Account } from "./routes/window/login";
-
-declare global {
-    var database: Database | null;
-}
+import { Dexie } from "dexie";
 
 export class Database {
     dexie: Dexie;
@@ -13,19 +8,19 @@ export class Database {
     }
     static async init() {
         const dexie = new Dexie("database");
-        dexie.version(1).stores({ accounts: "&id,name" });
+        dexie.version(1).stores({ accounts: "&id,name,key" });
         return new Database(await dexie.open());
     }
-    async add_account(account: Account) {
-        await (this.dexie as Dexie & { accounts: EntityTable<Account, "id"> }).accounts.add(account);
+    async add<T>(title: string, value: T) {
+        await this.dexie.table(title).add(value);
     }
-    async put_account(account: Account) {
-        await (this.dexie as Dexie & { accounts: EntityTable<Account, "id"> }).accounts.put(account);
+    async put<T>(title: string, value: T) {
+        await this.dexie.table(title).put(value);
     }
-    async get_account(id: string) {
-        return await (this.dexie as Dexie & { accounts: EntityTable<Account, "id"> }).accounts.get(id);
+    async get<T>(title: string, id: string) {
+        return await this.dexie.table<T>(title).get(id);
     }
-    async get_accounts() {
-        return await (this.dexie as Dexie & { accounts: EntityTable<Account, "id"> }).accounts.toArray();
+    async get_all<T>(title: string) {
+        return await this.dexie.table<T>(title).toArray();
     }
 }
