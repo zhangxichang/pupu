@@ -10,9 +10,8 @@ declare module "@tanstack/react-router" {
     }
 }
 
-async function main() {
+export function render() {
     createRoot(document.body).render(<StrictMode>
         <RouterProvider router={router} />
     </StrictMode>);
 }
-await main();

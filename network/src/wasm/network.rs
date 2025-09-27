@@ -11,6 +11,9 @@ use crate::{
 pub struct User(protocol::User);
 #[wasm_bindgen]
 impl User {
+    pub fn new(id: String, name: String) -> Self {
+        Self(protocol::User { id, name })
+    }
     #[wasm_bindgen(getter)]
     pub fn id(&self) -> String {
         self.0.id.clone()

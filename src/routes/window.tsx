@@ -31,7 +31,7 @@ function Component() {
         }
     }, []);
     return <>
-        <div className="w-screen h-screen flex flex-col bg-neutral-100">
+        <div className="w-screen h-screen flex flex-col">
             <div data-tauri-drag-region className="h-8 flex justify-end">
                 {isTauri() && <>
                     <div className="w-8 flex items-center justify-center hover:bg-neutral-200 active:bg-neutral-300 cursor-pointer"

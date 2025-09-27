@@ -3,3 +3,4 @@
 /.tanstack/
 /.vscode/
 /target/
+/stats.html
