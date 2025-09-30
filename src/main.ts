@@ -1,6 +1,6 @@
-import { render } from "./render";
+import { render } from "./render"
 
 async function main() {
-    render();
+    render()
 }
-await main();
+await main()

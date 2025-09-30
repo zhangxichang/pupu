@@ -9,11 +9,11 @@ export class Network {
     static async new(account: Account) {
         return new Network(await Net.new(account));
     }
-    async shutdown() {
-        await this.net.shutdown();
-    }
     account() {
         return this.net.account();
+    }
+    async shutdown() {
+        await this.net.shutdown();
     }
     async search_user(user_id: string) {
         return await this.net.search_user(user_id);

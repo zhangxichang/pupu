@@ -32,11 +32,11 @@ impl Network {
             gossip,
         })
     }
-    pub async fn shutdown(&self) -> Result<()> {
-        Ok(self.router.shutdown().await?)
-    }
     pub fn account(&self) -> Arc<Account> {
         self.user_protocol.account.clone()
+    }
+    pub async fn shutdown(&self) -> Result<()> {
+        Ok(self.router.shutdown().await?)
     }
     pub async fn search_user(&self, user_id: impl AsRef<str>) -> Result<User> {
         self.user_protocol.request_user_info(user_id).await

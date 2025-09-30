@@ -8,22 +8,32 @@ export class Database {
     }
     static async new() {
         const dexie = new Dexie("database");
-        dexie.version(1).stores({ accounts: "&id,name,key,avatar" });
+        dexie.version(1).stores({
+            accounts: "&id,name,key,avatar"
+        });
         return new Database(await dexie.open());
     }
-    async add<T>(table: string, value: T) {
-        await this.dexie.table<T>(table).add(value);
+    async add(table: string, value: any) {
+        await this.dexie.table(table).add(value);
     }
-    async put<T>(table: string, value: T) {
-        await this.dexie.table<T>(table).put(value);
+    async put(table: string, value: any) {
+        await this.dexie.table(table).put(value);
     }
-    async get<T>(table: string, id: string) {
-        return await this.dexie.table<T>(table).get(id);
+    async get(table: string, id: string) {
+        return await this.dexie.table<Record<string, any>>(table).get(id);
     }
-    async get_all<T>(table: string) {
-        return await this.dexie.table<T>(table).toArray();
+    async get_all(table: string) {
+        return await this.dexie.table<Record<string, any>>(table).toArray();
     }
-    async delete() {
-        await this.dexie.delete({ disableAutoOpen: false });
+    async delete_record(table: string, id: string) {
+        await this.dexie.table(table).delete(id);
+    }
+    async clear_all_table() {
+        for (const table of this.dexie.tables) {
+            await table.clear();
+        }
+    }
+    async query(table: string, where: string, equals: string) {
+        return await this.dexie.table<Record<string, any>>(table).where(where).equals(equals).first();
     }
 }

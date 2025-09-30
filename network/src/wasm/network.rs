@@ -45,11 +45,11 @@ impl Network {
     pub async fn new(account: Account) -> Result<Self, JsError> {
         Ok(Self(network::Network::new(account.into()).await.mje()?))
     }
-    pub async fn shutdown(&self) -> Result<(), JsError> {
-        Ok(self.0.shutdown().await.mje()?)
-    }
     pub fn account(&self) -> Account {
         (*self.0.account()).clone().into()
+    }
+    pub async fn shutdown(&self) -> Result<(), JsError> {
+        Ok(self.0.shutdown().await.mje()?)
     }
     pub async fn search_user(&self, user_id: String) -> Result<User, JsError> {
         Ok(self.0.search_user(user_id).await.mje()?.into())
