@@ -1,10 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -14,6 +13,10 @@ import { User } from "lucide-react";
 import { Database } from "@/lib/database";
 import { Network } from "@/lib/network";
 import { Account } from "@zhangxichang/network";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 
 declare global {
     var database: Database | null;
@@ -24,49 +27,56 @@ export const Route = createFileRoute("/window/login")({
     component: Component,
     pendingComponent: PendingComponent,
     loader: async () => {
-        try {
-            if (!window.database) {
-                window.database = await Database.new();
-            }
-        } catch (error) {
-            toast.error(`${error}`);
-            throw new Error(`加载登录路由失败，错误:${error}`);
-        }
+        if (!window.database) window.database = await Database.new();
     }
 });
+
 function Component() {
-    const [card_type, set_card_type] = useState("login");
-    const [selected_account_id, set_selected_account_id] = useState("");
-    const [input_account_name, set_input_account_name] = useState("");
-    const [refresh_accounts, set_refresh_accounts] = useState(false);
-    const accounts = useLiveQuery(() => database!.get_all<Account>("accounts"), [refresh_accounts]);
     const navigate = useNavigate();
-    const form_completed = useMemo(() => {
-        switch (card_type) {
-            case "login": return selected_account_id !== "";
-            case "register": return input_account_name !== "";
+    const [card_type, set_card_type] = useState("login");
+    const [refresh_deps, refresh_accounts] = useState(false);
+    const accounts = useLiveQuery(() => database!.get_all<Account>("accounts"), [refresh_deps]);
+    const [login_account_avatar_url, set_login_account_avatar_url] = useState<string>();
+    const [register_account_avatar_url, set_register_account_avatar_url] = useState<string>();
+    const register_account_avatar_input_ref = useRef<HTMLInputElement>(null);
+    const login_account_avatar_url_ref = useRef<string>(undefined);
+    login_account_avatar_url_ref.current = login_account_avatar_url;
+    const register_account_avatar_url_ref = useRef<string>(undefined);
+    register_account_avatar_url_ref.current = register_account_avatar_url;
+    //登录表单蓝图
+    const login_form_schema = z.object({
+        account_id: z.string().min(1, "请选择一个账户")
+    });
+    //注册表单蓝图
+    const register_form_schema = z.object({
+        user_name: z.string().min(1, "用户名不能为空")
+    });
+    // 登录表单
+    const login_form = useForm<z.infer<typeof login_form_schema>>({
+        resolver: zodResolver(login_form_schema),
+        defaultValues: {
+            account_id: ""
         }
-        return false;
-    }, [card_type, selected_account_id, input_account_name]);
-    const [is_disabled_main_button, set_is_disabled_main_button] = useState(form_completed);
-    const account_avatar_file_input_ref = useRef<HTMLInputElement>(null);
-    const [account_avatar_url, set_account_avatar_url] = useState<string>();
-    const account_avatar_url_ref = useRef("");
+    });
+    // 注册表单
+    const register_form = useForm<z.infer<typeof register_form_schema>>({
+        resolver: zodResolver(register_form_schema),
+        defaultValues: {
+            user_name: ""
+        }
+    });
+    //加载和清理
     useEffect(() => {
-        if (account_avatar_url) {
-            account_avatar_url_ref.current = account_avatar_url;
+        return () => {
+            if (login_account_avatar_url_ref.current) {
+                URL.revokeObjectURL(login_account_avatar_url_ref.current);
+            }
+            if (register_account_avatar_url_ref.current) {
+                URL.revokeObjectURL(register_account_avatar_url_ref.current);
+            }
         }
-    }, [account_avatar_url]);
-    useEffect(() => () => URL.revokeObjectURL(account_avatar_url_ref.current), []);
-    const [selected_account_avatar_url, set_selected_account_avatar_url] = useState<string>();
-    const selected_account_avatar_url_ref = useRef("");
-    useEffect(() => {
-        if (selected_account_avatar_url) {
-            selected_account_avatar_url_ref.current = selected_account_avatar_url;
-        }
-    }, [selected_account_avatar_url]);
-    useEffect(() => () => URL.revokeObjectURL(selected_account_avatar_url_ref.current), []);
-    return <>
+    }, [])
+    return (
         <div className="flex-1 flex items-center justify-center">
             <Tabs value={card_type} onValueChange={set_card_type}>
                 <TabsList>
@@ -89,92 +99,155 @@ function Component() {
                     </CardHeader>
                     {card_type !== "advanced" && <>
                         <CardContent>
+                            {/* 登录表单 */}
                             <TabsContent value="login" asChild>
-                                <div className="flex flex-col gap-2">
-                                    <div className="flex justify-center">
-                                        <Avatar className="w-14 h-14">
-                                            <AvatarImage src={selected_account_avatar_url} />
-                                            <AvatarFallback><User /></AvatarFallback>
-                                        </Avatar>
-                                    </div>
-                                    <Label>账户</Label>
-                                    <Select value={selected_account_id} onValueChange={async (value) => {
-                                        set_selected_account_id(value);
-                                        const account = accounts?.find((account) => account.id === value);
-                                        if (selected_account_avatar_url) {
-                                            URL.revokeObjectURL(selected_account_avatar_url);
-                                            set_selected_account_avatar_url(undefined);
-                                        }
-                                        if (account?.avatar) {
-                                            set_selected_account_avatar_url(URL.createObjectURL(new Blob([Uint8Array.from(account.avatar)])));
-                                        }
-                                    }}>
-                                        <SelectTrigger className="w-full">
-                                            <SelectValue placeholder="选择账户" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectGroup>
-                                                <SelectLabel>账户</SelectLabel>
-                                                {accounts?.map((value, index) => <SelectItem key={index} value={value.id}>{value.name}</SelectItem>)}
-                                            </SelectGroup>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
+                                <Form {...login_form}>
+                                    <form
+                                        id="login_form"
+                                        className="flex flex-col gap-2"
+                                        onSubmit={login_form.handleSubmit(async (form) => {
+                                            try {
+                                                window.network = await Network.new(Account.from_json(await database!.get("accounts", form.account_id)));
+                                                await navigate({ to: "/window/chat" });
+                                            } catch (error) { toast.error(`${error}`); }
+                                        })}
+                                    >
+                                        <div className="flex justify-center">
+                                            <Avatar className="w-14 h-14">
+                                                <AvatarImage src={login_account_avatar_url} />
+                                                <AvatarFallback><User /></AvatarFallback>
+                                            </Avatar>
+                                        </div>
+                                        <FormField
+                                            control={login_form.control}
+                                            name="account_id"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>账户</FormLabel>
+                                                    <Select
+                                                        value={field.value}
+                                                        onValueChange={(v) => {
+                                                            login_form.setValue("account_id", v);
+                                                            if (login_account_avatar_url) URL.revokeObjectURL(login_account_avatar_url);
+                                                            const account = accounts?.find((account) => account.id === v);
+                                                            set_login_account_avatar_url(
+                                                                account?.avatar &&
+                                                                URL.createObjectURL(new Blob([Uint8Array.from(account.avatar)]))
+                                                            );
+                                                        }}
+                                                    >
+                                                        <FormControl>
+                                                            <SelectTrigger className="w-full">
+                                                                <SelectValue placeholder="选择账户" />
+                                                            </SelectTrigger>
+                                                        </FormControl>
+                                                        <SelectContent>
+                                                            <SelectGroup>
+                                                                <SelectLabel>账户</SelectLabel>
+                                                                {accounts?.map((value, index) => (
+                                                                    <SelectItem key={index} value={value.id}>
+                                                                        {value.name}
+                                                                    </SelectItem>
+                                                                ))}
+                                                            </SelectGroup>
+                                                        </SelectContent>
+                                                    </Select>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                    </form>
+                                </Form>
                             </TabsContent>
+                            {/* 注册表单 */}
                             <TabsContent value="register" asChild>
-                                <div className="flex flex-col gap-2">
-                                    <div className="flex justify-center">
-                                        <Avatar className="w-14 h-14" onClick={() => account_avatar_file_input_ref.current?.click()}>
-                                            <AvatarImage src={account_avatar_url} />
-                                            <AvatarFallback><User /></AvatarFallback>
-                                            <input ref={account_avatar_file_input_ref} type="file" accept="image/*" style={{ display: "none" }} onChange={async (e) => {
-                                                const file = e.target.files?.[0];
-                                                if (!file) return;
-                                                if (!file.type.startsWith("image/")) {
-                                                    toast.error("请选择一个图片文件");
-                                                    return;
+                                <Form {...register_form}>
+                                    <form
+                                        id="register_form"
+                                        className="flex flex-col gap-2"
+                                        onSubmit={register_form.handleSubmit(async (form) => {
+                                            try {
+                                                if (!await database!.get("accounts", form.user_name)) {
+                                                    await database!.add("accounts", Account.new(
+                                                        form.user_name,
+                                                        register_account_avatar_url ?
+                                                            await (await fetch(register_account_avatar_url)).bytes() : null
+                                                    ).json());
+                                                    register_form.reset();
+                                                    if (register_account_avatar_url) {
+                                                        URL.revokeObjectURL(register_account_avatar_url);
+                                                        set_register_account_avatar_url(undefined);
+                                                    }
+                                                    toast.success("账户注册成功");
+                                                } else {
+                                                    toast.warning("用户名已存在");
                                                 }
-                                                if (account_avatar_url) {
-                                                    URL.revokeObjectURL(account_avatar_url);
-                                                }
-                                                set_account_avatar_url(URL.createObjectURL(file));
-                                            }} />
-                                        </Avatar>
-                                    </div>
-                                    <Label>用户名</Label>
-                                    <Input value={input_account_name} onChange={(e) => set_input_account_name(e.target.value)} placeholder="输入用户名" />
-                                </div>
+                                            } catch (error) { toast.error(`${error}`); }
+                                        })}
+                                    >
+                                        <div className="flex justify-center">
+                                            <Avatar
+                                                className="w-14 h-14 cursor-pointer"
+                                                onClick={() => register_account_avatar_input_ref.current?.click()}
+                                            >
+                                                <AvatarImage src={register_account_avatar_url} />
+                                                <AvatarFallback><User /></AvatarFallback>
+                                            </Avatar>
+                                            <input
+                                                ref={register_account_avatar_input_ref}
+                                                type="file"
+                                                accept="image/*"
+                                                style={{ display: "none" }}
+                                                onChange={(e) => {
+                                                    const file = e.target.files?.[0];
+                                                    if (file) {
+                                                        if (!file.type.startsWith("image/")) {
+                                                            toast.error("请选择一个图片文件");
+                                                            return;
+                                                        }
+                                                        if (register_account_avatar_url) {
+                                                            URL.revokeObjectURL(register_account_avatar_url);
+                                                        }
+                                                        set_register_account_avatar_url(URL.createObjectURL(file));
+                                                    }
+                                                }}
+                                            />
+                                        </div>
+                                        <FormField
+                                            control={register_form.control}
+                                            name="user_name"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>用户名</FormLabel>
+                                                    <FormControl>
+                                                        <Input {...field} placeholder="输入用户名" />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                    </form>
+                                </Form>
                             </TabsContent>
                         </CardContent>
                         <CardFooter>
-                            <Button disabled={!form_completed || is_disabled_main_button} className="w-full" onClick={async () => {
-                                set_is_disabled_main_button(true);
-                                try {
-                                    switch (card_type) {
-                                        case "login": {
-                                            window.network = await Network.new(Account.from_json(await database!.get("accounts", selected_account_id)));
-                                            await navigate({ to: "/window/chat" });
-                                            break;
-                                        }
-                                        case "register": {
-                                            await database!.add("accounts", Account.new(
-                                                input_account_name,
-                                                account_avatar_url ? await (await fetch(account_avatar_url)).bytes() : undefined
-                                            ).json());
-                                            set_input_account_name("");
-                                            if (account_avatar_url) {
-                                                URL.revokeObjectURL(account_avatar_url);
-                                                set_account_avatar_url(undefined);
-                                            }
-                                            break;
-                                        }
-                                    }
-                                } catch (error) { toast.error(`${error}`); }
-                                set_is_disabled_main_button(false);
-                            }}>
-                                <TabsContent value="login">登录</TabsContent>
-                                <TabsContent value="register">注册</TabsContent>
-                            </Button>
+                            <TabsContent value="login" asChild>
+                                <Button
+                                    type="submit"
+                                    form="login_form"
+                                    className="w-full"
+                                    disabled={login_form.formState.isSubmitting}
+                                >{login_form.formState.isSubmitting ? "登录中..." : "登录"}
+                                </Button>
+                            </TabsContent>
+                            <TabsContent value="register" asChild>
+                                <Button
+                                    type="submit"
+                                    form="register_form"
+                                    className="w-full"
+                                    disabled={register_form.formState.isSubmitting}
+                                >注册</Button>
+                            </TabsContent>
                         </CardFooter>
                     </>}
                     {card_type === "advanced" && <>
@@ -193,14 +266,14 @@ function Component() {
                                     <AlertDialogFooter>
                                         <AlertDialogCancel>取消</AlertDialogCancel>
                                         <AlertDialogAction onClick={async () => {
-                                            await database!.delete();
-                                            set_selected_account_id("");
-                                            if (selected_account_avatar_url) {
-                                                URL.revokeObjectURL(selected_account_avatar_url);
-                                                set_selected_account_avatar_url(undefined);
+                                            login_form.reset();
+                                            if (login_account_avatar_url) {
+                                                URL.revokeObjectURL(login_account_avatar_url);
                                             }
-                                            set_refresh_accounts(!refresh_accounts);
-                                        }}>确定</AlertDialogAction>
+                                            await database!.delete();
+                                            refresh_accounts((v) => !v);
+                                        }}
+                                        >确定</AlertDialogAction>
                                     </AlertDialogFooter>
                                 </AlertDialogContent>
                             </AlertDialog>
@@ -209,13 +282,14 @@ function Component() {
                 </Card>
             </Tabs>
         </div>
-    </>;
+    );
 }
+
 function PendingComponent() {
-    return <>
+    return (
         <div className="flex-1 flex items-center justify-center gap-1">
             <div className="select-none font-bold">正在加载登录界面</div>
             <div className="icon-[line-md--loading-loop] w-6 h-6" />
         </div>
-    </>;
+    );
 }

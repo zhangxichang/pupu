@@ -5,28 +5,29 @@ import { useEffect, useState } from "react";
 
 export const Route = createFileRoute("/window")({
     component: Component,
+    pendingComponent: PendingComponent,
 });
+
 function Component() {
     const [is_maximized, set_is_maximized] = useState(false);
     useEffect(() => {
         if (isTauri()) {
-            const old_title = getCurrentWindow().title();
+            //设置窗口标题
             getCurrentWindow().setTitle(document.title).catch(console.error);
-            const mutation_observer = new MutationObserver((mutations) => {
+            //监控网页标题变化
+            const mutation_observer = new MutationObserver(async (mutations) => {
                 for (const mutation of mutations) {
                     if (mutation.type === "childList") {
-                        getCurrentWindow().setTitle(document.title).catch(console.error);
+                        await getCurrentWindow().setTitle(document.title);
                     }
                 }
             });
             mutation_observer.observe(document.querySelector("title")!, { childList: true });
+            //监控窗口缩放
             const un_on_resized = getCurrentWindow().onResized(async () => set_is_maximized(await getCurrentWindow().isMaximized()));
             return () => {
                 mutation_observer.disconnect();
-                (async () => {
-                    (await un_on_resized)();
-                    await getCurrentWindow().setTitle(await old_title);
-                })();
+                (async () => (await un_on_resized)())();
             };
         }
     }, []);
@@ -53,6 +54,15 @@ function Component() {
             </div>
             <Outlet />
             <Navigate to="/window/login" />
+        </div>
+    </>;
+}
+
+function PendingComponent() {
+    return <>
+        <div className="w-screen h-screen flex items-center justify-center gap-1">
+            <div className="select-none font-bold">正在加载窗口</div>
+            <div className="icon-[line-md--loading-loop] w-6 h-6" />
         </div>
     </>;
 }

@@ -4,3 +4,4 @@
 /.vscode/
 /target/
 /stats.html
+/*.tsbuildinfo
