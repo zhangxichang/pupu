@@ -1,5 +1,9 @@
-import { createFileRoute, Navigate, Outlet } from "@tanstack/react-router"
 import { Database } from "@/lib/database"
+import { createFileRoute, Navigate, Outlet } from "@tanstack/react-router"
+
+declare global {
+    var database: Database | null
+}
 
 export const Route = createFileRoute("/window/app")({
     component: () => <>
@@ -7,9 +11,9 @@ export const Route = createFileRoute("/window/app")({
         <Navigate to="/window/app/login" />
     </>,
     pendingComponent: PendingComponent,
-    beforeLoad: async () => ({
-        database: await Database.new()
-    }),
+    loader: async () => {
+        if (!window.database) window.database = await Database.new();
+    }
 })
 
 function PendingComponent() {

@@ -3,25 +3,28 @@ import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
 import { Network } from "@/lib/network"
-import { createFileRoute, Outlet, useNavigate } from "@tanstack/react-router"
+import { createFileRoute, Link, Outlet } from "@tanstack/react-router"
 import { Account } from "@zhangxichang/network"
 import { Clipboard, LogOut } from "lucide-react"
 import { useEffect } from "react"
 
+declare global {
+    var network: Network | null
+}
+
 export const Route = createFileRoute("/window/app/chat/$account_id")({
     component: Component,
     pendingComponent: PendingComponent,
-    beforeLoad: async ({ context, params }) => ({
-        network: await Network.new(Account.from_json(await context.database.get("accounts", params.account_id)))
-    })
+    loader: async ({ params }) => {
+        if (!window.network) window.network = await Network.new(Account.from_json(await database!.get("accounts", params.account_id)));
+    }
 })
 
 function Component() {
-    const context = Route.useRouteContext()
-    const navigate = useNavigate()
+    const params = Route.useParams();
     //获取当前用户
     const account = (() => {
-        const account = context.network.account()
+        const account = network!.account()
         return {
             id: account.id,
             name: account.name,
@@ -42,14 +45,17 @@ function Component() {
                 <Input placeholder="搜索用户" />
             </div>
             <div className="flex-1 flex flex-col border-b">
-                <div className="h-12 flex items-center px-2 gap-2 hover:bg-neutral-100" onClick={() => {
-                }}>
+                <Link
+                    to="/window/app/chat/$account_id/chatbar"
+                    params={params}
+                    className="h-12 flex items-center px-2 gap-2 hover:bg-neutral-100"
+                >
                     <Avatar>
                         <AvatarImage src={account.avatar_url} />
                         <AvatarFallback>{account.name[0]}</AvatarFallback>
                     </Avatar>
                     <span>{account.name}</span>
-                </div>
+                </Link>
             </div>
             <div className="h-15 flex items-center px-2">
                 <DropdownMenu>
@@ -67,12 +73,17 @@ function Component() {
                             <Clipboard />
                             <span>复制用户ID</span>
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={async () => {
-                            await context.network.shutdown()
-                            await navigate({ to: "/window/app/login" })
-                        }}>
-                            <LogOut />
-                            <span>登出</span>
+                        <DropdownMenuItem asChild>
+                            <Link
+                                to="/window/app/login"
+                                onClick={async () => {
+                                    await network!.shutdown()
+                                    window.network = null
+                                }}
+                            >
+                                <LogOut />
+                                <span>登出</span>
+                            </Link>
                         </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>

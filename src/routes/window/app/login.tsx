@@ -22,12 +22,11 @@ export const Route = createFileRoute("/window/app/login")({
 })
 
 function Component() {
-    const context = Route.useRouteContext()
     const navigate = useNavigate()
     const [card_type, set_card_type] = useState("login")
     const login_accounts = useLiveQuery(async () => {
         const login_accounts = []
-        for (const v of await context.database.get_all("accounts")) {
+        for (const v of await database!.get_all("accounts")) {
             login_accounts.push({
                 id: v.id as string,
                 name: v.name as string,
@@ -98,9 +97,10 @@ function Component() {
                                     <form
                                         id="login_form"
                                         className="flex flex-col gap-1"
-                                        onSubmit={login_form.handleSubmit(async (form) => {
-                                            await navigate({ to: "/window/app/chat/$account_id", params: { account_id: form.account_id } })
-                                        })}
+                                        onSubmit={login_form.handleSubmit(async (form) => await navigate({
+                                            to: "/window/app/chat/$account_id",
+                                            params: { account_id: form.account_id }
+                                        }))}
                                     >
                                         <FormField
                                             control={login_form.control}
@@ -155,8 +155,8 @@ function Component() {
                                         className="flex flex-col gap-1"
                                         onSubmit={register_form.handleSubmit(async (form) => {
                                             try {
-                                                if (!(await context.database.query("accounts", "name", form.user_name))) {
-                                                    await context.database.add("accounts", Account.new(
+                                                if (!(await database!.query("accounts", "name", form.user_name))) {
+                                                    await database!.add("accounts", Account.new(
                                                         form.user_name,
                                                         form.avatar_url ? await (await fetch(form.avatar_url)).bytes() : null
                                                     ).json())
@@ -231,7 +231,7 @@ function Component() {
                                 </Button>
                                 <AlertDialog>
                                     <AlertDialogTrigger asChild>
-                                        <Button variant={"destructive"} className="w-full" onClick={(e) => {
+                                        <Button variant={"outline"} className="w-full" onClick={(e) => {
                                             if (login_form.getValues("account_id") === login_form.formState.defaultValues?.account_id) {
                                                 toast.warning("请先选择一个账户删除")
                                                 e.preventDefault()
@@ -248,7 +248,7 @@ function Component() {
                                         <AlertDialogFooter>
                                             <AlertDialogCancel>取消</AlertDialogCancel>
                                             <AlertDialogAction onClick={async () => {
-                                                await context.database.delete_record("accounts", login_form.getValues("account_id"))
+                                                await database!.delete_record("accounts", login_form.getValues("account_id"))
                                                 login_form.reset()
                                             }}
                                             >确定</AlertDialogAction>
@@ -282,7 +282,7 @@ function Component() {
                                     <AlertDialogCancel>取消</AlertDialogCancel>
                                     <AlertDialogAction onClick={async () => {
                                         login_form.reset()
-                                        await context.database.clear_all_table()
+                                        await database!.clear_all_table()
                                     }}
                                     >确定</AlertDialogAction>
                                 </AlertDialogFooter>
