@@ -3,7 +3,6 @@ import path from "path"
 import react from "@vitejs/plugin-react"
 import { tanstackRouter } from "@tanstack/router-plugin/vite"
 import tailwindcss from "@tailwindcss/vite"
-import wasm from "vite-plugin-wasm"
 import { visualizer } from "rollup-plugin-visualizer"
 
 export default defineConfig({
@@ -17,7 +16,6 @@ export default defineConfig({
         tanstackRouter({ target: "react", autoCodeSplitting: true }),
         react(),
         tailwindcss(),
-        wasm(),
         visualizer({
             template: "network"
         }),

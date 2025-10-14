@@ -18,6 +18,7 @@ import { combine } from "zustand/middleware"
 import { Octokit } from "octokit"
 import { open_url } from "@/lib/opener"
 import type { UserInfo } from "@/lib/type"
+import wasm, { init } from "@self/wasm"
 
 const Store = createStore(combine({
     wasm_inited: false,
@@ -38,7 +39,8 @@ export const Route = createFileRoute("/viewport")({
     beforeLoad: async () => {
         const store = Store.getState()
         if (!store.get().wasm_inited) {
-            // (await import("wasm-and-native")).init()
+            await wasm()
+            init()
             store.set({ wasm_inited: true })
         }
         if (!store.get().dexie) {

@@ -14,7 +14,6 @@ import { Loading } from "@/components/loading"
 import { Tooltip, TooltipContent } from "@/components/ui/tooltip"
 import { TooltipTrigger } from "@radix-ui/react-tooltip"
 import { Item, ItemActions, ItemContent, ItemDescription, ItemMedia, ItemTitle } from "@/components/ui/item"
-// import { Node, SecretKey, UserInfo as NodeUserInfo } from "wasm-and-native"
 import { blob_to_data_url, type UserInfo } from "@/lib/type"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
@@ -23,6 +22,7 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Input } from "@/components/ui/input"
 import { toast } from "sonner"
+import { Node, SecretKey, UserInfo as WasmUserInfo } from "@self/wasm"
 
 const Store = createStore(combine({
     node: null as Node | null,
@@ -34,7 +34,7 @@ export const Route = createFileRoute("/viewport/main/$user_id")({
         const user = (await context.dexie.users.get(params.user_id))!
         const store = Store.getState()
         if (!store.get().node) {
-            const node = await Node.new(SecretKey.from(user.key), NodeUserInfo.new(user.name, user.avatar, user.bio))
+            const node = await Node.new(SecretKey.from(user.key), WasmUserInfo.new(user.name, user.avatar, user.bio))
             store.set({ node });
             (async () => {
                 while (true) {

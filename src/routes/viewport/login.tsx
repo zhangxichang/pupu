@@ -15,8 +15,8 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { Loading } from "@/components/loading"
-// import { SecretKey } from "wasm-and-native"
 import { blob_to_data_url, type UserInfo } from "@/lib/type"
+import { SecretKey } from "@self/wasm"
 
 export const Route = createFileRoute("/viewport/login")({
     component: Component,
