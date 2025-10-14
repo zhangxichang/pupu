@@ -10,9 +10,9 @@ import Textarea from "react-textarea-autosize"
 import { toast } from "sonner"
 import z from "zod"
 
-export const Route = createFileRoute("/viewport/main/$user_id/chat/$user_id")({
+export const Route = createFileRoute("/app/home/$user_id/chat/$user_id")({
     component: Component,
-    pendingComponent: () => <Loading hint_text="正在加载聊天栏" />,
+    pendingComponent: () => <Loading hint_text="正在初始化聊天栏" />,
     beforeLoad: async ({ }) => {
         return {}
     }

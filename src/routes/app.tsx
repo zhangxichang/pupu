@@ -33,9 +33,9 @@ const Store = createStore(combine({
         }, "id">
     } | null
 }, (set, get) => ({ set, get })))
-export const Route = createFileRoute("/viewport")({
+export const Route = createFileRoute("/app")({
     component: Component,
-    pendingComponent: () => <Loading hint_text="正在加载视口" mode="screen" />,
+    pendingComponent: () => <Loading hint_text="正在初始化应用" mode="screen" />,
     beforeLoad: async () => {
         const store = Store.getState()
         if (!store.get().wasm_inited) {
@@ -73,7 +73,7 @@ function Component() {
         bio: string | null
         html_url: string
     }[]>()
-    useEffect(() => { navigate({ to: "/viewport/login" }) }, [])
+    useEffect(() => { navigate({ to: "/app/login" }) }, [])
     useEffect(() => {
         if (!is_tauri) return
         //设置窗口标题

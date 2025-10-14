@@ -27,9 +27,9 @@ import { Node, SecretKey, UserInfo as WasmUserInfo } from "@self/wasm"
 const Store = createStore(combine({
     node: null as Node | null,
 }, (set, get) => ({ set, get })))
-export const Route = createFileRoute("/viewport/main/$user_id")({
+export const Route = createFileRoute("/app/home/$user_id")({
     component: Component,
-    pendingComponent: () => <Loading hint_text="正在加载主界面" />,
+    pendingComponent: () => <Loading hint_text="正在初始化主界面" />,
     beforeLoad: async ({ context, params }) => {
         const user = (await context.dexie.users.get(params.user_id))!
         const store = Store.getState()
@@ -41,7 +41,7 @@ export const Route = createFileRoute("/viewport/main/$user_id")({
                     const friend_request = await node.friend_request_next()
                     if (!friend_request) break
                     const user_info = await node.request_user_info(friend_request.node_id)
-                    const user_avatar_url = user_info.avatar && await blob_to_data_url(new Blob([Uint8Array.from(user_info.avatar)]))
+                    const user_avatar_url = user_info.avatar && (await blob_to_data_url(new Blob([Uint8Array.from(user_info.avatar)])))
                     const toast_id = toast(
                         <Item className="flex-1">
                             <ItemMedia>
@@ -82,7 +82,7 @@ export const Route = createFileRoute("/viewport/main/$user_id")({
             user: {
                 id: user.id,
                 name: user.name,
-                avatar_url: user.avatar && await blob_to_data_url(new Blob([Uint8Array.from(user.avatar)])),
+                avatar_url: user.avatar && (await blob_to_data_url(new Blob([Uint8Array.from(user.avatar)]))),
                 bio: user.bio
             },
             node: store.get().node!
@@ -103,7 +103,7 @@ function Component() {
             friends.push({
                 id: value.id,
                 name: value.name,
-                avatar_url: value.avatar && await blob_to_data_url(new Blob([Uint8Array.from(value.avatar)])),
+                avatar_url: value.avatar && (await blob_to_data_url(new Blob([Uint8Array.from(value.avatar)]))),
                 bio: value.bio
             })
         }
@@ -170,7 +170,7 @@ function Component() {
                                                                         const user_info = await context.node.request_user_info(form.user_id)
                                                                         set_search_user_result({
                                                                             name: user_info.name,
-                                                                            avatar_url: user_info.avatar && await blob_to_data_url(new Blob([Uint8Array.from(user_info.avatar)])),
+                                                                            avatar_url: user_info.avatar && (await blob_to_data_url(new Blob([Uint8Array.from(user_info.avatar)]))),
                                                                             bio: user_info.bio
                                                                         })
                                                                     } catch (error) {
@@ -229,7 +229,7 @@ function Component() {
                     <div className="w-full relative" style={{ height: `${friend_list_rows.getTotalSize()}px` }}>
                         {friends && friend_list_rows.getVirtualItems().map((value) => (
                             <Item key={value.key} className="rounded-none" asChild>
-                                <Link to="/viewport/main/$user_id/chat/$user_id" params={{ ...params, user_id: friends[value.index].id }}
+                                <Link to="/app/home/$user_id/chat/$user_id" params={{ ...params, user_id: friends[value.index].id }}
                                     className="absolute top-0 left-0 w-full"
                                     style={{
                                         transform: `translateY(${value.start}px)`,

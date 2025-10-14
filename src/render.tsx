@@ -6,7 +6,7 @@ import { routeTree } from "./routeTree.gen"
 const Router = createRouter({
     routeTree,
     history: createMemoryHistory({
-        initialEntries: ["/viewport"]
+        initialEntries: ["/app"]
     })
 })
 declare module "@tanstack/react-router" {

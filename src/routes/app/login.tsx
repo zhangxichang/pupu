@@ -18,9 +18,9 @@ import { Loading } from "@/components/loading"
 import { blob_to_data_url, type UserInfo } from "@/lib/type"
 import { SecretKey } from "@self/wasm"
 
-export const Route = createFileRoute("/viewport/login")({
+export const Route = createFileRoute("/app/login")({
     component: Component,
-    pendingComponent: () => <Loading hint_text="正在加载登录界面" />,
+    pendingComponent: () => <Loading hint_text="正在初始化登录界面" />,
 })
 function Component() {
     const context = Route.useRouteContext()
@@ -58,7 +58,7 @@ function Component() {
             users.push({
                 id: value.id,
                 name: value.name,
-                avatar_url: value.avatar && await blob_to_data_url(new Blob([Uint8Array.from(value.avatar)])),
+                avatar_url: value.avatar && (await blob_to_data_url(new Blob([Uint8Array.from(value.avatar)]))),
                 bio: value.bio
             })
             if (value.id === login_form.getValues("user_id") && is_login_form_reset) is_login_form_reset = false
@@ -205,7 +205,7 @@ function Component() {
                             <Button
                                 disabled={login_form.formState.isSubmitting}
                                 onClick={login_form.handleSubmit(async (form) => await navigate({
-                                    to: "/viewport/main/$user_id",
+                                    to: "/app/home/$user_id",
                                     params: { user_id: form.user_id }
                                 }))}
                             >{login_form.formState.isSubmitting ? "登录中..." : "登录"}</Button>
