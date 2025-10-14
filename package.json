@@ -3,7 +3,7 @@
     "type": "module",
     "scripts": {
         "dev": "vite --force",
-        "build": "vite build && tsc",
+        "build": "vite build",
         "preview": "vite preview",
         "build:wasm:dev": "wasm-pack build ./wasm-and-native --dev",
         "build:wasm:release": "wasm-pack build ./wasm-and-native --release"
