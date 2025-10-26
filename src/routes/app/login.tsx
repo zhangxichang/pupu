@@ -47,8 +47,9 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Loading } from "@/components/loading";
-import { blob_to_data_url, type UserInfo } from "@/lib/type";
+import { type UserInfo } from "@/lib/user_info";
 import { SecretKey } from "@zhangxichang/wasm";
+import { blob_to_data_url } from "@/lib/blob_to_data_url";
 
 export const Route = createFileRoute("/app/login")({
   component: Component,

@@ -1,9 +1,3 @@
-export interface UserInfo {
-  name: string;
-  avatar?: Uint8Array;
-  bio?: string;
-}
-
 export async function blob_to_data_url(blob: Blob) {
   return await new Promise<string>((resolve, reject) => {
     const file_reader = new FileReader();

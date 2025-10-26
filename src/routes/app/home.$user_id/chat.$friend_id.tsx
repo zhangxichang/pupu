@@ -2,15 +2,16 @@ import { Loading } from "@/components/loading";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
-import { blob_to_data_url } from "@/lib/type";
+import { blob_to_data_url } from "@/lib/blob_to_data_url";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createFileRoute } from "@tanstack/react-router";
 import { useVirtualizer } from "@tanstack/react-virtual";
+import type { Connection } from "@zhangxichang/wasm";
 import { useLiveQuery } from "dexie-react-hooks";
-import { useEffect, useMemo, useRef } from "react";
+import { CircleAlert } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import Textarea from "react-textarea-autosize";
-import { toast } from "sonner";
 import z from "zod";
 
 export const Route = createFileRoute("/app/home/$user_id/chat/$friend_id")({
@@ -38,6 +39,7 @@ export const Route = createFileRoute("/app/home/$user_id/chat/$friend_id")({
             message,
           });
         }
+        context.chat_connections.delete(params.friend_id);
       })();
     }
     return {
@@ -54,6 +56,9 @@ export const Route = createFileRoute("/app/home/$user_id/chat/$friend_id")({
 function Component() {
   const context = Route.useRouteContext();
   const params = Route.useParams();
+  const [connection, set_connection] = useState<Connection | undefined>(
+    context.chat_connections.get(params.friend_id),
+  );
   //聊天记录
   const chat_messages = useLiveQuery(() =>
     context.dexie.chat_records
@@ -103,9 +108,18 @@ function Component() {
   }, [chat_messages?.length]);
   //每次渲染时自动获取聊天输入框焦点
   useEffect(() => send_message_form.setFocus("message"));
+  //监听连接存在变化
+  useEffect(() => {
+    context.chat_connections.listen_set(params.friend_id, (connection) =>
+      set_connection(connection),
+    );
+    context.chat_connections.listen_delete(params.friend_id, () =>
+      set_connection(undefined),
+    );
+  }, []);
   return (
     <div className="flex-1 flex flex-col min-h-0">
-      <div className="flex items-center p-2 gap-1 border-b border-t border-t-transparent">
+      <div className="flex items-center px-2 py-1 gap-1 border-b">
         <Avatar>
           <AvatarImage src={context.friend.avatar_url} />
           <AvatarFallback className="select-none">
@@ -115,8 +129,9 @@ function Component() {
         <Button variant={"link"} className="p-0 font-bold">
           {context.friend.name}
         </Button>
+        {!connection && <CircleAlert className="text-red-700 size-5" />}
       </div>
-      <div className="flex-1 flex flex-col p-2 min-h-0">
+      <div className="flex-1 flex flex-col p-2 min-h-0 gap-1">
         <div ref={chat_message_list_ref} className="flex-1 overflow-y-auto">
           <div
             className="w-full relative"
@@ -185,7 +200,7 @@ function Component() {
                 <FormControl>
                   <Textarea
                     {...field}
-                    disabled={formState.isSubmitting}
+                    disabled={formState.isSubmitting || !connection}
                     maxRows={16}
                     className="resize-none border rounded p-2 focus:outline-none focus:border-neutral-200 focus:ring-1 focus:ring-neutral-200"
                     placeholder="发送消息"
@@ -193,22 +208,14 @@ function Component() {
                       if (e.key !== "Enter" || e.shiftKey) return;
                       e.preventDefault();
                       await send_message_form.handleSubmit(async (form) => {
-                        try {
-                          const connection = context.chat_connections.get(
-                            params.friend_id,
-                          );
-                          if (!connection) throw "对方不在线";
-                          await connection.send(form.message);
-                          await context.dexie.chat_records.add({
-                            timestamp: Date.now(),
-                            sender: params.user_id,
-                            receiver: params.friend_id,
-                            message: form.message,
-                          });
-                          send_message_form.reset();
-                        } catch (error) {
-                          toast.error(`${error}`);
-                        }
+                        await connection!.send(form.message);
+                        await context.dexie.chat_records.add({
+                          timestamp: Date.now(),
+                          sender: params.user_id,
+                          receiver: params.friend_id,
+                          message: form.message,
+                        });
+                        send_message_form.reset();
                       })();
                     }}
                   />

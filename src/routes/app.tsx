@@ -60,7 +60,7 @@ import { createStore } from "zustand";
 import { combine } from "zustand/middleware";
 import { Octokit } from "octokit";
 import { open_url } from "@/lib/opener";
-import type { UserInfo } from "@/lib/type";
+import type { UserInfo } from "@/lib/user_info";
 import wasm_url from "@zhangxichang/wasm/wasm_bg.wasm?url";
 import wasm_instantiate, { wasm_init } from "@zhangxichang/wasm";
 
@@ -68,6 +68,7 @@ const Store = createStore(
   combine(
     {
       wasm_inited: false,
+      notification: null as [] | null,
       dexie: null as
         | (Dexie & {
             users: EntityTable<
@@ -117,7 +118,12 @@ export const Route = createFileRoute("/app")({
         friends: "&[owner+id],name,avatar,bio",
         chat_records: "++id,timestamp,sender,receiver,message",
       });
-      store.set({ dexie: (await dexie.open()) as any });
+      try {
+        await dexie.open();
+      } catch (_) {
+        await dexie.delete({ disableAutoOpen: false });
+      }
+      store.set({ dexie: dexie as any });
     }
     return {
       dexie: store.get().dexie!,

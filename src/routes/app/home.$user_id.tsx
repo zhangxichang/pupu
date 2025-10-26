@@ -26,7 +26,7 @@ import {
   ItemMedia,
   ItemTitle,
 } from "@/components/ui/item";
-import { blob_to_data_url, type UserInfo } from "@/lib/type";
+import { type UserInfo } from "@/lib/user_info";
 import {
   Dialog,
   DialogContent,
@@ -55,12 +55,14 @@ import {
   UserInfo as WasmUserInfo,
 } from "@zhangxichang/wasm";
 import type Dexie from "dexie";
+import { blob_to_data_url } from "@/lib/blob_to_data_url";
+import { ObservableMap } from "@/lib/observable_map";
 
 const Store = createStore(
   combine(
     {
       node: null as Node | null,
-      chat_connections: null as Map<string, Connection> | null,
+      chat_connections: null as ObservableMap<string, Connection> | null,
     },
     (set, get) => ({ set, get }),
   ),
@@ -83,7 +85,7 @@ export const Route = createFileRoute("/app/home/$user_id")({
       handle_friend_request(node, context.dexie, user.id);
     }
     if (!store.get().chat_connections) {
-      const chat_connections = new Map<string, Connection>();
+      const chat_connections = new ObservableMap<string, Connection>();
       store.set({ chat_connections });
       handle_chat_request(
         store.get().node!,
@@ -107,6 +109,7 @@ export const Route = createFileRoute("/app/home/$user_id")({
   onLeave: () =>
     Store.getState().set({
       node: null,
+      chat_connections: null,
     }),
 });
 function Component() {
@@ -170,166 +173,160 @@ function Component() {
           <Contact />
           <Label className="font-bold">好友</Label>
           <Separator orientation="vertical" />
-          <div className="flex-1 flex justify-end">
-            <Dialog>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <DialogTrigger asChild>
-                    <Button size={"icon-sm"} variant={"outline"}>
-                      <UserPlus />
-                    </Button>
-                  </DialogTrigger>
-                </TooltipTrigger>
-                <TooltipContent>添加好友</TooltipContent>
-              </Tooltip>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>添加好友</DialogTitle>
-                  <DialogDescription>输入用户ID按回车搜索</DialogDescription>
-                </DialogHeader>
-                <Form {...search_user_form}>
-                  <FormField
-                    control={search_user_form.control}
-                    name="user_id"
-                    render={({ field }) => (
-                      <>
-                        <FormItem>
-                          <FormLabel>用户ID</FormLabel>
-                          <FormControl>
-                            <Input
-                              {...field}
-                              placeholder="输入用户ID"
-                              disabled={search_user_form.formState.isSubmitting}
-                              onKeyDown={async (e) => {
-                                if (e.key !== "Enter") return;
-                                e.preventDefault();
-                                await search_user_form.handleSubmit(
-                                  async (form) => {
-                                    try {
-                                      if (
-                                        (await context.dexie.friends
-                                          .where("[owner+id]")
-                                          .equals([
-                                            params.user_id,
-                                            form.user_id,
-                                          ])
-                                          .count()) !== 0
-                                      ) {
-                                        throw "已经是你的好友了";
-                                      }
-                                      const user_info =
-                                        await context.node.request_user_info(
-                                          form.user_id,
-                                        );
-                                      set_search_user_result({
-                                        id: form.user_id,
-                                        name: user_info.name(),
-                                        avatar_url:
-                                          user_info.avatar() &&
-                                          (await blob_to_data_url(
-                                            new Blob([
-                                              Uint8Array.from(
-                                                user_info.avatar()!,
-                                              ),
-                                            ]),
-                                          )),
-                                        bio: user_info.bio(),
-                                      });
-                                      set_send_friend_request_button_disabled(
-                                        false,
-                                      );
-                                    } catch (error) {
-                                      search_user_form.setError("user_id", {
-                                        message: `${error}`,
-                                      });
+          <div className="flex-1" />
+          <Dialog>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <DialogTrigger asChild>
+                  <Button size={"icon-sm"} variant={"outline"}>
+                    <UserPlus />
+                  </Button>
+                </DialogTrigger>
+              </TooltipTrigger>
+              <TooltipContent>添加好友</TooltipContent>
+            </Tooltip>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>添加好友</DialogTitle>
+                <DialogDescription>输入用户ID按回车搜索</DialogDescription>
+              </DialogHeader>
+              <Form {...search_user_form}>
+                <FormField
+                  control={search_user_form.control}
+                  name="user_id"
+                  render={({ field }) => (
+                    <>
+                      <FormItem>
+                        <FormLabel>用户ID</FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            placeholder="输入用户ID"
+                            disabled={search_user_form.formState.isSubmitting}
+                            onKeyDown={async (e) => {
+                              if (e.key !== "Enter") return;
+                              e.preventDefault();
+                              await search_user_form.handleSubmit(
+                                async (form) => {
+                                  try {
+                                    if (
+                                      (await context.dexie.friends
+                                        .where("[owner+id]")
+                                        .equals([params.user_id, form.user_id])
+                                        .count()) !== 0
+                                    ) {
+                                      throw "已经是你的好友了";
                                     }
-                                  },
-                                )();
-                              }}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      </>
-                    )}
-                  />
-                </Form>
-                {search_user_result && (
-                  <Item>
-                    <ItemMedia>
-                      <Avatar>
-                        <AvatarImage src={search_user_result.avatar_url} />
-                        <AvatarFallback>
-                          {search_user_result.name.at(0)}
-                        </AvatarFallback>
-                      </Avatar>
-                    </ItemMedia>
-                    <ItemContent>
-                      <ItemTitle>{search_user_result.name}</ItemTitle>
-                      <ItemDescription>
-                        {search_user_result.bio}
-                      </ItemDescription>
-                    </ItemContent>
-                    <ItemActions>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            variant="outline"
-                            size="icon-sm"
-                            disabled={send_friend_request_button_disabled}
-                            onClick={() => {
-                              set_send_friend_request_button_disabled(true);
-                              toast.promise(
-                                async () => {
-                                  if (
-                                    !(await context.node.request_friend(
-                                      search_user_result.id,
-                                    ))
-                                  ) {
-                                    throw "对方拒绝好友请求";
-                                  }
-                                },
-                                {
-                                  loading: "等待回应好友请求",
-                                  error: (error) => {
+                                    const user_info =
+                                      await context.node.request_user_info(
+                                        form.user_id,
+                                      );
+                                    set_search_user_result({
+                                      id: form.user_id,
+                                      name: user_info.name(),
+                                      avatar_url:
+                                        user_info.avatar() &&
+                                        (await blob_to_data_url(
+                                          new Blob([
+                                            Uint8Array.from(
+                                              user_info.avatar()!,
+                                            ),
+                                          ]),
+                                        )),
+                                      bio: user_info.bio(),
+                                    });
                                     set_send_friend_request_button_disabled(
                                       false,
                                     );
-                                    return `${error}`;
-                                  },
-                                  success: () => {
-                                    (async () => {
-                                      await context.dexie.friends.add({
-                                        owner: params.user_id,
-                                        id: search_user_result.id,
-                                        name: search_user_result.name,
-                                        avatar: search_user_result.avatar_url
-                                          ? await (
-                                              await fetch(
-                                                search_user_result.avatar_url,
-                                              )
-                                            ).bytes()
-                                          : undefined,
-                                        bio: search_user_result.bio,
-                                      });
-                                    })();
-                                    return "对方同意好友请求";
-                                  },
+                                  } catch (error) {
+                                    search_user_form.setError("user_id", {
+                                      message: `${error}`,
+                                    });
+                                  }
                                 },
-                              );
+                              )();
                             }}
-                          >
-                            <Send />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>发送好友请求</TooltipContent>
-                      </Tooltip>
-                    </ItemActions>
-                  </Item>
-                )}
-              </DialogContent>
-            </Dialog>
-          </div>
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    </>
+                  )}
+                />
+              </Form>
+              {search_user_result && (
+                <Item>
+                  <ItemMedia>
+                    <Avatar>
+                      <AvatarImage src={search_user_result.avatar_url} />
+                      <AvatarFallback>
+                        {search_user_result.name.at(0)}
+                      </AvatarFallback>
+                    </Avatar>
+                  </ItemMedia>
+                  <ItemContent>
+                    <ItemTitle>{search_user_result.name}</ItemTitle>
+                    <ItemDescription>{search_user_result.bio}</ItemDescription>
+                  </ItemContent>
+                  <ItemActions>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="icon-sm"
+                          disabled={send_friend_request_button_disabled}
+                          onClick={() => {
+                            set_send_friend_request_button_disabled(true);
+                            toast.promise(
+                              async () => {
+                                if (
+                                  !(await context.node.request_friend(
+                                    search_user_result.id,
+                                  ))
+                                ) {
+                                  throw "对方拒绝好友请求";
+                                }
+                              },
+                              {
+                                loading: "等待回应好友请求",
+                                error: (error) => {
+                                  set_send_friend_request_button_disabled(
+                                    false,
+                                  );
+                                  return `${error}`;
+                                },
+                                success: () => {
+                                  (async () => {
+                                    await context.dexie.friends.add({
+                                      owner: params.user_id,
+                                      id: search_user_result.id,
+                                      name: search_user_result.name,
+                                      avatar: search_user_result.avatar_url
+                                        ? await (
+                                            await fetch(
+                                              search_user_result.avatar_url,
+                                            )
+                                          ).bytes()
+                                        : undefined,
+                                      bio: search_user_result.bio,
+                                    });
+                                  })();
+                                  return "对方同意好友请求";
+                                },
+                              },
+                            );
+                          }}
+                        >
+                          <Send />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>发送好友请求</TooltipContent>
+                    </Tooltip>
+                  </ItemActions>
+                </Item>
+              )}
+            </DialogContent>
+          </Dialog>
         </div>
         <div ref={friend_list_ref} className="flex-1 overflow-y-auto">
           <div
@@ -420,49 +417,53 @@ async function handle_friend_request(
           new Blob([Uint8Array.from(user_info.avatar()!)]),
         ));
       const toast_id = toast(
-        <Item className="flex-1">
-          <ItemMedia>
-            <Avatar>
-              <AvatarImage src={user_avatar_url} />
-              <AvatarFallback>{user_info.name().at(0)}</AvatarFallback>
-            </Avatar>
-          </ItemMedia>
-          <ItemContent>
-            <ItemTitle>{user_info.name()}</ItemTitle>
-            <ItemDescription>{user_info.bio()}</ItemDescription>
-          </ItemContent>
-          <ItemActions>
-            <Button
-              variant="outline"
-              size="icon-sm"
-              onClick={async () => {
-                const friend_id = friend_request.remote_node_id();
-                await dexie.table("friends").add({
-                  owner: user_id,
-                  id: friend_id,
-                  name: user_info.name(),
-                  avatar: user_info.avatar(),
-                  bio: user_info.bio(),
-                });
-                friend_request.accept();
-                toast.dismiss(toast_id);
-              }}
-            >
-              <Check />
-            </Button>
-            <Button
-              variant="outline"
-              size="icon-sm"
-              onClick={() => {
-                friend_request.reject();
-                toast.dismiss(toast_id);
-              }}
-            >
-              <X />
-            </Button>
-          </ItemActions>
-        </Item>,
+        <div className="flex-1">
+          <Label className="font-bold">好友请求</Label>
+          <Item>
+            <ItemMedia>
+              <Avatar>
+                <AvatarImage src={user_avatar_url} />
+                <AvatarFallback>{user_info.name().at(0)}</AvatarFallback>
+              </Avatar>
+            </ItemMedia>
+            <ItemContent>
+              <ItemTitle>{user_info.name()}</ItemTitle>
+              <ItemDescription>{user_info.bio()}</ItemDescription>
+            </ItemContent>
+            <ItemActions>
+              <Button
+                variant="outline"
+                size="icon-sm"
+                onClick={async () => {
+                  const friend_id = friend_request.remote_node_id();
+                  await dexie.table("friends").add({
+                    owner: user_id,
+                    id: friend_id,
+                    name: user_info.name(),
+                    avatar: user_info.avatar(),
+                    bio: user_info.bio(),
+                  });
+                  friend_request.accept();
+                  toast.dismiss(toast_id);
+                }}
+              >
+                <Check />
+              </Button>
+              <Button
+                variant="outline"
+                size="icon-sm"
+                onClick={() => {
+                  friend_request.reject();
+                  toast.dismiss(toast_id);
+                }}
+              >
+                <X />
+              </Button>
+            </ItemActions>
+          </Item>
+        </div>,
         {
+          dismissible: false,
           duration: Infinity,
           classNames: {
             content: "flex-1",
@@ -478,7 +479,7 @@ async function handle_chat_request(
   node: Node,
   dexie: Dexie,
   user_id: string,
-  chat_connections: Map<string, Connection>,
+  chat_connections: ObservableMap<string, Connection>,
 ) {
   while (true) {
     const chat_request = await node.chat_request_next();
@@ -502,6 +503,7 @@ async function handle_chat_request(
             message,
           });
         }
+        chat_connections.delete(friend_id);
       }
     })();
   }
