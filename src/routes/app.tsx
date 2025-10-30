@@ -43,10 +43,9 @@ import {
   MenubarTrigger,
 } from "@/components/ui/menubar";
 import { Toaster } from "@/components/ui/sonner";
-import { createFileRoute, Outlet, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Outlet } from "@tanstack/react-router";
 import { isTauri } from "@tauri-apps/api/core";
 import { getCurrentWindow } from "@tauri-apps/api/window";
-import Dexie, { type EntityTable } from "dexie";
 import {
   ExternalLink,
   Info,
@@ -60,43 +59,12 @@ import { createStore } from "zustand";
 import { combine } from "zustand/middleware";
 import { Octokit } from "octokit";
 import { open_url } from "@/lib/opener";
-import type { UserInfo } from "@/lib/user_info";
-import wasm_url from "@zhangxichang/wasm/wasm_bg.wasm?url";
-import wasm_instantiate, { wasm_init } from "@zhangxichang/wasm";
+import { State } from "@/lib/state";
 
 const Store = createStore(
   combine(
     {
-      wasm_inited: false,
-      notification: null as [] | null,
-      dexie: null as
-        | (Dexie & {
-            users: EntityTable<
-              UserInfo & {
-                id: string;
-                key: Uint8Array;
-              },
-              "id"
-            >;
-            friends: EntityTable<
-              UserInfo & {
-                owner: string;
-                id: string;
-              },
-              "owner" | "id"
-            >;
-            chat_records: EntityTable<
-              {
-                id: number;
-                timestamp: number;
-                sender: string;
-                receiver: string;
-                message: string;
-              },
-              "id"
-            >;
-          })
-        | null,
+      state: new State(),
     },
     (set, get) => ({ set, get }),
   ),
@@ -106,38 +74,14 @@ export const Route = createFileRoute("/app")({
   pendingComponent: () => <Loading hint_text="正在初始化应用" mode="screen" />,
   beforeLoad: async () => {
     const store = Store.getState();
-    if (!store.get().wasm_inited) {
-      await wasm_instantiate({ module_or_path: wasm_url });
-      wasm_init();
-      store.set({ wasm_inited: true });
-    }
-    if (!store.get().dexie) {
-      const dexie = new Dexie("database");
-      dexie.version(1).stores({
-        users: "&id,key,name,avatar,bio",
-        friends: "&[owner+id],name,avatar,bio",
-        chat_records: "++id,timestamp,sender,receiver,message",
-      });
-      try {
-        await dexie.open();
-      } catch (_) {
-        await dexie.delete({ disableAutoOpen: false });
-      }
-      store.set({ dexie: dexie as any });
-    }
+    await store.get().state.init();
     return {
-      dexie: store.get().dexie!,
+      state: store.get().state,
     };
   },
-  onLeave: () =>
-    Store.getState().set({
-      dexie: null,
-    }),
 });
 function Component() {
-  const context = Route.useRouteContext();
   const is_tauri = useMemo(isTauri, []);
-  const navigate = useNavigate();
   const [is_maximized, set_is_maximized] = useState(false);
   const [about_dialog_opened, set_about_dialog_opened] = useState(false);
   const [
@@ -153,9 +97,9 @@ function Component() {
       html_url: string;
     }[]
   >();
-  useEffect(() => {
-    navigate({ to: "/app/login" });
-  }, []);
+  //子路由导航
+  useEffect(() => {}, []);
+  //窗口配置
   useEffect(() => {
     if (!is_tauri) return;
     //设置窗口标题
@@ -285,15 +229,7 @@ function Component() {
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel>取消</AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={async () => {
-                      for (const table of context.dexie.tables) {
-                        table.clear();
-                      }
-                    }}
-                  >
-                    确定
-                  </AlertDialogAction>
+                  <AlertDialogAction>确定</AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>

@@ -18,8 +18,6 @@ jobs:
         run: rustup target install wasm32-unknown-unknown
       - name: 安装wasm-pack
         run: cargo binstall wasm-pack
-      - name: 构建wasm
-        run: bun run build:wasm
       - name: 安装依赖包
         run: bun install
       - name: 构建
