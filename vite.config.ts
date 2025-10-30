@@ -8,12 +8,6 @@ import { visualizer } from "rollup-plugin-visualizer";
 
 export default defineConfig({
   clearScreen: false,
-  server: {
-    headers: {
-      "Cross-Origin-Embedder-Policy": "require-corp",
-      "Cross-Origin-Opener-Policy": "same-origin",
-    },
-  },
   envPrefix: ["VITE_", "TAURI_ENV_"],
   build: {
     target: "esnext",

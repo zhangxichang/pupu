@@ -44,8 +44,9 @@ import {
 } from "@/components/ui/menubar";
 import { Toaster } from "@/components/ui/sonner";
 import { createFileRoute, Outlet } from "@tanstack/react-router";
-import { isTauri } from "@tauri-apps/api/core";
+// #if TAURI_ENV_PLATFORM
 import { getCurrentWindow } from "@tauri-apps/api/window";
+// #endif
 import {
   ExternalLink,
   Info,
@@ -81,7 +82,13 @@ export const Route = createFileRoute("/app")({
   },
 });
 function Component() {
-  const is_tauri = useMemo(isTauri, []);
+  let is_tauri = useMemo(() => {
+    let is_tauri = false;
+    // #if TAURI_ENV_PLATFORM
+    is_tauri = true;
+    // #endif
+    return is_tauri;
+  }, []);
   const [is_maximized, set_is_maximized] = useState(false);
   const [about_dialog_opened, set_about_dialog_opened] = useState(false);
   const [
@@ -99,9 +106,8 @@ function Component() {
   >();
   //子路由导航
   useEffect(() => {}, []);
-  //窗口配置
+  // #if TAURI_ENV_PLATFORM
   useEffect(() => {
-    if (!is_tauri) return;
     //设置窗口标题
     getCurrentWindow().setTitle(document.title);
     //监控网页标题变化
@@ -121,6 +127,7 @@ function Component() {
       (async () => (await un_on_resized)())();
     };
   }, []);
+  // #endif
   //获取贡献者信息
   useEffect(() => {
     (async () => {

@@ -1,10 +1,11 @@
-import { isTauri } from "@tauri-apps/api/core";
+// #if TAURI_ENV_PLATFORM
 import { openUrl } from "@tauri-apps/plugin-opener";
+// #endif
 
 export async function open_url(url: string) {
-  if (isTauri()) {
-    await openUrl(url);
-  } else {
-    open(url);
-  }
+  // #if TAURI_ENV_PLATFORM
+  await openUrl(url);
+  // #else
+  open(url);
+  // #endif
 }
