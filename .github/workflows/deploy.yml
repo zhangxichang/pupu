@@ -60,7 +60,7 @@ jobs:
         run: |
           $TARGET_PATH="./target/release/starlink-windows.exe"
           echo "TARGET_PATH=$TARGET_PATH" >> $env:GITHUB_ENV
-          Move-Item -Path ./target/release/starlink.exe -Destination $TARGET_PATH
+          Move-Item -Path ./target/release/native.exe -Destination $TARGET_PATH
       - name: 发布
         uses: softprops/action-gh-release@v2
         env:
