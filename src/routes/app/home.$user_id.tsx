@@ -7,7 +7,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { createFileRoute, Outlet } from "@tanstack/react-router";
-import { Clipboard, Contact, Send, UserPlus } from "lucide-react";
+import { Check, Clipboard, Contact, Send, UserPlus, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { Label } from "@/components/ui/label";
@@ -49,11 +49,15 @@ import { blob_to_data_url } from "@/lib/blob_to_data_url";
 import { createStore } from "zustand";
 import { combine } from "zustand/middleware";
 import { Endpoint } from "@/lib/endpoint";
+import type { Database } from "@/lib/database";
+import type { Connection } from "@starlink/endpoint";
+import { Link } from "@tanstack/react-router";
 
 const Store = createStore(
   combine(
     {
       endpoint: new Endpoint(),
+      chat_connections: new Map<string, Connection>(),
     },
     (set, get) => ({ set, get }),
   ),
@@ -68,13 +72,24 @@ export const Route = createFileRoute("/app/home/$user_id")({
         `SELECT key,name,avatar,bio FROM users WHERE id='${params.user_id}' LIMIT 1`,
       )
     )[0];
-    await store.get().endpoint.init(user.key, {
-      name: user.name,
-      avatar: user.avatar,
-      bio: user.bio,
-    });
+    if (
+      await store.get().endpoint.init(user.key, {
+        name: user.name,
+        avatar: user.avatar,
+        bio: user.bio,
+      })
+    ) {
+      handle_friend_request(store.get().endpoint, context.db, params.user_id);
+      handle_chat_request(
+        store.get().endpoint,
+        context.db,
+        params.user_id,
+        store.get().chat_connections,
+      );
+    }
     return {
       endpoint: store.get().endpoint,
+      chat_connections: store.get().chat_connections,
     };
   },
 });
@@ -133,7 +148,7 @@ function Component() {
     context.db.live_query<DOMUser>(
       "friends",
       set_friends,
-      `SELECT f.* FROM friends f INNER JOIN user_friends uf ON f.id=uf.friend_id WHERE uf.user_id='${params.user_id}'`,
+      `SELECT f.* FROM friends f INNER JOIN user_friend_index uf ON f.id=uf.friend_id WHERE uf.user_id='${params.user_id}'`,
       {
         map: async (value) => ({
           id: value.id,
@@ -193,7 +208,7 @@ function Component() {
                                     if (
                                       (
                                         await context.db.query(
-                                          `SELECT 0 FROM user_friends WHERE user_id=${params.user_id} AND friend_id='${form.user_id}' LIMIT 1`,
+                                          `SELECT 0 FROM user_friend_index WHERE user_id='${params.user_id}' AND friend_id='${form.user_id}' LIMIT 1`,
                                         )
                                       ).length !== 0
                                     ) {
@@ -259,13 +274,13 @@ function Component() {
                             set_send_friend_request_button_disabled(true);
                             toast.promise(
                               async () => {
-                                // if (
-                                //   !(await context.endpoint.request_friend(
-                                //     search_user_result.id,
-                                //   ))
-                                // ) {
-                                //   throw "对方拒绝好友请求";
-                                // }
+                                if (
+                                  !(await context.endpoint.request_friend(
+                                    search_user_result.id,
+                                  ))
+                                ) {
+                                  throw "对方拒绝好友请求";
+                                }
                               },
                               {
                                 loading: "等待回应好友请求",
@@ -276,23 +291,26 @@ function Component() {
                                   return `${error}`;
                                 },
                                 success: () => {
-                                  // (async () => {
-                                  //   await context.dexie.friends.add({
-                                  //     owner: params.user_id,
-                                  //     id: search_user_result.id,
-                                  //     name: search_user_result.name,
-                                  //     avatar: search_user_result.avatar_url
-                                  //       ? Array.from(
-                                  //           await (
-                                  //             await fetch(
-                                  //               search_user_result.avatar_url,
-                                  //             )
-                                  //           ).bytes(),
-                                  //         )
-                                  //       : undefined,
-                                  //     bio: search_user_result.bio,
-                                  //   });
-                                  // })();
+                                  (async () => {
+                                    await context.db.execute(
+                                      `BEGIN TRANSACTION;\
+                                      INSERT OR IGNORE INTO friends\
+                                      VALUES('${search_user_result.id}','${search_user_result.name}',?,'${search_user_result.bio}');\
+                                      INSERT OR IGNORE INTO user_friend_index(user_id,friend_id) VALUES('${params.user_id}','${search_user_result.id}');\
+                                      COMMIT;`,
+                                      {
+                                        bind: [
+                                          search_user_result.avatar_url
+                                            ? await (
+                                                await fetch(
+                                                  search_user_result.avatar_url,
+                                                )
+                                              ).bytes()
+                                            : null,
+                                        ],
+                                      },
+                                    );
+                                  })();
                                   return "对方同意好友请求";
                                 },
                               },
@@ -317,7 +335,7 @@ function Component() {
           >
             {friend_virtualizer.getVirtualItems().map((value) => (
               <Item key={value.key} className="rounded-none" asChild>
-                {/*<Link
+                <Link
                   to="/app/home/$user_id/chat/$friend_id"
                   params={{ ...params, friend_id: friends[value.index].id }}
                   className="absolute top-0 left-0 w-full"
@@ -340,7 +358,7 @@ function Component() {
                       {friends[value.index].bio}
                     </ItemDescription>
                   </ItemContent>
-                </Link>*/}
+                </Link>
               </Item>
             ))}
           </div>
@@ -380,110 +398,123 @@ function Component() {
   );
 }
 
-// async function handle_friend_request(
-//   endpoint: Endpoint,
-//   dexie: Dexie,
-//   user_id: string,
-// ) {
-//   while (true) {
-//     const friend_request = await endpoint.friend_request_next();
-//     if (!friend_request) break;
-//     (async () => {
-//       const user_info = await endpoint.request_user_info(
-//         friend_request.remote_id(),
-//       );
-//       const user_avatar_url =
-//         user_info.avatar &&
-//         (await blob_to_data_url(new Blob([Uint8Array.from(user_info.avatar)])));
-//       const toast_id = toast(
-//         <div className="flex-1">
-//           <Label className="font-bold">好友请求</Label>
-//           <Item>
-//             <ItemMedia>
-//               <Avatar>
-//                 <AvatarImage src={user_avatar_url} />
-//                 <AvatarFallback>{user_info.name.at(0)}</AvatarFallback>
-//               </Avatar>
-//             </ItemMedia>
-//             <ItemContent>
-//               <ItemTitle>{user_info.name}</ItemTitle>
-//               <ItemDescription>{user_info.bio}</ItemDescription>
-//             </ItemContent>
-//             <ItemActions>
-//               <Button
-//                 variant="outline"
-//                 size="icon-sm"
-//                 onClick={async () => {
-//                   const friend_id = friend_request.remote_id();
-//                   await dexie.table("friends").add({
-//                     owner: user_id,
-//                     id: friend_id,
-//                     name: user_info.name,
-//                     avatar: user_info.avatar,
-//                     bio: user_info.bio,
-//                   });
-//                   friend_request.accept();
-//                   toast.dismiss(toast_id);
-//                 }}
-//               >
-//                 <Check />
-//               </Button>
-//               <Button
-//                 variant="outline"
-//                 size="icon-sm"
-//                 onClick={() => {
-//                   friend_request.reject();
-//                   toast.dismiss(toast_id);
-//                 }}
-//               >
-//                 <X />
-//               </Button>
-//             </ItemActions>
-//           </Item>
-//         </div>,
-//         {
-//           dismissible: false,
-//           duration: Infinity,
-//           classNames: {
-//             content: "flex-1",
-//             title: "flex-1 flex",
-//           },
-//         },
-//       );
-//     })();
-//   }
-// }
+async function handle_friend_request(
+  endpoint: Endpoint,
+  db: Database,
+  user_id: string,
+) {
+  while (true) {
+    const friend_request = await endpoint.friend_request_next();
+    if (!friend_request) break;
+    (async () => {
+      const friend_info = await endpoint.request_user_info(
+        friend_request.remote_id(),
+      );
+      const friend_avatar_url =
+        friend_info.avatar &&
+        (await blob_to_data_url(
+          new Blob([Uint8Array.from(friend_info.avatar)]),
+        ));
+      const toast_id = toast(
+        <div className="flex-1">
+          <Label className="font-bold">好友请求</Label>
+          <Item>
+            <ItemMedia>
+              <Avatar>
+                <AvatarImage src={friend_avatar_url} />
+                <AvatarFallback>{friend_info.name.at(0)}</AvatarFallback>
+              </Avatar>
+            </ItemMedia>
+            <ItemContent>
+              <ItemTitle>{friend_info.name}</ItemTitle>
+              <ItemDescription>{friend_info.bio}</ItemDescription>
+            </ItemContent>
+            <ItemActions>
+              <Button
+                variant="outline"
+                size="icon-sm"
+                onClick={async () => {
+                  const friend_id = friend_request.remote_id();
+                  await db.execute(
+                    `BEGIN TRANSACTION;\
+                    INSERT OR IGNORE INTO friends\
+                    VALUES('${friend_id}','${friend_info.name}',?,'${friend_info.bio}');\
+                    INSERT OR IGNORE INTO user_friend_index(user_id,friend_id) VALUES('${user_id}','${friend_id}');\
+                    COMMIT;`,
+                    {
+                      bind: [friend_info.avatar],
+                    },
+                  );
+                  friend_request.accept();
+                  toast.dismiss(toast_id);
+                }}
+              >
+                <Check />
+              </Button>
+              <Button
+                variant="outline"
+                size="icon-sm"
+                onClick={() => {
+                  friend_request.reject();
+                  toast.dismiss(toast_id);
+                }}
+              >
+                <X />
+              </Button>
+            </ItemActions>
+          </Item>
+        </div>,
+        {
+          dismissible: false,
+          duration: Infinity,
+          classNames: {
+            content: "flex-1",
+            title: "flex-1 flex",
+          },
+        },
+      );
+    })();
+  }
+}
 
-// async function handle_chat_request(
-//   endpoint: Endpoint,
-//   dexie: Dexie,
-//   user_id: string,
-//   chat_connections: ObservableMap<string, Connection>,
-// ) {
-//   while (true) {
-//     const chat_request = await endpoint.chat_request_next();
-//     if (!chat_request) break;
-//     (async () => {
-//       const friend_id = chat_request.remote_id();
-//       if (!(await dexie.table("friends").get([user_id, friend_id]))) {
-//         chat_request.reject();
-//       } else {
-//         const connection = chat_request.accept();
-//         chat_connections.set(friend_id, connection);
-//         while (true) {
-//           const connection = chat_connections.get(friend_id);
-//           if (!connection) break;
-//           const message = await connection.read();
-//           if (!message) break;
-//           dexie.table("chat_records").add({
-//             timestamp: Date.now(),
-//             sender: friend_id,
-//             receiver: user_id,
-//             message,
-//           });
-//         }
-//         chat_connections.delete(friend_id);
-//       }
-//     })();
-//   }
-// }
+async function handle_chat_request(
+  endpoint: Endpoint,
+  db: Database,
+  user_id: string,
+  chat_connections: Map<string, Connection>,
+) {
+  while (true) {
+    const chat_request = await endpoint.chat_request_next();
+    if (!chat_request) break;
+    (async () => {
+      const friend_id = chat_request.remote_id();
+      if (
+        (
+          await db.query(
+            `SELECT 0 FROM user_friend_index WHERE user_id='${user_id}' AND friend_id='${friend_id}' LIMIT 1`,
+          )
+        ).length === 0
+      ) {
+        chat_request.reject();
+      } else {
+        const connection = chat_request.accept();
+        chat_connections.set(friend_id, connection);
+        while (true) {
+          const connection = chat_connections.get(friend_id);
+          if (!connection) break;
+          const message = await connection.read();
+          if (!message) break;
+          const chat_record_id = (
+            await db.query<number>(
+              `INSERT OR IGNORE INTO chat_records(message) VALUES('${message}') RETURNING chat_record_id`,
+            )
+          )[0];
+          await db.execute(
+            `INSERT OR IGNORE INTO user_chat_record_index(user_id,chat_id,chat_record_id) VALUES('${user_id}','${friend_id}',${chat_record_id})`,
+          );
+        }
+        chat_connections.delete(friend_id);
+      }
+    })();
+  }
+}

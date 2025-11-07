@@ -65,7 +65,7 @@ function Component() {
     () =>
       z.object({
         user_id: z.string().min(1, "请选择一个账户"),
-        avatar_url: z.string().optional(),
+        avatar_url: z.string().optional().nullable(),
       }),
     [],
   );
@@ -74,7 +74,7 @@ function Component() {
     () =>
       z.object({
         user_name: z.string().min(1, "用户名不能为空"),
-        avatar_url: z.string().optional(),
+        avatar_url: z.string().optional().nullable(),
       }),
     [],
   );
@@ -139,15 +139,16 @@ function Component() {
                     control={login_form.control}
                     name="avatar_url"
                     render={({ field }) => (
-                      <FormItem className="flex justify-center">
+                      <FormItem className="flex flex-col items-center">
                         <FormControl>
                           <Avatar className="size-14">
-                            <AvatarImage src={field.value} />
+                            <AvatarImage src={field.value ?? undefined} />
                             <AvatarFallback>
                               <UserIcon />
                             </AvatarFallback>
                           </Avatar>
                         </FormControl>
+                        <FormMessage />
                       </FormItem>
                     )}
                   />
@@ -163,7 +164,7 @@ function Component() {
                             field.onChange(value);
                             login_form.setValue(
                               "avatar_url",
-                              users.find((a) => a.id === value)?.avatar_url,
+                              users.find((v) => v.id === value)?.avatar_url,
                             );
                           }}
                         >
@@ -212,7 +213,7 @@ function Component() {
                               register_avatar_input_ref.current?.click()
                             }
                           >
-                            <AvatarImage src={field.value} />
+                            <AvatarImage src={field.value ?? undefined} />
                             <AvatarFallback>
                               <UserIcon />
                             </AvatarFallback>

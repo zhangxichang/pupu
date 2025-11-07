@@ -26,13 +26,12 @@ export class Database {
 
   async init() {
     if (tauri_sqlite) {
-      if (this.native_inner) return;
+      if (this.native_inner) return false;
       const native_db = await tauri_sqlite.default.load("sqlite:data.db");
       await native_db.execute(await (await fetch("/db_schema.sql")).text());
       this.native_inner = native_db;
-      return;
     } else if (sqlite) {
-      if (this.web_inner) return;
+      if (this.web_inner) return false;
       const web_db = await sqlite.sqlite3Worker1Promiser.v2();
       await web_db("open", {
         vfs: "opfs",
@@ -42,9 +41,10 @@ export class Database {
         sql: await (await fetch("/db_schema.sql")).text(),
       });
       this.web_inner = web_db;
-      return;
+    } else {
+      throw new Error("API缺失");
     }
-    throw new Error("API缺失");
+    return true;
   }
   async reset() {
     if (tauri_sqlite && tauri_fs) {
@@ -56,7 +56,6 @@ export class Database {
       native_inner = await tauri_sqlite.default.load("sqlite:data.db");
       await native_inner.execute(await (await fetch("/db_schema.sql")).text());
       this.native_inner = native_inner;
-      return;
     } else if (sqlite && opfs) {
       if (!this.web_inner) throw new Error("未初始化");
       let web_inner = this.web_inner;
@@ -71,35 +70,31 @@ export class Database {
         sql: await (await fetch("/db_schema.sql")).text(),
       });
       this.web_inner = web_inner;
-      return;
+    } else {
+      throw new Error("API缺失");
     }
-    throw new Error("API缺失");
+    this.callbacks.forEach((f) => f());
   }
   async execute(sql: string, options?: { bind?: any[] }) {
     if (tauri_sqlite) {
       if (!this.native_inner) throw new Error("未初始化");
       await this.native_inner.execute(sql, options?.bind);
-      this.callbacks.forEach((f) => f());
-      return;
     } else if (sqlite) {
       if (!this.web_inner) throw new Error("未初始化");
       await this.web_inner("exec", { sql, bind: options?.bind });
-      this.callbacks.forEach((f) => f());
-      return;
+    } else {
+      throw new Error("API缺失");
     }
-    throw new Error("API缺失");
+    this.callbacks.forEach((f) => f());
   }
   async query<T>(
     sql: string,
     options?: { bind?: any[]; map?: (value: any) => T | Promise<T> },
   ) {
+    let rows: T[] = [];
     if (tauri_sqlite) {
       if (!this.native_inner) throw new Error("未初始化");
-      let result = await this.native_inner.select<T[]>(sql, options?.bind);
-      if (options?.map) {
-        result = await Promise.all(result.map(options.map));
-      }
-      return result;
+      rows = await this.native_inner.select<T[]>(sql, options?.bind);
     } else if (sqlite) {
       if (!this.web_inner) throw new Error("未初始化");
       let result: T[] = [];
@@ -117,19 +112,20 @@ export class Database {
           result_indexs.push(value.rowNumber);
         },
       });
-      result = result
+      rows = result
         .map((v, i) => ({
           value: v,
           index: result_indexs[i],
         }))
         .sort((a, b) => a.index - b.index)
         .map(({ value }) => value);
-      if (options?.map) {
-        result = await Promise.all(result.map(options.map));
-      }
-      return result;
+    } else {
+      throw new Error("API缺失");
     }
-    throw new Error("API缺失");
+    if (options?.map) {
+      rows = await Promise.all(rows.map(options.map));
+    }
+    return rows;
   }
   async live_query<T>(
     name: string,

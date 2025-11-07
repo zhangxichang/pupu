@@ -21,43 +21,78 @@ export class Endpoint {
 
   async init(secret_key: Uint8Array, user_info: UserInfo) {
     if (tauri_core) {
-      return;
+      throw new Error("未实现");
     } else if (endpoint) {
+      if (this.web_inner) return false;
       this.web_inner = await endpoint.Endpoint.new(
         secret_key,
         endpoint.UserInfo.from_object(user_info),
       );
-      return;
+    } else {
+      throw new Error("API缺失");
     }
-    throw new Error("API缺失");
+    return true;
   }
   async request_user_info(id: string) {
     if (tauri_core) {
-      return {} as UserInfo;
+      throw new Error("未实现");
     } else if (endpoint) {
       if (!this.web_inner) throw new Error("未初始化");
       return (
         await this.web_inner.request_user_info(id)
       ).to_object() as UserInfo;
+    } else {
+      throw new Error("API缺失");
     }
-    throw new Error("API缺失");
+  }
+  async request_friend(id: string) {
+    if (tauri_core) {
+      throw new Error("未实现");
+    } else if (endpoint) {
+      if (!this.web_inner) throw new Error("未初始化");
+      return await this.web_inner.request_friend(id);
+    } else {
+      throw new Error("API缺失");
+    }
+  }
+  async friend_request_next() {
+    if (tauri_core) {
+      throw new Error("未实现");
+    } else if (endpoint) {
+      if (!this.web_inner) throw new Error("未初始化");
+      return await this.web_inner.friend_request_next();
+    } else {
+      throw new Error("API缺失");
+    }
+  }
+  async chat_request_next() {
+    if (tauri_core) {
+      throw new Error("未实现");
+    } else if (endpoint) {
+      if (!this.web_inner) throw new Error("未初始化");
+      return await this.web_inner.chat_request_next();
+    } else {
+      throw new Error("API缺失");
+    }
   }
 }
 
 export function generate_secret_key() {
   if (tauri_core) {
-    return new Uint8Array();
+    throw new Error("未实现");
   } else if (endpoint) {
     return endpoint.generate_secret_key();
+  } else {
+    throw new Error("API缺失");
   }
-  throw new Error("API缺失");
 }
 
 export function get_secret_key_id(secret_key: Uint8Array) {
   if (tauri_core) {
-    return "";
+    throw new Error("未实现");
   } else if (endpoint) {
     return endpoint.get_secret_key_id(secret_key);
+  } else {
+    throw new Error("API缺失");
   }
-  throw new Error("API缺失");
 }
