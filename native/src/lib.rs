@@ -1,3 +1,7 @@
+mod endpoint;
+mod error;
+mod file_system;
+mod sqlite;
 mod state;
 
 use crate::state::State;
@@ -34,10 +38,18 @@ pub fn run() {
         .plugin(tauri_plugin_prevent_default.build())
         .plugin(tauri_plugin_os::init())
         .plugin(tauri_plugin_opener::init())
-        .plugin(tauri_plugin_fs::init())
-        .plugin(tauri_plugin_sql::Builder::default().build())
         .manage(State::default())
-        .invoke_handler(tauri::generate_handler![])
+        .invoke_handler(tauri::generate_handler![
+            file_system::fs_remove_file,
+            sqlite::sqlite_open,
+            sqlite::sqlite_is_open,
+            sqlite::sqlite_close,
+            sqlite::sqlite_execute_batch,
+            sqlite::sqlite_execute,
+            sqlite::sqlite_query,
+            endpoint::generate_secret_key,
+            endpoint::get_secret_key_id,
+        ])
         .run(tauri::generate_context!())
         .unwrap();
 }

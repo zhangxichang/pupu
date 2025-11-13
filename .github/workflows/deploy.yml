@@ -54,15 +54,15 @@ jobs:
       - name: 安装依赖包
         run: bun install
       - name: 生成应用图标资源
-        run: bun tauri icon .\public\icon.svg
+        run: bun tauri icon public/icon.svg
       - name: 构建
         run: bun tauri build
       #发布
       - name: 后处理构建产物
         run: |
-          $TARGET_PATH="./target/release/starlink-windows.exe"
+          $TARGET_PATH="target/release/starlink-windows.exe"
           echo "TARGET_PATH=$TARGET_PATH" >> $env:GITHUB_ENV
-          Move-Item -Path ./target/release/native.exe -Destination $TARGET_PATH
+          Move-Item -Path target/release/native.exe -Destination $TARGET_PATH
       - name: 发布
         uses: softprops/action-gh-release@v2
         env:

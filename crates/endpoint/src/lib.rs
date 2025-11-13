@@ -10,7 +10,7 @@ use iroh::{
 };
 use tokio::sync::mpsc;
 
-use crate::service::{ChatRequest, FriendRequest, SERVICE_ALPN, Service, UserInfo};
+use crate::service::{ChatRequest, FriendRequest, Person, SERVICE_ALPN, Service};
 
 pub struct Endpoint {
     router: Router,
@@ -19,7 +19,7 @@ pub struct Endpoint {
 impl Endpoint {
     pub async fn new(
         secret_key: Vec<u8>,
-        user_info: UserInfo,
+        person: Person,
         friend_request_sender: mpsc::UnboundedSender<FriendRequest>,
         chat_request_sender: mpsc::UnboundedSender<ChatRequest>,
     ) -> Result<Self> {
@@ -29,7 +29,7 @@ impl Endpoint {
             .await?;
         let service = Service::new(
             endpoint.clone(),
-            user_info,
+            person,
             friend_request_sender,
             chat_request_sender,
         );
@@ -49,8 +49,8 @@ impl Endpoint {
     pub fn latency(&self, id: EndpointId) -> Option<Duration> {
         self.router.endpoint().latency(id)
     }
-    pub async fn request_user_info(&self, id: EndpointId) -> Result<UserInfo> {
-        self.service.request_user_info(id).await
+    pub async fn request_person(&self, id: EndpointId) -> Result<Person> {
+        self.service.request_person(id).await
     }
     pub async fn request_friend(&self, id: EndpointId) -> Result<bool> {
         self.service.request_friend(id).await

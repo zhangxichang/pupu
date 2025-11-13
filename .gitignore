@@ -1,6 +1,9 @@
+/public/schema.sql
+
 /node_modules/
 /dist/
 /target/
 /.tanstack/
 /.vscode/
 /stats.html
+/schema.db

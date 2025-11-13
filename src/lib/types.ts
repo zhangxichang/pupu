@@ -1,12 +1,12 @@
-export interface DOMUser {
-  id: string;
-  name: string;
-  avatar_url?: string;
-  bio?: string;
+export interface PK {
+  pk: number;
 }
-
-export interface UserInfo {
+export interface ID {
+  id: string;
+}
+export interface Person {
   name: string;
   avatar?: Uint8Array;
   bio?: string;
 }
+export type DOMPerson = Omit<Person, "avatar"> & { avatar_url?: string };

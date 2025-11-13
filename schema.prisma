@@ -1,0 +1,24 @@
+generator kysely {
+  provider = "prisma-kysely"
+  output   = "src"
+  fileName = "db_types.gen.ts"
+  bytesTypeOverride="Uint8Array"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:schema.db"
+}
+
+model person {
+  pk Int @id @default(autoincrement())
+  id String @unique
+  name String
+  avatar Bytes?
+  bio String?
+}
+
+model user {
+  pk Int @id
+  key Bytes @unique
+}

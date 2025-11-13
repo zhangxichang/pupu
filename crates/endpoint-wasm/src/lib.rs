@@ -32,11 +32,11 @@ impl From<iroh::endpoint::ConnectionType> for ConnectionType {
 }
 
 #[wasm_bindgen]
-pub struct UserInfo(service::UserInfo);
+pub struct Person(service::Person);
 #[wasm_bindgen]
-impl UserInfo {
+impl Person {
     pub fn from_object(value: JsValue) -> Result<Self, JsError> {
-        Ok(Self(serde_wasm_bindgen::from_value::<service::UserInfo>(
+        Ok(Self(serde_wasm_bindgen::from_value::<service::Person>(
             value,
         )?))
     }
@@ -103,13 +103,13 @@ pub struct Endpoint {
 }
 #[wasm_bindgen]
 impl Endpoint {
-    pub async fn new(secret_key: Vec<u8>, user_info: UserInfo) -> Result<Self, JsError> {
+    pub async fn new(secret_key: Vec<u8>, person: Person) -> Result<Self, JsError> {
         let (friend_request_sender, friend_request_receiver) = mpsc::unbounded_channel();
         let (chat_request_sender, chat_request_receiver) = mpsc::unbounded_channel();
         Ok(Self {
             endpoint: endpoint::Endpoint::new(
                 secret_key,
-                user_info.0,
+                person.0,
                 friend_request_sender,
                 chat_request_sender,
             )
@@ -147,9 +147,9 @@ impl Endpoint {
             .await
             .map(|v| ChatRequest(v))
     }
-    pub async fn request_user_info(&self, id: String) -> Result<UserInfo, JsError> {
-        Ok(UserInfo(
-            self.endpoint.request_user_info(id.parse()?).await.mje()?,
+    pub async fn request_person(&self, id: String) -> Result<Person, JsError> {
+        Ok(Person(
+            self.endpoint.request_person(id.parse()?).await.mje()?,
         ))
     }
     pub async fn request_friend(&self, id: String) -> Result<bool, JsError> {
@@ -172,8 +172,8 @@ pub fn generate_secret_key() -> Vec<u8> {
         .to_vec()
 }
 #[wasm_bindgen]
-pub fn get_secret_key_id(bytes: &[u8]) -> Result<String, JsError> {
-    Ok(iroh::SecretKey::from_bytes(bytes.try_into()?)
+pub fn get_secret_key_id(secret_key: &[u8]) -> Result<String, JsError> {
+    Ok(iroh::SecretKey::from_bytes(secret_key.try_into()?)
         .public()
         .to_string())
 }

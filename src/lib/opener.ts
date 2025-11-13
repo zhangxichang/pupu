@@ -1,12 +1,20 @@
-let tauri_opener: typeof import("@tauri-apps/plugin-opener") | undefined;
+type Native = { kind: "Native" } & typeof import("@tauri-apps/plugin-opener");
+type Web = { kind: "Web" };
+
+let api: Native | Web;
 if (import.meta.env.TAURI_ENV_PLATFORM) {
-  tauri_opener = await import("@tauri-apps/plugin-opener");
+  api = { kind: "Native", ...(await import("@tauri-apps/plugin-opener")) };
+}
+if (!import.meta.env.TAURI_ENV_PLATFORM) {
+  api = { kind: "Web" };
 }
 
 export async function open_url(url: string) {
-  if (tauri_opener) {
-    await tauri_opener.openUrl(url);
-  } else {
+  if (api.kind === "Native") {
+    await api.openUrl(url);
+  } else if (api.kind === "Web") {
     open(url);
+  } else {
+    throw new Error("API缺失");
   }
 }

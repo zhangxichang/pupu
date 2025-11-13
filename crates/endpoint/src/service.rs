@@ -13,14 +13,14 @@ pub const SERVICE_ALPN: &[u8] = b"service/v1";
 
 #[derive(Archive, rkyv::Serialize, rkyv::Deserialize)]
 enum Request {
-    UserInfo,
+    Person,
     Friend,
     Chat,
 }
 
 #[derive(Archive, rkyv::Serialize, rkyv::Deserialize)]
 enum Response {
-    UserInfo(UserInfo),
+    Person(Person),
     Friend(bool),
     Chat(bool),
 }
@@ -28,7 +28,7 @@ enum Response {
 #[derive(
     Archive, rkyv::Serialize, rkyv::Deserialize, Debug, Clone, serde::Serialize, serde::Deserialize,
 )]
-pub struct UserInfo {
+pub struct Person {
     pub name: String,
     pub avatar: Option<Vec<u8>>,
     pub bio: Option<String>,
@@ -81,20 +81,20 @@ impl ChatRequest {
 #[derive(Debug, Clone)]
 pub struct Service {
     endpoint: Endpoint,
-    user_info: Arc<UserInfo>,
+    person: Arc<Person>,
     friend_request_sender: mpsc::UnboundedSender<FriendRequest>,
     chat_request_sender: mpsc::UnboundedSender<ChatRequest>,
 }
 impl Service {
     pub fn new(
         endpoint: Endpoint,
-        user_info: UserInfo,
+        person: Person,
         friend_request_sender: mpsc::UnboundedSender<FriendRequest>,
         chat_request_sender: mpsc::UnboundedSender<ChatRequest>,
     ) -> Self {
         Self {
             endpoint,
-            user_info: Arc::new(user_info),
+            person: Arc::new(person),
             friend_request_sender,
             chat_request_sender,
         }
@@ -103,10 +103,10 @@ impl Service {
         if let Ok((mut send, mut recv)) = connection.accept_bi().await {
             if let Ok(data) = recv.read_to_end(usize::MAX).await {
                 match rkyv::from_bytes::<Request, rkyv::rancor::Error>(&data)? {
-                    Request::UserInfo => {
-                        send.write_all(&rkyv::to_bytes::<rkyv::rancor::Error>(
-                            &Response::UserInfo((*self.user_info).clone()),
-                        )?)
+                    Request::Person => {
+                        send.write_all(&rkyv::to_bytes::<rkyv::rancor::Error>(&Response::Person(
+                            (*self.person).clone(),
+                        ))?)
                         .await?;
                         send.finish()?;
                         connection.closed().await;
@@ -143,19 +143,19 @@ impl Service {
         }
         Ok(())
     }
-    pub async fn request_user_info(&self, id: EndpointId) -> Result<UserInfo> {
+    pub async fn request_person(&self, id: EndpointId) -> Result<Person> {
         let connection = self.endpoint.connect(id, SERVICE_ALPN).await?;
         let (mut send, mut recv) = connection.open_bi().await?;
-        send.write_all(&rkyv::to_bytes::<rkyv::rancor::Error>(&Request::UserInfo)?)
+        send.write_all(&rkyv::to_bytes::<rkyv::rancor::Error>(&Request::Person)?)
             .await?;
         send.finish()?;
-        let Response::UserInfo(user_info) = rkyv::from_bytes::<Response, rkyv::rancor::Error>(
+        let Response::Person(person) = rkyv::from_bytes::<Response, rkyv::rancor::Error>(
             &recv.read_to_end(usize::MAX).await?,
         )?
         else {
             bail!("响应数据非预期");
         };
-        Ok(user_info)
+        Ok(person)
     }
     pub async fn request_friend(&self, id: EndpointId) -> Result<bool> {
         let connection = self.endpoint.connect(id, SERVICE_ALPN).await?;

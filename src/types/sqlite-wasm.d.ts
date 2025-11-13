@@ -1,6 +1,6 @@
 declare module "@sqlite.org/sqlite-wasm" {
   // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-  type Row = any;
+  type TODO = any;
 
   /**
    * A function to be called when the SQLite3 module and worker APIs are done
@@ -25,7 +25,7 @@ declare module "@sqlite.org/sqlite-wasm" {
      */
     worker?: Worker | (() => Worker);
     /** Function to generate unique message IDs */
-    generateMessageId?: (messageObject: Row) => string;
+    generateMessageId?: (messageObject: TODO) => string;
     /**
      * A `console.debug()` style function for logging information about Worker
      * messages.
@@ -145,7 +145,7 @@ declare module "@sqlite.org/sqlite-wasm" {
            */
           type: string;
           /** Sqlilte3 VALUE */
-          row: Row;
+          row: TODO;
           /** 1-based index */
           rowNumber: number;
           columnNames: string[];
@@ -155,10 +155,10 @@ declare module "@sqlite.org/sqlite-wasm" {
          * applied to the first non-empty statement in the SQL which has any
          * bindable parameters. (Empty statements are skipped entirely.)
          */
-        bind?: Exclude<Row, null>;
-        [key: string]: Row; //
+        bind?: Exclude<TODO, null>;
+        [key: string]: TODO; //
       };
-      result: { [key: string]: Row };
+      result: { [key: string]: TODO };
     };
   };
 
@@ -195,7 +195,7 @@ declare module "@sqlite.org/sqlite-wasm" {
       /** The message object which triggered the error */
       input: object;
       /** _if available_ a stack trace array */
-      stack: Row[];
+      stack: TODO[];
     };
     /** Same value, if any, provided by the inbound message */
     messageId: string;

@@ -16,10 +16,10 @@ export default defineConfig({
   optimizeDeps: {
     exclude: ["@sqlite.org/sqlite-wasm"],
   },
-  envPrefix: ["VITE_", "TAURI_ENV_"],
   build: {
     target: "esnext",
   },
+  envPrefix: ["VITE_", "TAURI_ENV_"],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),

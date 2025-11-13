@@ -5,8 +5,8 @@ edition = "2024"
 
 [dependencies]
 eyre = "0.6.12"
-n0-error = "0.1.0"
-iroh = "0.95.0"
+n0-error = "0.1.2"
+iroh = "0.95.1"
 rkyv = "0.8.12"
 tokio = { version = "1.48.0", default-features = false, features = [
     "parking_lot",

@@ -17,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -47,24 +47,43 @@ import { z } from "zod";
 import { Loading } from "@/components/loading";
 import { blob_to_data_url } from "@/lib/blob_to_data_url";
 import { toast } from "sonner";
-import type { DOMUser } from "@/lib/types";
-import { generate_secret_key, get_secret_key_id } from "@/lib/endpoint";
+import type { DOMPerson, Person, PK } from "@/lib/types";
+import { QueryBuilder } from "@/lib/query_builder";
+import { Errored } from "@/components/errored";
+import { createStore } from "zustand";
+import { combine } from "zustand/middleware";
+import { Endpoint } from "@/lib/endpoint";
 
+const Store = createStore(
+  combine(
+    {
+      endpoint: new Endpoint(),
+    },
+    (set, get) => ({ set, get }),
+  ),
+);
 export const Route = createFileRoute("/app/login")({
   component: Component,
-  pendingComponent: () => <Loading hint_text="正在初始化登录界面" />,
+  pendingComponent: () => <Loading hint_text="现在正在加载登录界面了" />,
+  errorComponent: () => <Errored hint_text="唉呀~出错了好像" />,
+  beforeLoad: async () => {
+    const store = Store.getState();
+    store.get().endpoint.init();
+    return {
+      endpoint: store.get().endpoint,
+    };
+  },
 });
 function Component() {
   const context = Route.useRouteContext();
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
   const register_avatar_input_ref = useRef<HTMLInputElement>(null);
-  //用户
-  const [users, set_users] = useState<DOMUser[]>([]);
+  const [users, set_users] = useState<(DOMPerson & PK)[]>([]);
   //登录表单规则
   const login_form_schema = useMemo(
     () =>
       z.object({
-        user_id: z.string().min(1, "请选择一个账户"),
+        person_pk: z.string().min(1, "请选择一个账户"),
         avatar_url: z.string().optional().nullable(),
       }),
     [],
@@ -82,7 +101,7 @@ function Component() {
   const login_form = useForm<z.infer<typeof login_form_schema>>({
     resolver: zodResolver(login_form_schema),
     defaultValues: {
-      user_id: "",
+      person_pk: "",
     },
   });
   //注册表单
@@ -92,23 +111,45 @@ function Component() {
       user_name: "",
     },
   });
-  //实时同步数据库用户列表
+  //实时同步数据库用户变化
   useEffect(() => {
-    context.db.live_query<DOMUser>(
-      "users",
-      set_users,
-      "SELECT id,name,avatar,bio FROM users",
-      {
-        map: async (value) => ({
-          id: value.id,
-          name: value.name,
-          avatar_url:
-            value.avatar &&
-            (await blob_to_data_url(new Blob([Uint8Array.from(value.avatar)]))),
-          bio: value.bio,
-        }),
-      },
-    );
+    const update_users = async () => {
+      set_users(
+        await Promise.all(
+          (
+            await context.db.query<Person & PK>(
+              QueryBuilder.selectFrom("person")
+                .innerJoin("user", "user.pk", "person.pk")
+                .select([
+                  "person.pk",
+                  "person.name",
+                  "person.avatar",
+                  "person.bio",
+                ])
+                .compile(),
+            )
+          ).map(
+            async (v) =>
+              ({
+                pk: v.pk,
+                name: v.name,
+                avatar_url:
+                  v.avatar &&
+                  (await blob_to_data_url(
+                    new Blob([Uint8Array.from(v.avatar)]),
+                  )),
+                bio: v.bio,
+              }) satisfies DOMPerson & PK,
+          ),
+        ),
+      );
+    };
+    update_users();
+    context.db.on_execute("login_users", update_users);
+    context.db.on_open("login_users", () => {
+      login_form.reset();
+      update_users();
+    });
   }, []);
   return (
     <div className="flex-1 flex items-center justify-center">
@@ -154,7 +195,7 @@ function Component() {
                   />
                   <FormField
                     control={login_form.control}
-                    name="user_id"
+                    name="person_pk"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>账户</FormLabel>
@@ -164,7 +205,8 @@ function Component() {
                             field.onChange(value);
                             login_form.setValue(
                               "avatar_url",
-                              users.find((v) => v.id === value)?.avatar_url,
+                              users.find((v) => v.pk.toString() === value)
+                                ?.avatar_url,
                             );
                           }}
                         >
@@ -177,7 +219,10 @@ function Component() {
                             <SelectGroup>
                               <SelectLabel>账户</SelectLabel>
                               {users.map((value) => (
-                                <SelectItem key={value.id} value={value.id}>
+                                <SelectItem
+                                  key={value.pk}
+                                  value={value.pk.toString()}
+                                >
                                   <Avatar>
                                     <AvatarImage src={value.avatar_url} />
                                     <AvatarFallback>
@@ -232,10 +277,10 @@ function Component() {
                               register_form.setError("avatar_url", {
                                 message: "请选择一个图片文件",
                               });
-                            } else {
-                              register_form.clearErrors("avatar_url");
-                              field.onChange(await blob_to_data_url(file));
+                              return;
                             }
+                            register_form.clearErrors("avatar_url");
+                            field.onChange(await blob_to_data_url(file));
                           }}
                         />
                       </FormItem>
@@ -262,11 +307,20 @@ function Component() {
             <TabsContent value="login" className="flex flex-col gap-1">
               <Button
                 disabled={login_form.formState.isSubmitting}
-                onClick={login_form.handleSubmit(async (form) => {
-                  await navigate({
-                    to: "/app/home/$user_id",
-                    params: { user_id: form.user_id },
-                  });
+                onClick={login_form.handleSubmit(async (_form) => {
+                  // const row = (
+                  //   await context.db.query<ID>(
+                  //     QueryBuilder.selectFrom("person")
+                  //       .select(["id"])
+                  //       .where("pk", "=", Number(form.person_pk))
+                  //       .limit(1)
+                  //       .compile(),
+                  //   )
+                  // )[0];
+                  // await navigate({
+                  //   to: "/app/home/$user_id",
+                  //   params: { user_id: row.id },
+                  // });
                 })}
               >
                 {login_form.formState.isSubmitting ? "登录中..." : "登录"}
@@ -277,10 +331,10 @@ function Component() {
                     variant={"outline"}
                     onClick={(e) => {
                       if (
-                        login_form.getValues("user_id") ===
-                        login_form.formState.defaultValues?.user_id
+                        login_form.getValues("person_pk") ===
+                        login_form.formState.defaultValues?.person_pk
                       ) {
-                        login_form.setError("user_id", {
+                        login_form.setError("person_pk", {
                           message: "请先选择一个账户删除",
                         });
                         e.preventDefault();
@@ -304,7 +358,22 @@ function Component() {
                     <AlertDialogAction
                       onClick={async () => {
                         await context.db.execute(
-                          `DELETE FROM users WHERE id='${login_form.getValues("user_id")}'`,
+                          QueryBuilder.deleteFrom("user")
+                            .where(
+                              "pk",
+                              "=",
+                              Number(login_form.getValues("person_pk")),
+                            )
+                            .compile(),
+                        );
+                        await context.db.execute(
+                          QueryBuilder.deleteFrom("person")
+                            .where(
+                              "pk",
+                              "=",
+                              Number(login_form.getValues("person_pk")),
+                            )
+                            .compile(),
                         );
                         login_form.reset();
                       }}
@@ -319,38 +388,48 @@ function Component() {
               <Button
                 disabled={register_form.formState.isSubmitting}
                 onClick={register_form.handleSubmit(async (form) => {
-                  try {
-                    if (
-                      (
-                        await context.db.query(
-                          `SELECT 0 FROM users WHERE name='${form.user_name}' LIMIT 1`,
-                        )
-                      ).length === 0
-                    ) {
-                      const secret_key = generate_secret_key();
-                      await context.db.execute(
-                        `INSERT INTO users(id,key,name,avatar) VALUES('${get_secret_key_id(secret_key)}',?,'${form.user_name}',?)`,
-                        {
-                          bind: [
-                            secret_key,
-                            form.avatar_url
-                              ? await (await fetch(form.avatar_url)).bytes()
-                              : null,
-                          ],
-                        },
-                      );
-                      register_form.reset();
-                      toast.success("账户注册成功");
-                    } else {
-                      register_form.setError("user_name", {
-                        message: "用户名已经存在了",
-                      });
-                    }
-                  } catch (error) {
+                  if (
+                    (
+                      await context.db.query(
+                        QueryBuilder.selectFrom("person")
+                          .innerJoin("user", "user.pk", "person.pk")
+                          .select("person.pk")
+                          .where("name", "=", form.user_name)
+                          .limit(1)
+                          .compile(),
+                      )
+                    ).length !== 0
+                  ) {
                     register_form.setError("user_name", {
-                      message: `${error}`,
+                      message: "用户名已经存在了",
                     });
+                    return;
                   }
+                  const secret_key = await Endpoint.generate_secret_key();
+                  const person_pk = (
+                    await context.db.query<PK>(
+                      QueryBuilder.insertInto("person")
+                        .values({
+                          id: await Endpoint.get_secret_key_id(secret_key),
+                          name: form.user_name,
+                          avatar: form.avatar_url
+                            ? await (await fetch(form.avatar_url)).bytes()
+                            : null,
+                        })
+                        .returning("pk")
+                        .compile(),
+                    )
+                  )[0];
+                  await context.db.execute(
+                    QueryBuilder.insertInto("user")
+                      .values({
+                        pk: person_pk.pk,
+                        key: secret_key,
+                      })
+                      .compile(),
+                  );
+                  register_form.reset();
+                  toast.success("账户注册成功");
                 })}
               >
                 注册

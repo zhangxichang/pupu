@@ -1,2 +1,6 @@
+use crate::sqlite::Sqlite;
+
 #[derive(Default)]
-pub struct State {}
+pub struct State {
+    pub db: Sqlite,
+}

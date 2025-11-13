@@ -1,4 +1,3 @@
-import "@/style.css";
 import { Loading } from "@/components/loading";
 import {
   AlertDialog,
@@ -57,7 +56,9 @@ import { createStore } from "zustand";
 import { combine } from "zustand/middleware";
 import { Octokit } from "octokit";
 import { open_url } from "@/lib/opener";
-import { Database } from "@/lib/database";
+import { FileSystem } from "@/lib/file_system";
+import { Sqlite } from "@/lib/sqlite";
+import { Errored } from "@/components/errored";
 
 let tauri_window: typeof import("@tauri-apps/api/window") | undefined;
 if (import.meta.env.TAURI_ENV_PLATFORM) {
@@ -67,18 +68,30 @@ if (import.meta.env.TAURI_ENV_PLATFORM) {
 const Store = createStore(
   combine(
     {
-      db: new Database(),
+      fs: new FileSystem(),
+      db: new Sqlite(),
     },
     (set, get) => ({ set, get }),
   ),
 );
 export const Route = createFileRoute("/app")({
   component: Component,
-  pendingComponent: () => <Loading hint_text="正在初始化应用" mode="screen" />,
+  pendingComponent: () => {
+    return <Loading hint_text="我现在正在初始化这个程序" mode="screen" />;
+  },
+  errorComponent: () => {
+    return <Errored hint_text="我的天呀，应用程序初始化错误了" mode="screen" />;
+  },
   beforeLoad: async () => {
     const store = Store.getState();
-    await store.get().db.init();
+    store.get().fs.init();
+    const db = store.get().db;
+    await db.init();
+    if (!(await db.is_open())) {
+      await db.open("data.db", true);
+    }
     return {
+      fs: store.get().fs,
       db: store.get().db,
     };
   },
@@ -249,7 +262,9 @@ function Component() {
                   <AlertDialogAction
                     onClick={async () => {
                       await navigate({ to: "/app/login" });
-                      await context.db.reset();
+                      await context.db.close();
+                      await context.fs.remove_file("data.db");
+                      await context.db.open("data.db", true);
                     }}
                   >
                     确定
