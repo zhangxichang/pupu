@@ -10,69 +10,25 @@ datasource db {
   url="file:schema.db"
 }
 
-enum MessageType {
-  Ref
-  Text
-  File
-  Image
-  Audio
-  Video
-}
-
-model file {
-  pk Int @id @default(autoincrement())
-  hash String @unique
-}
-
-model person {
-  pk Int @id @default(autoincrement())
-  id String @unique
-  name String
-  avatar_file_pk Int?
+model user {
+  id String @id
+  key Bytes
+  name String @unique
+  avatar Bytes?
   bio String @default("还没有自我介绍")
 }
 
-model user {
-  person_pk Int @unique
-  key_file_pk Int @unique
-}
-
 model friend {
-  person_pk Int
-  user_person_pk Int
-  @@unique([person_pk,user_person_pk])
+  id String @id
+  user_id String
+  name String
+  avatar Bytes?
+  bio String
 }
 
 model message {
-  pk Int @id @default(autoincrement())
+  id Int @id @default(autoincrement())
+  sender_id String
   timestamp DateTime @default(now())
-  type MessageType @default(Text)
-  ref_pk Int?
-  text String?
-  file_pk Int?
-}
-
-model friend_message {
-  friend_person_pk Int
-  message_pk Int
-  @@unique([friend_person_pk,message_pk])
-}
-
-model group {
-  pk Int @id @default(autoincrement())
-  id String @unique
-}
-
-model user_group {
-  pk Int @id @default(autoincrement())
-  user_person_pk Int
-  group_pk Int
-  @@unique([user_person_pk,group_pk])
-}
-
-model group_message {
-  user_group_pk Int
-  sender_person_pk Int
-  message_pk Int
-  @@unique([user_group_pk,message_pk])
+  text String
 }

@@ -53,7 +53,7 @@ import {
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { createStore } from "zustand";
-import { combine } from "zustand/middleware";
+import { subscribeWithSelector } from "zustand/middleware";
 import { Octokit } from "octokit";
 import { open_url } from "@/lib/opener";
 import { AppPath, FileSystem } from "@/lib/file_system";
@@ -61,20 +61,17 @@ import { Sqlite } from "@/lib/sqlite";
 import { Errored } from "@/components/errored";
 import { Endpoint } from "@/lib/endpoint";
 
-let tauri_window: typeof import("@tauri-apps/api/window") | undefined;
+let window_api: typeof import("@tauri-apps/api/window") | undefined;
 if (import.meta.env.TAURI_ENV_PLATFORM) {
-  tauri_window = await import("@tauri-apps/api/window");
+  window_api = await import("@tauri-apps/api/window");
 }
 
-const Store = createStore(
-  combine(
-    {
-      fs: new FileSystem(),
-      db: new Sqlite(),
-      endpoint: new Endpoint(),
-    },
-    (set, get) => ({ set, get }),
-  ),
+export const AppStore = createStore(
+  subscribeWithSelector(() => ({
+    fs: new FileSystem(),
+    db: new Sqlite(),
+    endpoint: new Endpoint(),
+  })),
 );
 export const Route = createFileRoute("/app")({
   component: Component,
@@ -85,25 +82,18 @@ export const Route = createFileRoute("/app")({
     return <Errored hint_text="我的天呀，应用程序初始化错误了" mode="screen" />;
   },
   beforeLoad: async () => {
-    const store = Store.getState();
-    store.get().fs.init();
-    const db = store.get().db;
+    AppStore.getState().fs.init();
+    const db = AppStore.getState().db;
     await db.init();
     if (!(await db.is_open())) {
       await db.open(AppPath.DatabaseFile, true);
     }
-    store.get().endpoint.init();
-    return {
-      fs: store.get().fs,
-      db: store.get().db,
-      endpoint: store.get().endpoint,
-    };
+    AppStore.getState().endpoint.init();
   },
 });
 function Component() {
-  const context = Route.useRouteContext();
   const navigate = useNavigate();
-  const [is_maximized, set_is_maximized] = useState(false);
+  const [is_maximized, set_is_maximized] = useState<boolean>();
   const [about_dialog_opened, set_about_dialog_opened] = useState(false);
   const [
     clear_all_data_alert_dialog_opened,
@@ -122,36 +112,36 @@ function Component() {
   useEffect(() => {
     navigate({ to: "/app/login" });
   }, []);
-  //配置窗口
+  //窗口配置
   useEffect(() => {
-    if (tauri_window) {
+    if (window_api) {
       const cleanup = (async () => {
         //设置窗口标题
-        await tauri_window.getCurrentWindow().setTitle(document.title);
-        //监控网页标题变化
+        await window_api.getCurrentWindow().setTitle(document.title);
+        //同步标题变化
         const title_observer = new MutationObserver(
           async () =>
-            await tauri_window.getCurrentWindow().setTitle(document.title),
+            await window_api.getCurrentWindow().setTitle(document.title),
         );
         title_observer.observe(document.querySelector("title")!, {
           childList: true,
           characterData: true,
         });
+        //设置窗口缩放状态
+        set_is_maximized(await window_api.getCurrentWindow().isMaximized());
         //监控窗口缩放
-        const un_on_resized = tauri_window
+        const un_on_resized = await window_api
           .getCurrentWindow()
           .onResized(async () =>
-            set_is_maximized(
-              await tauri_window.getCurrentWindow().isMaximized(),
-            ),
+            set_is_maximized(await window_api.getCurrentWindow().isMaximized()),
           );
-        return async () => {
+        return () => {
           title_observer.disconnect();
-          (await un_on_resized)();
+          un_on_resized();
         };
       })();
       return () => {
-        (async () => await (await cleanup)())();
+        (async () => (await cleanup)())();
       };
     }
   }, []);
@@ -266,10 +256,14 @@ function Component() {
                   <AlertDialogAction
                     onClick={async () => {
                       await navigate({ to: "/app/login" });
-                      await context.db.close();
-                      await context.fs.remove_file(AppPath.DatabaseFile);
-                      await context.fs.remove_dir_all(AppPath.DataDirectory);
-                      await context.db.open(AppPath.DatabaseFile, true);
+                      await AppStore.getState().db.close();
+                      await AppStore.getState().fs.remove_file(
+                        AppPath.DatabaseFile,
+                      );
+                      await AppStore.getState().db.open(
+                        AppPath.DatabaseFile,
+                        true,
+                      );
                     }}
                   >
                     确定
@@ -279,13 +273,13 @@ function Component() {
             </AlertDialog>
           </div>
           {/* 窗口控制按钮 */}
-          {tauri_window && (
+          {window_api && (
             <div data-tauri-drag-region className="flex-1 flex justify-end">
               <Button
                 variant={"ghost"}
                 className="rounded-none cursor-pointer"
                 onClick={async () =>
-                  await tauri_window.getCurrentWindow().minimize()
+                  await window_api.getCurrentWindow().minimize()
                 }
               >
                 <Minimize2 />
@@ -294,7 +288,7 @@ function Component() {
                 variant={"ghost"}
                 className="rounded-none cursor-pointer"
                 onClick={async () =>
-                  await tauri_window.getCurrentWindow().toggleMaximize()
+                  await window_api.getCurrentWindow().toggleMaximize()
                 }
               >
                 {!is_maximized ? <Maximize /> : <Minimize />}
@@ -303,7 +297,7 @@ function Component() {
                 variant={"ghost"}
                 className="rounded-none cursor-pointer hover:bg-red-600 hover:text-white active:bg-red-500"
                 onClick={async () =>
-                  await tauri_window.getCurrentWindow().close()
+                  await window_api.getCurrentWindow().close()
                 }
               >
                 <X />

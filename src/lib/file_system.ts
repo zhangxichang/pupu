@@ -14,8 +14,6 @@ if (!import.meta.env.TAURI_ENV_PLATFORM) {
 export const AppPath = {
   DatabaseFile: "data.db",
   ConfigFile: "config.toml",
-  DataDirectory: "data",
-  CacheDirectory: "cache",
 } as const;
 
 export class FileSystem {
