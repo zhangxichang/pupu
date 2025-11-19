@@ -71,6 +71,7 @@ export const AppStore = createStore(
     fs: new FileSystem(),
     db: new Sqlite(),
     endpoint: new Endpoint(),
+    on_resets: new Array<() => void | Promise<void>>(),
   })),
 );
 export const Route = createFileRoute("/app")({
@@ -257,13 +258,14 @@ function Component() {
                     onClick={async () => {
                       await navigate({ to: "/app/login" });
                       await AppStore.getState().db.close();
-                      await AppStore.getState().fs.remove_file(
-                        AppPath.DatabaseFile,
-                      );
+                      await AppStore.getState().fs.remove_dir_all("");
                       await AppStore.getState().db.open(
                         AppPath.DatabaseFile,
                         true,
                       );
+                      for (const callback of AppStore.getState().on_resets) {
+                        await callback();
+                      }
                     }}
                   >
                     确定

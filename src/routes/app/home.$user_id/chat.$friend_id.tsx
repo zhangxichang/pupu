@@ -26,6 +26,7 @@ import type { Message } from "@/lib/types";
 import { Avatar } from "@/components/widgets/avatar";
 import { ConnectionType } from "@starlink/endpoint";
 import { useStore } from "zustand";
+import type { SQLiteUpdateEvent } from "@/lib/sqlite";
 
 export const Route = createFileRoute("/app/home/$user_id/chat/$friend_id")({
   component: Component,
@@ -139,7 +140,13 @@ function Component() {
       );
     };
     update();
-    AppStore.getState().db.on_execute("messages", update);
+    const on_update = async (e: SQLiteUpdateEvent) => {
+      if (e.table_name === "message") {
+        await update();
+      }
+    };
+    AppStore.getState().db.on_update(on_update);
+    return () => AppStore.getState().db.unon_update(on_update);
   }, []);
   //自动滚动到最新消息
   useEffect(() => {

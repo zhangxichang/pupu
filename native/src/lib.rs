@@ -48,6 +48,7 @@ pub fn run() {
             sqlite::sqlite_open,
             sqlite::sqlite_is_open,
             sqlite::sqlite_close,
+            sqlite::sqlite_on_update,
             sqlite::sqlite_execute_batch,
             sqlite::sqlite_execute,
             sqlite::sqlite_query,

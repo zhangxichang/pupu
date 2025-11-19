@@ -6,7 +6,7 @@
     },
     "target": "esnext",
     "module": "esnext",
-    "lib": ["ESNext", "DOM"],
+    "lib": ["ESNext", "DOM", "DOM.AsyncIterable"],
     "jsx": "react-jsx",
     "noEmit": true,
     "moduleResolution": "bundler",

@@ -3174,6 +3174,7 @@ dependencies = [
  "endpoint",
  "eyre",
  "iroh",
+ "log",
  "parking_lot",
  "rand 0.9.2",
  "rusqlite",

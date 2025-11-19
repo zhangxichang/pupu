@@ -1,7 +1,9 @@
 use std::path::PathBuf;
 
 use parking_lot::Mutex;
-use rusqlite::{ToSql, params_from_iter, types::FromSql};
+use rusqlite::{ToSql, hooks::Action, params_from_iter, types::FromSql};
+use serde::{Deserialize, Serialize};
+use tauri::Emitter;
 
 use crate::{
     error::{Error, OptionExt},
@@ -100,6 +102,14 @@ impl FromSql for SQLiteType {
     }
 }
 
+#[derive(Serialize, Deserialize, Clone)]
+struct SQLiteUpdateEvent {
+    update_type: i32,
+    db_name: String,
+    table_name: String,
+    row_id: i64,
+}
+
 #[derive(Default)]
 pub struct Sqlite {
     connection: Mutex<Option<rusqlite::Connection>>,
@@ -122,6 +132,33 @@ pub async fn sqlite_close(state: tauri::State<'_, State>) -> Result<(), Error> {
     if let Some(db) = state.db.connection.lock().take() {
         db.close().map_err(|v| v.1)?;
     }
+    Ok(())
+}
+#[tauri::command(rename_all = "snake_case")]
+pub async fn sqlite_on_update(
+    state: tauri::State<'_, State>,
+    tauri_app: tauri::AppHandle,
+) -> Result<(), Error> {
+    state.db.connection.lock().get()?.update_hook(Some(
+        move |update_type: Action, db_name: &str, table_name: &str, row_id| {
+            if let Err(err) = tauri_app.emit(
+                "on_update",
+                SQLiteUpdateEvent {
+                    update_type: match update_type {
+                        Action::SQLITE_DELETE => 9,
+                        Action::SQLITE_INSERT => 18,
+                        Action::SQLITE_UPDATE => 23,
+                        _ => -1,
+                    },
+                    db_name: db_name.to_string(),
+                    table_name: table_name.to_string(),
+                    row_id,
+                },
+            ) {
+                log::error!("{}", err);
+            }
+        },
+    ));
     Ok(())
 }
 #[tauri::command(rename_all = "snake_case")]

@@ -51,6 +51,7 @@ import type { ID, Person } from "@/lib/types";
 import { AppStore } from "../app";
 import { Avatar } from "@/components/widgets/avatar";
 import { UserIcon } from "lucide-react";
+import type { SQLiteUpdateEvent } from "@/lib/sqlite";
 
 export const Route = createFileRoute("/app/login")({
   component: Component,
@@ -105,12 +106,23 @@ function Component() {
       );
     };
     update();
-    AppStore.getState().db.on_execute("login_users", update);
-    AppStore.getState().db.on_open("login_users", () => {
+    const on_update = async (e: SQLiteUpdateEvent) => {
+      if (e.table_name === "user") {
+        await update();
+      }
+    };
+    AppStore.getState().db.on_update(on_update);
+    AppStore.getState().on_resets.push(() => {
       set_login_user_avatar(undefined);
       login_form.reset();
       update();
     });
+    return () => {
+      AppStore.getState().db.unon_update(on_update);
+      AppStore.setState((old) => ({
+        on_resets: old.on_resets.filter((v) => v === update),
+      }));
+    };
   }, []);
   return (
     <div className="flex-1 flex items-center justify-center">

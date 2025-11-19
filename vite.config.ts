@@ -13,16 +13,13 @@ export default defineConfig({
       "Cross-Origin-Embedder-Policy": "require-corp",
     },
   },
-  optimizeDeps: {
-    exclude: ["@sqlite.org/sqlite-wasm"],
-  },
   build: {
     target: "esnext",
   },
   envPrefix: ["VITE_", "TAURI_ENV_"],
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "./src"),
+      "@": path.resolve(__dirname, "src"),
     },
   },
   plugins: [
