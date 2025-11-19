@@ -13,7 +13,7 @@ export function Avatar(
   const [image_url, set_image_url] = useState<string>();
   useEffect(() => {
     let url: string | undefined;
-    if (props.image instanceof Uint8Array) {
+    if (props.image instanceof Uint8Array || props.image instanceof Array) {
       url = URL.createObjectURL(new Blob([Uint8Array.from(props.image)]));
     } else if (props.image instanceof File) {
       url = URL.createObjectURL(props.image);
