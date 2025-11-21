@@ -12,6 +12,7 @@ use tokio::sync::mpsc;
 
 use crate::service::{ChatRequest, FriendRequest, Person, SERVICE_ALPN, Service};
 
+#[derive(Clone)]
 pub struct Endpoint {
     router: Router,
     service: Service,
@@ -43,12 +44,6 @@ impl Endpoint {
     pub fn id(&self) -> EndpointId {
         self.router.endpoint().id()
     }
-    pub fn connection_type(&self, id: EndpointId) -> Option<ConnectionType> {
-        self.router.endpoint().conn_type(id).map(|mut v| v.get())
-    }
-    pub fn latency(&self, id: EndpointId) -> Option<Duration> {
-        self.router.endpoint().latency(id)
-    }
     pub async fn request_person(&self, id: EndpointId) -> Result<Person> {
         self.service.request_person(id).await
     }
@@ -57,5 +52,11 @@ impl Endpoint {
     }
     pub async fn request_chat(&self, id: EndpointId) -> Result<Option<Connection>> {
         self.service.request_chat(id).await
+    }
+    pub fn connection_type(&self, id: EndpointId) -> Option<ConnectionType> {
+        self.router.endpoint().conn_type(id).map(|mut v| v.get())
+    }
+    pub fn latency(&self, id: EndpointId) -> Option<Duration> {
+        self.router.endpoint().latency(id)
     }
 }

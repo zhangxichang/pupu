@@ -8,6 +8,10 @@ use crate::state::State;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    flexi_logger::Logger::with(flexi_logger::LogSpecification::info())
+        .start()
+        .unwrap();
+    log::info!("日志开始记录");
     #[allow(unused_mut)]
     let mut builder = tauri::Builder::default();
     #[cfg(all(desktop, not(debug_assertions)))]
@@ -56,6 +60,21 @@ pub fn run() {
             endpoint::get_secret_key_id,
             endpoint::endpoint_create,
             endpoint::endpoint_is_create,
+            endpoint::endpoint_request_person,
+            endpoint::endpoint_request_friend,
+            endpoint::endpoint_friend_request_next,
+            endpoint::endpoint_chat_request_next,
+            endpoint::endpoint_request_chat,
+            endpoint::endpoint_connection_type,
+            endpoint::endpoint_latency,
+            endpoint::friend_request::endpoint_friend_request_remote_id,
+            endpoint::friend_request::endpoint_friend_request_accept,
+            endpoint::friend_request::endpoint_friend_request_reject,
+            endpoint::chat_request::endpoint_chat_request_remote_id,
+            endpoint::chat_request::endpoint_chat_request_accept,
+            endpoint::chat_request::endpoint_chat_request_reject,
+            endpoint::connection::endpoint_connection_send,
+            endpoint::connection::endpoint_connection_recv,
         ])
         .run(tauri::generate_context!())
         .unwrap();

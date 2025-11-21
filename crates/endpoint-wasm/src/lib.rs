@@ -1,6 +1,7 @@
 mod into;
 
-use endpoint::{self, service};
+use endpoint::service;
+use iroh::endpoint::ConnectionType;
 use tokio::sync::{Mutex, mpsc};
 use wasm_bindgen::{JsError, JsValue, prelude::wasm_bindgen};
 
@@ -11,24 +12,6 @@ fn start() {
     console_error_panic_hook::set_once();
     wasm_logger::init(wasm_logger::Config::new(log::Level::Info));
     log::info!("Endpoint模块初始化完成");
-}
-
-#[wasm_bindgen]
-pub enum ConnectionType {
-    None,
-    Direct,
-    Relay,
-    Mixed,
-}
-impl From<iroh::endpoint::ConnectionType> for ConnectionType {
-    fn from(value: iroh::endpoint::ConnectionType) -> Self {
-        match value {
-            iroh::endpoint::ConnectionType::Direct(_) => Self::Direct,
-            iroh::endpoint::ConnectionType::Relay(_) => Self::Relay,
-            iroh::endpoint::ConnectionType::Mixed(_, _) => Self::Mixed,
-            iroh::endpoint::ConnectionType::None => Self::None,
-        }
-    }
 }
 
 #[wasm_bindgen]
@@ -79,16 +62,16 @@ impl ChatRequest {
 pub struct Connection(iroh::endpoint::Connection);
 #[wasm_bindgen]
 impl Connection {
-    pub async fn send(&self, data: String) -> Result<(), JsError> {
+    pub async fn send(&self, message: String) -> Result<(), JsError> {
         let mut send = self.0.open_uni().await?;
-        send.write_all(data.as_bytes()).await?;
+        send.write_all(message.as_bytes()).await?;
         send.finish()?;
         Ok(())
     }
-    pub async fn read(&self) -> Result<Option<String>, JsError> {
+    pub async fn recv(&self) -> Result<Option<String>, JsError> {
         if let Ok(mut recv) = self.0.accept_uni().await {
-            if let Ok(data) = recv.read_to_end(usize::MAX).await {
-                return Ok(Some(String::from_utf8(data)?));
+            if let Ok(message) = recv.read_to_end(usize::MAX).await {
+                return Ok(Some(String::from_utf8(message)?));
             }
         }
         Ok(None)
@@ -122,14 +105,19 @@ impl Endpoint {
     pub fn id(&self) -> String {
         self.endpoint.id().to_string()
     }
-    pub fn connection_type(&self, id: String) -> Result<Option<ConnectionType>, JsError> {
-        Ok(self.endpoint.connection_type(id.parse()?).map(Into::into))
+    pub async fn request_person(&self, id: String) -> Result<Person, JsError> {
+        Ok(Person(self.endpoint.request_person(id.parse()?).await.m()?))
     }
-    pub fn latency(&self, id: String) -> Result<Option<usize>, JsError> {
+    pub async fn request_friend(&self, id: String) -> Result<bool, JsError> {
+        Ok(self.endpoint.request_friend(id.parse()?).await.m()?)
+    }
+    pub async fn request_chat(&self, id: String) -> Result<Option<Connection>, JsError> {
         Ok(self
             .endpoint
-            .latency(id.parse()?)
-            .map(|v| v.as_millis() as _))
+            .request_chat(id.parse()?)
+            .await
+            .m()?
+            .map(|v| Connection(v)))
     }
     pub async fn friend_request_next(&self) -> Option<FriendRequest> {
         self.friend_request_receiver
@@ -147,19 +135,22 @@ impl Endpoint {
             .await
             .map(|v| ChatRequest(v))
     }
-    pub async fn request_person(&self, id: String) -> Result<Person, JsError> {
-        Ok(Person(self.endpoint.request_person(id.parse()?).await.m()?))
+    pub fn connection_type(&self, id: String) -> Result<Option<String>, JsError> {
+        Ok(self.endpoint.connection_type(id.parse()?).map(|value| {
+            match value {
+                ConnectionType::Direct(_) => "Direct",
+                ConnectionType::Relay(_) => "Relay",
+                ConnectionType::Mixed(_, _) => "Mixed",
+                ConnectionType::None => "None",
+            }
+            .to_string()
+        }))
     }
-    pub async fn request_friend(&self, id: String) -> Result<bool, JsError> {
-        Ok(self.endpoint.request_friend(id.parse()?).await.m()?)
-    }
-    pub async fn request_chat(&self, id: String) -> Result<Option<Connection>, JsError> {
+    pub fn latency(&self, id: String) -> Result<Option<usize>, JsError> {
         Ok(self
             .endpoint
-            .request_chat(id.parse()?)
-            .await
-            .m()?
-            .map(|v| Connection(v)))
+            .latency(id.parse()?)
+            .map(|v| v.as_millis() as _))
     }
 }
 

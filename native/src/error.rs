@@ -1,13 +1,25 @@
-pub trait OptionExt<T> {
-    fn out(self) -> Result<T, Error>;
+pub trait OptionGet<T> {
     fn get(&self) -> Result<&T, Error>;
+    fn get_mut(&mut self) -> Result<&mut T, Error>;
+    fn get_move(self) -> Result<T, Error>;
 }
-impl<T> OptionExt<T> for Option<T> {
-    fn out(self) -> Result<T, Error> {
-        self.ok_or("空值".to_string().into())
-    }
+impl<T> OptionGet<T> for Option<T> {
     fn get(&self) -> Result<&T, Error> {
         self.as_ref().ok_or("空值".to_string().into())
+    }
+    fn get_mut(&mut self) -> Result<&mut T, Error> {
+        self.as_mut().ok_or("空值".to_string().into())
+    }
+    fn get_move(self) -> Result<T, Error> {
+        self.ok_or("空值".to_string().into())
+    }
+}
+pub trait OptionGetClone<T> {
+    fn get_clone(&self) -> Result<T, Error>;
+}
+impl<T: Clone> OptionGetClone<T> for Option<T> {
+    fn get_clone(&self) -> Result<T, Error> {
+        self.clone().ok_or("空值".to_string().into())
     }
 }
 
@@ -23,6 +35,16 @@ pub enum Error {
     Rusqlite(#[from] rusqlite::Error),
     #[error(transparent)]
     TryFromSlice(#[from] std::array::TryFromSliceError),
+    #[error(transparent)]
+    IrohKeyParsing(#[from] iroh::KeyParsingError),
+    #[error(transparent)]
+    IrohConnection(#[from] iroh::endpoint::ConnectionError),
+    #[error(transparent)]
+    IrohWrite(#[from] iroh::endpoint::WriteError),
+    #[error(transparent)]
+    IrohClosedStream(#[from] iroh::endpoint::ClosedStream),
+    #[error(transparent)]
+    StringFromUtf8(#[from] std::string::FromUtf8Error),
 }
 impl serde::Serialize for Error {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>

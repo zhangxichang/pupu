@@ -31,7 +31,7 @@ enum Response {
 pub struct Person {
     pub name: String,
     pub avatar: Option<Vec<u8>>,
-    pub bio: Option<String>,
+    pub bio: String,
 }
 
 pub struct FriendRequest {

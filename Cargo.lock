@@ -1444,6 +1444,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "flexi_logger"
+version = "0.31.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "31e5335674a3a259527f97e9176a3767dcc9b220b8e29d643daeb2d6c72caf8b"
+dependencies = [
+ "chrono",
+ "log",
+ "nu-ansi-term",
+ "regex",
+ "thiserror 2.0.17",
+]
+
+[[package]]
 name = "fnv"
 version = "1.0.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3173,6 +3186,7 @@ version = "0.1.0"
 dependencies = [
  "endpoint",
  "eyre",
+ "flexi_logger",
  "iroh",
  "log",
  "parking_lot",
@@ -3180,6 +3194,7 @@ dependencies = [
  "rusqlite",
  "serde",
  "serde_json",
+ "slab",
  "tauri",
  "tauri-build",
  "tauri-plugin-opener",

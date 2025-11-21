@@ -1,15 +1,12 @@
 import { SQLiteConnection } from "@/worker/sqlite-api";
-import type { UnlistenFn } from "@tauri-apps/api/event";
 import type { CompiledQuery } from "kysely";
 
 type Native = { kind: "Native" } & typeof import("@tauri-apps/api/core");
 type Web = { kind: "Web" } & typeof import("@/worker/sqlite-api");
 
 let api: Native | Web;
-let event: typeof import("@tauri-apps/api/event");
 if (import.meta.env.TAURI_ENV_PLATFORM) {
   api = { kind: "Native", ...(await import("@tauri-apps/api/core")) };
-  event = await import("@tauri-apps/api/event");
 }
 if (!import.meta.env.TAURI_ENV_PLATFORM) {
   api = { kind: "Web", ...(await import("@/worker/sqlite-api")) };
@@ -25,7 +22,6 @@ export interface SQLiteUpdateEvent {
 export class Sqlite {
   private schema_sql?: string;
   private connection?: SQLiteConnection;
-  private un_listen_on_update?: UnlistenFn;
   private on_updates = new Array<
     (event: SQLiteUpdateEvent) => void | Promise<void>
   >();
@@ -38,15 +34,13 @@ export class Sqlite {
     if (api.kind === "Native") {
       try {
         await api.invoke("sqlite_open", { path });
-        await api.invoke("sqlite_on_update");
-        this.un_listen_on_update = await event.listen<SQLiteUpdateEvent>(
-          "on_update",
-          async (e) => {
-            for (const callback of this.on_updates) {
-              await callback(e.payload);
-            }
-          },
-        );
+        const channel = new api.Channel<SQLiteUpdateEvent>();
+        channel.onmessage = async (e) => {
+          for (const callback of this.on_updates) {
+            await callback(e);
+          }
+        };
+        await api.invoke("sqlite_on_update", { channel });
       } catch (error) {
         throw new Error(`${error}`);
       }
@@ -97,7 +91,6 @@ export class Sqlite {
     if (api.kind === "Native") {
       try {
         await api.invoke("sqlite_close");
-        this.un_listen_on_update?.();
       } catch (error) {
         throw new Error(`${error}`);
       }

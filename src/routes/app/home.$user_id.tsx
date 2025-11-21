@@ -47,12 +47,13 @@ import { createStore, useStore } from "zustand";
 import { subscribeWithSelector } from "zustand/middleware";
 import { Link } from "@tanstack/react-router";
 import { QueryBuilder } from "@/lib/query_builder";
-import type { Connection } from "@starlink/endpoint";
 import { AppStore } from "../app";
 import type { ID, Person } from "@/lib/types";
 import { Avatar } from "@/components/widgets/avatar";
 import { useShallow } from "zustand/shallow";
 import type { SQLiteUpdateEvent } from "@/lib/sqlite";
+import type { Connection } from "@/lib/endpoint";
+import { Errored } from "@/components/errored";
 
 export const HomeStore = createStore(
   subscribeWithSelector(() => ({
@@ -64,6 +65,7 @@ export const HomeStore = createStore(
 export const Route = createFileRoute("/app/home/$user_id")({
   component: Component,
   pendingComponent: () => <Loading hint_text="正在初始化主界面" />,
+  errorComponent: () => <Errored hint_text="emmm...出错了呢..." />,
   beforeLoad: async ({ params }) => {
     const update_user = async () => {
       HomeStore.setState({
@@ -403,9 +405,9 @@ async function handle_friend_request() {
       await AppStore.getState().endpoint.friend_request_next();
     if (!friend_request) break;
     (async () => {
-      const friend_info = await AppStore.getState().endpoint.request_person(
-        friend_request.remote_id(),
-      );
+      const friend_id = await friend_request.remote_id();
+      const friend_info =
+        await AppStore.getState().endpoint.request_person(friend_id);
       const toast_id = toast(
         <div className="flex-1">
           <Label className="font-bold">好友请求</Label>
@@ -427,7 +429,7 @@ async function handle_friend_request() {
                   await AppStore.getState().db.execute(
                     QueryBuilder.insertInto("friend")
                       .values({
-                        id: friend_request.remote_id(),
+                        id: friend_id,
                         user_id: HomeStore.getState().user.id,
                         ...friend_info,
                       })
@@ -470,7 +472,7 @@ async function handle_chat_request() {
     const chat_request = await AppStore.getState().endpoint.chat_request_next();
     if (!chat_request) break;
     (async () => {
-      const friend_id = chat_request.remote_id();
+      const friend_id = await chat_request.remote_id();
       if (
         (
           await AppStore.getState().db.query(
@@ -484,13 +486,14 @@ async function handle_chat_request() {
       ) {
         chat_request.reject();
       } else {
+        const connection = await chat_request.accept();
         HomeStore.setState((old) => ({
-          connections: old.connections.set(friend_id, chat_request.accept()),
+          connections: old.connections.set(friend_id, connection),
         }));
         while (true) {
           const connection = HomeStore.getState().connections.get(friend_id);
           if (!connection) break;
-          const message = await connection.read();
+          const message = await connection.recv();
           if (!message) break;
           await AppStore.getState().db.execute(
             QueryBuilder.insertInto("message")

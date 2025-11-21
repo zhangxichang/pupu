@@ -24,9 +24,9 @@ import { HomeStore } from "../home.$user_id";
 import { AppStore } from "@/routes/app";
 import type { Message } from "@/lib/types";
 import { Avatar } from "@/components/widgets/avatar";
-import { ConnectionType } from "@starlink/endpoint";
 import { useStore } from "zustand";
 import type { SQLiteUpdateEvent } from "@/lib/sqlite";
+import type { ConnectionType } from "@/lib/endpoint";
 
 export const Route = createFileRoute("/app/home/$user_id/chat/$friend_id")({
   component: Component,
@@ -46,7 +46,7 @@ export const Route = createFileRoute("/app/home/$user_id/chat/$friend_id")({
             params.friend_id,
           );
           if (!connection) break;
-          const message = await connection.read();
+          const message = await connection.recv();
           if (!message) break;
           await AppStore.getState().db.execute(
             QueryBuilder.insertInto("message")
@@ -76,12 +76,8 @@ function Component() {
   const connection = useStore(HomeStore, (state) =>
     state.connections.get(params.friend_id),
   );
-  const [connection_type, set_connection_type] = useState<
-    ConnectionType | undefined
-  >(AppStore.getState().endpoint.connection_type(params.friend_id));
-  const [connection_latency, set_connection_latency] = useState<
-    number | undefined
-  >(AppStore.getState().endpoint.latency(params.friend_id));
+  const [connection_type, set_connection_type] = useState<ConnectionType>();
+  const [connection_latency, set_connection_latency] = useState<number>();
   const [messages, set_messages] = useState<Message[]>([]);
   //聊天消息列表;
   const message_list_ref = useRef(null);
@@ -109,16 +105,16 @@ function Component() {
   //监听连接状态变化
   useEffect(() => {
     const update_connection_type_task = setInterval(
-      () =>
+      async () =>
         set_connection_type(
-          AppStore.getState().endpoint.connection_type(params.friend_id),
+          await AppStore.getState().endpoint.connection_type(params.friend_id),
         ),
       1000,
     );
     const update_connection_latency_task = setInterval(
-      () =>
+      async () =>
         set_connection_latency(
-          AppStore.getState().endpoint.latency(params.friend_id),
+          await AppStore.getState().endpoint.latency(params.friend_id),
         ),
       1000,
     );
@@ -169,11 +165,11 @@ function Component() {
         <div className="flex gap-1">
           {!connection && <WifiOff className="size-5 text-red-700" />}
           {(() => {
-            if (connection_type === ConnectionType.Direct) {
+            if (connection_type === "Direct") {
               return <Radio className="size-5 text-green-700" />;
-            } else if (connection_type === ConnectionType.Relay) {
+            } else if (connection_type === "Relay") {
               return <RadioTower className="size-5 text-yellow-600" />;
-            } else if (connection_type === ConnectionType.Mixed) {
+            } else if (connection_type === "Mixed") {
               return <Waypoints className="size-5 text-blue-500" />;
             }
           })()}
