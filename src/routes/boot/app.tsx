@@ -79,7 +79,7 @@ export const AppStore = createStore(
     on_resets: new Array<() => void | Promise<void>>(),
   })),
 );
-export const Route = createFileRoute("/app")({
+export const Route = createFileRoute("/boot/app")({
   component: Component,
   pendingComponent: () => {
     return <Loading hint_text="我现在正在初始化这个程序" mode="screen" />;
@@ -116,7 +116,7 @@ function Component() {
   >();
   //导航到子路由
   useEffect(() => {
-    navigate({ to: "/app/login" });
+    navigate({ to: "/boot/app/login" });
   }, []);
   //窗口配置
   useEffect(() => {
@@ -266,7 +266,7 @@ function Component() {
                         AppPath.DatabaseFile,
                       );
                       router.clearCache();
-                      await navigate({ to: "/app/login" });
+                      await navigate({ to: "/boot/app/login" });
                       for (const callback of AppStore.getState().on_resets) {
                         await callback();
                       }

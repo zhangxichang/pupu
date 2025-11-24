@@ -62,7 +62,7 @@ export const HomeStore = createStore(
     connections: new Map<string, Connection>(),
   })),
 );
-export const Route = createFileRoute("/app/home/$user_id")({
+export const Route = createFileRoute("/boot/app/home/$user_id")({
   component: Component,
   pendingComponent: () => <Loading hint_text="正在初始化主界面" />,
   errorComponent: () => <Errored hint_text="emmm...出错了呢..." />,
@@ -334,7 +334,7 @@ function Component() {
             {friend_virtualizer.getVirtualItems().map((value) => (
               <Item key={value.key} className="rounded-none" asChild>
                 <Link
-                  to="/app/home/$user_id/chat/$friend_id"
+                  to="/boot/app/home/$user_id/chat/$friend_id"
                   params={{
                     ...params,
                     friend_id: friends[value.index].id,

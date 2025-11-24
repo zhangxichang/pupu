@@ -53,7 +53,7 @@ import { Avatar } from "@/components/widgets/avatar";
 import { UserIcon } from "lucide-react";
 import type { SQLiteUpdateEvent } from "@/lib/sqlite";
 
-export const Route = createFileRoute("/app/login")({
+export const Route = createFileRoute("/boot/app/login")({
   component: Component,
   pendingComponent: () => <Loading hint_text="现在正在加载登录界面了" />,
   errorComponent: () => <Errored hint_text="唉呀~出错了好像" />,
@@ -258,7 +258,7 @@ function Component() {
                 disabled={login_form.formState.isSubmitting}
                 onClick={login_form.handleSubmit(async (form) => {
                   await navigate({
-                    to: "/app/home/$user_id",
+                    to: "/boot/app/home/$user_id",
                     params: { user_id: form.id },
                   });
                 })}
