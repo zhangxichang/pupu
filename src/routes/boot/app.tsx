@@ -66,9 +66,9 @@ import { Sqlite } from "@/lib/sqlite";
 import { Errored } from "@/components/errored";
 import { Endpoint } from "@/lib/endpoint";
 
-let window_api: typeof import("@tauri-apps/api/window") | undefined;
+let tauri_window: typeof import("@tauri-apps/api/window") | undefined;
 if (import.meta.env.TAURI_ENV_PLATFORM) {
-  window_api = await import("@tauri-apps/api/window");
+  tauri_window = await import("@tauri-apps/api/window");
 }
 
 export const AppStore = createStore(
@@ -120,26 +120,28 @@ function Component() {
   }, []);
   //窗口配置
   useEffect(() => {
-    if (window_api) {
+    if (tauri_window) {
       const cleanup = (async () => {
         //设置窗口标题
-        await window_api.getCurrentWindow().setTitle(document.title);
+        await tauri_window.getCurrentWindow().setTitle(document.title);
         //同步标题变化
         const title_observer = new MutationObserver(
           async () =>
-            await window_api.getCurrentWindow().setTitle(document.title),
+            await tauri_window.getCurrentWindow().setTitle(document.title),
         );
         title_observer.observe(document.querySelector("title")!, {
           childList: true,
           characterData: true,
         });
         //设置窗口缩放状态
-        set_is_maximized(await window_api.getCurrentWindow().isMaximized());
+        set_is_maximized(await tauri_window.getCurrentWindow().isMaximized());
         //监控窗口缩放
-        const un_on_resized = await window_api
+        const un_on_resized = await tauri_window
           .getCurrentWindow()
           .onResized(async () =>
-            set_is_maximized(await window_api.getCurrentWindow().isMaximized()),
+            set_is_maximized(
+              await tauri_window.getCurrentWindow().isMaximized(),
+            ),
           );
         return () => {
           title_observer.disconnect();
@@ -279,13 +281,13 @@ function Component() {
             </AlertDialog>
           </div>
           {/* 窗口控制按钮 */}
-          {window_api && (
+          {tauri_window && (
             <div data-tauri-drag-region className="flex-1 flex justify-end">
               <Button
                 variant={"ghost"}
                 className="rounded-none cursor-pointer"
                 onClick={async () =>
-                  await window_api.getCurrentWindow().minimize()
+                  await tauri_window.getCurrentWindow().minimize()
                 }
               >
                 <Minimize2 />
@@ -294,7 +296,7 @@ function Component() {
                 variant={"ghost"}
                 className="rounded-none cursor-pointer"
                 onClick={async () =>
-                  await window_api.getCurrentWindow().toggleMaximize()
+                  await tauri_window.getCurrentWindow().toggleMaximize()
                 }
               >
                 {!is_maximized ? <Maximize /> : <Minimize />}
@@ -303,7 +305,7 @@ function Component() {
                 variant={"ghost"}
                 className="rounded-none cursor-pointer hover:bg-red-600 hover:text-white active:bg-red-500"
                 onClick={async () =>
-                  await window_api.getCurrentWindow().close()
+                  await tauri_window.getCurrentWindow().close()
                 }
               >
                 <X />

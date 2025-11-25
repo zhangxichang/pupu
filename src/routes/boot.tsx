@@ -8,10 +8,22 @@ import { createFileRoute, Outlet, useNavigate } from "@tanstack/react-router";
 import { Loading } from "@/components/loading";
 import { AppStore } from "./boot/app";
 
+let tauri_error: typeof import("@/lib/invoke/error") | undefined;
+if (import.meta.env.TAURI_ENV_PLATFORM) {
+  tauri_error = await import("@/lib/invoke/error");
+}
+
 export const Route = createFileRoute("/boot")({
   component: Component,
   pendingComponent: () => {
     return <Loading hint_text="正在引导应用程序" mode="screen" />;
+  },
+  beforeLoad: () => {
+    if (tauri_error) {
+      self.onunhandledrejection = (e) => {
+        tauri_error.fatal_error(e.reason);
+      };
+    }
   },
 });
 function Component() {

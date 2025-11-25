@@ -59,3 +59,9 @@ impl From<String> for Error {
         Self::User { error: value }
     }
 }
+
+#[tauri::command(rename_all = "snake_case")]
+pub async fn fatal_error(stack: Option<String>) -> Result<(), Error> {
+    log::error!("{}", stack.unwrap_or("没有栈信息".to_string()));
+    Ok(())
+}

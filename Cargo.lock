@@ -1522,9 +1522,13 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "31e5335674a3a259527f97e9176a3767dcc9b220b8e29d643daeb2d6c72caf8b"
 dependencies = [
  "chrono",
+ "flate2",
  "log",
  "nu-ansi-term",
  "regex",
+ "serde",
+ "serde_derive",
+ "serde_json",
  "thiserror 2.0.17",
 ]
 

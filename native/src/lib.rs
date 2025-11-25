@@ -1,6 +1,7 @@
 mod endpoint;
 mod error;
 mod file_system;
+mod logger;
 mod sqlite;
 mod state;
 
@@ -8,10 +9,7 @@ use crate::state::State;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    flexi_logger::Logger::with(flexi_logger::LogSpecification::info())
-        .start()
-        .unwrap();
-    log::info!("日志开始记录");
+    logger::init();
     #[allow(unused_mut)]
     let mut builder = tauri::Builder::default();
     #[cfg(all(desktop, not(debug_assertions)))]
@@ -44,6 +42,7 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .manage(State::default())
         .invoke_handler(tauri::generate_handler![
+            error::fatal_error,
             file_system::fs_remove_file,
             file_system::fs_read_file,
             file_system::fs_create_file,
