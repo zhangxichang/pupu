@@ -27,9 +27,9 @@ function Component() {
         set_is_open((v) => !v);
       }
     };
-    addEventListener("keydown", update);
+    self.addEventListener("keydown", update);
     return () => {
-      removeEventListener("keydown", update);
+      self.removeEventListener("keydown", update);
     };
   }, []);
   //导航到应用

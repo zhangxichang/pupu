@@ -24,7 +24,6 @@ import { HomeStore } from "../home.$user_id";
 import type { Message } from "@/lib/types";
 import { Avatar } from "@/components/widgets/avatar";
 import { useStore } from "zustand";
-import type { SQLiteUpdateEvent } from "@/lib/sqlite";
 import type { ConnectionType } from "@/lib/endpoint";
 import { AppStore } from "../../app";
 
@@ -127,7 +126,7 @@ function Component() {
   }, []);
   //实时同步消息
   useEffect(() => {
-    const update = async () => {
+    const update_messages = async () => {
       set_messages(
         await AppStore.getState().db.query<Message>(
           QueryBuilder.selectFrom("message")
@@ -137,14 +136,12 @@ function Component() {
         ),
       );
     };
-    update();
-    const on_update = async (e: SQLiteUpdateEvent) => {
+    update_messages();
+    AppStore.getState().db.on_update(update_messages.name, async (e) => {
       if (e.table_name === "message") {
-        await update();
+        await update_messages();
       }
-    };
-    AppStore.getState().db.on_update(on_update);
-    return () => AppStore.getState().db.unon_update(on_update);
+    });
   }, []);
   //自动滚动到最新消息
   useEffect(() => {

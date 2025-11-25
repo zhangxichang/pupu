@@ -51,7 +51,6 @@ import type { ID, Person } from "@/lib/types";
 import { AppStore } from "../app";
 import { Avatar } from "@/components/widgets/avatar";
 import { UserIcon } from "lucide-react";
-import type { SQLiteUpdateEvent } from "@/lib/sqlite";
 
 export const Route = createFileRoute("/boot/app/login")({
   component: Component,
@@ -96,7 +95,7 @@ function Component() {
   });
   //实时同步用户列表
   useEffect(() => {
-    const update = async () => {
+    const update_users = async () => {
       set_users(
         await AppStore.getState().db.query<Person & ID>(
           QueryBuilder.selectFrom("user")
@@ -105,24 +104,17 @@ function Component() {
         ),
       );
     };
-    update();
-    const on_update = async (e: SQLiteUpdateEvent) => {
+    update_users();
+    AppStore.getState().db.on_update(update_users.name, async (e) => {
       if (e.table_name === "user") {
-        await update();
+        await update_users();
       }
-    };
-    AppStore.getState().db.on_update(on_update);
-    AppStore.getState().on_resets.push(async () => {
+    });
+    AppStore.getState().on_resets.set(update_users.name, async () => {
       set_login_user_avatar(undefined);
       login_form.reset();
-      await update();
+      await update_users();
     });
-    return () => {
-      AppStore.getState().db.unon_update(on_update);
-      AppStore.setState((old) => ({
-        on_resets: old.on_resets.filter((v) => v === update),
-      }));
-    };
   }, []);
   return (
     <div className="flex-1 flex items-center justify-center">

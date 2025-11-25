@@ -1,11 +1,11 @@
 import type { OPFSFileSystem } from "opfs-worker";
 
-type Native = { kind: "Native" } & typeof import("@/lib/invoke");
+type Native = { kind: "Native" } & typeof import("@/lib/invoke/file_system");
 type Web = { kind: "Web" } & typeof import("opfs-worker");
 
 let api: Native | Web;
 if (import.meta.env.TAURI_ENV_PLATFORM) {
-  api = { kind: "Native", ...(await import("@/lib/invoke")) };
+  api = { kind: "Native", ...(await import("@/lib/invoke/file_system")) };
 }
 if (!import.meta.env.TAURI_ENV_PLATFORM) {
   api = { kind: "Web", ...(await import("opfs-worker")) };
@@ -29,7 +29,7 @@ export class FileSystem {
   }
   async remove_file(path: string) {
     if (api.kind === "Native") {
-      await api.fs_remove_file(path);
+      await api.remove_file(path);
     } else if (api.kind === "Web") {
       if (!this.opfs) throw new Error("未初始化");
       await this.opfs.remove(path);
@@ -39,7 +39,7 @@ export class FileSystem {
   }
   async read_file(path: string) {
     if (api.kind === "Native") {
-      return await api.fs_read_file(path);
+      return await api.read_file(path);
     } else if (api.kind === "Web") {
       if (!this.opfs) throw new Error("未初始化");
       return await this.opfs.readFile(path, "binary");
@@ -49,7 +49,7 @@ export class FileSystem {
   }
   async create_file(path: string, bytes: Uint8Array) {
     if (api.kind === "Native") {
-      await api.fs_create_file(path, bytes);
+      await api.create_file(path, bytes);
     } else if (api.kind === "Web") {
       if (!this.opfs) throw new Error("未初始化");
       await this.opfs.writeFile(path, bytes);
@@ -59,7 +59,7 @@ export class FileSystem {
   }
   async exists(path: string) {
     if (api.kind === "Native") {
-      return await api.fs_exists(path);
+      return await api.exists(path);
     } else if (api.kind === "Web") {
       if (!this.opfs) throw new Error("未初始化");
       return await this.opfs.exists(path);
@@ -70,7 +70,7 @@ export class FileSystem {
   async remove_dir_all(path: string) {
     if (await this.exists(path)) {
       if (api.kind === "Native") {
-        await api.fs_remove_dir_all(path);
+        await api.remove_dir_all(path);
       } else if (api.kind === "Web") {
         if (!this.opfs) throw new Error("未初始化");
         await this.opfs.remove(path, { recursive: true });

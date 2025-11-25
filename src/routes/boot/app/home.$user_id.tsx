@@ -7,7 +7,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { createFileRoute, Outlet } from "@tanstack/react-router";
 import { Check, Clipboard, Contact, Send, UserPlus, X } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
@@ -51,7 +51,6 @@ import { AppStore } from "../app";
 import type { ID, Person } from "@/lib/types";
 import { Avatar } from "@/components/widgets/avatar";
 import { useShallow } from "zustand/shallow";
-import type { SQLiteUpdateEvent } from "@/lib/sqlite";
 import type { ChatRequest, Connection, FriendRequest } from "@/lib/endpoint";
 import { Errored } from "@/components/errored";
 
@@ -81,12 +80,11 @@ export const Route = createFileRoute("/boot/app/home/$user_id")({
       });
     };
     await update_user();
-    const on_update_user = async (e: SQLiteUpdateEvent) => {
+    AppStore.getState().db.on_update(update_user.name, async (e) => {
       if (e.table_name === "user") {
         await update_user();
       }
-    };
-    AppStore.getState().db.on_update(on_update_user);
+    });
     const update_friends = async () => {
       HomeStore.setState({
         friends: new Map(
@@ -102,18 +100,17 @@ export const Route = createFileRoute("/boot/app/home/$user_id")({
       });
     };
     await update_friends();
-    const on_update_friends = async (e: SQLiteUpdateEvent) => {
+    AppStore.getState().db.on_update(update_friends.name, async (e) => {
       if (e.table_name === "friend") {
         await update_friends();
       }
-    };
-    AppStore.getState().db.on_update(on_update_friends);
+    });
     if (!(await AppStore.getState().endpoint.is_create())) {
       await AppStore.getState().endpoint.create(
         (
           await AppStore.getState().db.query<{ key: Uint8Array }>(
             QueryBuilder.selectFrom("user")
-              .select(["key"])
+              .select("key")
               .where("id", "=", params.user_id)
               .limit(1)
               .compile(),
@@ -131,14 +128,9 @@ export const Route = createFileRoute("/boot/app/home/$user_id")({
       );
       handle_endpoint_event();
     }
-    return {
-      on_update_user,
-      on_update_friends,
-    };
   },
 });
 function Component() {
-  const context = Route.useRouteContext();
   const params = Route.useParams();
   const user = useStore(HomeStore, (state) => state.user);
   const friends = useStore(
@@ -172,14 +164,6 @@ function Component() {
       id: "",
     },
   });
-  //清理上下文
-  useEffect(
-    () => () => {
-      AppStore.getState().db.unon_update(context.on_update_user);
-      AppStore.getState().db.unon_update(context.on_update_friends);
-    },
-    [],
-  );
   return (
     <div className="flex-1 flex min-h-0">
       <div className="w-80 flex flex-col border-t border-r rounded-tr-md min-h-0">
@@ -227,6 +211,7 @@ function Component() {
                                     (
                                       await AppStore.getState().db.query(
                                         QueryBuilder.selectFrom("friend")
+                                          .select("id")
                                           .where("user_id", "=", params.user_id)
                                           .where("id", "=", form.id)
                                           .limit(1)
@@ -473,6 +458,7 @@ async function handle_chat_request_event(chat_request: ChatRequest) {
     (
       await AppStore.getState().db.query(
         QueryBuilder.selectFrom("friend")
+          .select("id")
           .where("user_id", "=", HomeStore.getState().user.id)
           .where("id", "=", friend_id)
           .limit(1)

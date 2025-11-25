@@ -1,12 +1,12 @@
 import { SQLiteConnection } from "@/worker/sqlite-api";
 import type { CompiledQuery } from "kysely";
 
-type Native = { kind: "Native" } & typeof import("@/lib/invoke");
+type Native = { kind: "Native" } & typeof import("@/lib/invoke/sqlite");
 type Web = { kind: "Web" } & typeof import("@/worker/sqlite-api");
 
 let api: Native | Web;
 if (import.meta.env.TAURI_ENV_PLATFORM) {
-  api = { kind: "Native", ...(await import("@/lib/invoke")) };
+  api = { kind: "Native", ...(await import("@/lib/invoke/sqlite")) };
 }
 if (!import.meta.env.TAURI_ENV_PLATFORM) {
   api = { kind: "Web", ...(await import("@/worker/sqlite-api")) };
@@ -22,7 +22,8 @@ export interface SQLiteUpdateEvent {
 export class Sqlite {
   private schema_sql?: string;
   private connection?: SQLiteConnection;
-  private on_updates = new Array<
+  private on_updates = new Map<
+    string,
     (event: SQLiteUpdateEvent) => void | Promise<void>
   >();
 
@@ -32,13 +33,13 @@ export class Sqlite {
   }
   async open(path: string, is_init?: boolean) {
     const callback = async (e: SQLiteUpdateEvent) => {
-      for (const callback of this.on_updates) {
+      for (const callback of this.on_updates.values()) {
         await callback(e);
       }
     };
     if (api.kind === "Native") {
-      await api.sqlite_open(path);
-      await api.sqlite_on_update(callback);
+      await api.open(path);
+      await api.on_update(callback);
     } else if (api.kind === "Web") {
       const connection = await SQLiteConnection.new(path);
       connection.on_update(callback);
@@ -49,7 +50,7 @@ export class Sqlite {
     try {
       if (is_init && this.schema_sql) {
         if (api.kind === "Native") {
-          await api.sqlite_execute_batch(this.schema_sql);
+          await api.execute_batch(this.schema_sql);
         } else if (api.kind === "Web") {
           if (!this.connection) throw new Error("没有连接数据库");
           await this.connection.execute(this.schema_sql);
@@ -63,7 +64,7 @@ export class Sqlite {
   }
   async is_open() {
     if (api.kind === "Native") {
-      return await api.sqlite_is_open();
+      return await api.is_open();
     } else if (api.kind === "Web") {
       return this.connection ? true : false;
     } else {
@@ -72,7 +73,7 @@ export class Sqlite {
   }
   async close() {
     if (api.kind === "Native") {
-      await api.sqlite_close();
+      await api.close();
     } else if (api.kind === "Web") {
       if (!this.connection) throw new Error("没有连接数据库");
       const connection = this.connection;
@@ -85,10 +86,7 @@ export class Sqlite {
   async execute(compiled_query: CompiledQuery) {
     try {
       if (api.kind === "Native") {
-        await api.sqlite_execute(
-          compiled_query.sql,
-          compiled_query.parameters as any,
-        );
+        await api.execute(compiled_query.sql, compiled_query.parameters as any);
       } else if (api.kind === "Web") {
         if (!this.connection) throw new Error("没有连接数据库");
         await this.connection.execute(
@@ -105,7 +103,7 @@ export class Sqlite {
   async query<T>(compiled_query: CompiledQuery) {
     try {
       if (api.kind === "Native") {
-        return await api.sqlite_query<T>(
+        return await api.query<T>(
           compiled_query.sql,
           compiled_query.parameters as any,
         );
@@ -126,10 +124,10 @@ export class Sqlite {
       throw new Error(`查询错误:${error}\n${compiled_query.sql}`);
     }
   }
-  on_update(callback: (event: SQLiteUpdateEvent) => void | Promise<void>) {
-    this.on_updates.push(callback);
-  }
-  unon_update(callback: (event: SQLiteUpdateEvent) => void | Promise<void>) {
-    this.on_updates = this.on_updates.filter((value) => value === callback);
+  on_update(
+    key: string,
+    callback: (event: SQLiteUpdateEvent) => void | Promise<void>,
+  ) {
+    this.on_updates.set(key, callback);
   }
 }

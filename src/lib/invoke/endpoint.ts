@@ -1,0 +1,115 @@
+import { invoke } from "@tauri-apps/api/core";
+import type { Person } from "../types";
+
+export async function generate_secret_key() {
+  try {
+    return Uint8Array.from(await invoke("endpoint_generate_secret_key"));
+  } catch (error) {
+    throw new Error(`${error}`);
+  }
+}
+export async function get_secret_key_id(secret_key: Uint8Array) {
+  try {
+    return await invoke<string>("endpoint_get_secret_key_id", { secret_key });
+  } catch (error) {
+    throw new Error(`${error}`);
+  }
+}
+export async function event_next() {
+  try {
+    return await invoke<string | undefined>("endpoint_event_next");
+  } catch (error) {
+    throw new Error(`${error}`);
+  }
+}
+export async function create(secret_key: Uint8Array, person: Person) {
+  try {
+    await invoke("endpoint_create", { secret_key, person });
+  } catch (error) {
+    throw new Error(`${error}`);
+  }
+}
+export async function is_create() {
+  try {
+    return await invoke<boolean>("endpoint_is_create");
+  } catch (error) {
+    throw new Error(`${error}`);
+  }
+}
+export async function request_person(id: string) {
+  try {
+    return await invoke<Person>("endpoint_request_person", { id });
+  } catch (error) {
+    throw new Error(`${error}`);
+  }
+}
+export async function request_friend(id: string) {
+  try {
+    return await invoke<boolean>("endpoint_request_friend", { id });
+  } catch (error) {
+    throw new Error(`${error}`);
+  }
+}
+export async function request_chat(id: string) {
+  try {
+    return await invoke<number | undefined>("endpoint_request_chat", { id });
+  } catch (error) {
+    throw new Error(`${error}`);
+  }
+}
+export async function connection_type(id: string) {
+  try {
+    return await invoke<string | undefined>("endpoint_connection_type", { id });
+  } catch (error) {
+    throw new Error(`${error}`);
+  }
+}
+export async function latency(id: string) {
+  try {
+    return await invoke<number | undefined>("endpoint_latency", { id });
+  } catch (error) {
+    throw new Error(`${error}`);
+  }
+}
+export async function event_as_request_remote_id() {
+  try {
+    return await invoke<string>("endpoint_event_as_request_remote_id");
+  } catch (error) {
+    throw new Error(`${error}`);
+  }
+}
+export async function event_as_request_accept() {
+  try {
+    await invoke("endpoint_event_as_request_accept");
+  } catch (error) {
+    throw new Error(`${error}`);
+  }
+}
+export async function event_as_request_reject() {
+  try {
+    await invoke("endpoint_event_as_request_reject");
+  } catch (error) {
+    throw new Error(`${error}`);
+  }
+}
+export async function event_as_chat_request_accept() {
+  try {
+    return await invoke<number>("endpoint_event_as_chat_request_accept");
+  } catch (error) {
+    throw new Error(`${error}`);
+  }
+}
+export async function connection_send(id: number, message: string) {
+  try {
+    await invoke("endpoint_connection_send", { id, message });
+  } catch (error) {
+    throw new Error(`${error}`);
+  }
+}
+export async function connection_recv(id: number) {
+  try {
+    return await invoke<string | undefined>("endpoint_connection_recv", { id });
+  } catch (error) {
+    throw new Error(`${error}`);
+  }
+}

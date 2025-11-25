@@ -76,7 +76,7 @@ export const AppStore = createStore(
     fs: new FileSystem(),
     db: new Sqlite(),
     endpoint: new Endpoint(),
-    on_resets: new Array<() => void | Promise<void>>(),
+    on_resets: new Map<string, () => void | Promise<void>>(),
   })),
 );
 export const Route = createFileRoute("/boot/app")({
@@ -267,7 +267,7 @@ function Component() {
                       );
                       router.clearCache();
                       await navigate({ to: "/boot/app/login" });
-                      for (const callback of AppStore.getState().on_resets) {
+                      for (const callback of AppStore.getState().on_resets.values()) {
                         await callback();
                       }
                     }}
