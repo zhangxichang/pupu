@@ -1341,6 +1341,7 @@ dependencies = [
  "eyre",
  "iroh",
  "iroh-blobs",
+ "log",
  "n0-error",
  "parking_lot",
  "rkyv",

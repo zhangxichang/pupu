@@ -5,6 +5,7 @@ edition = "2024"
 
 [dependencies]
 eyre = "0.6.12"
+log = "0.4.28"
 n0-error = "0.1.2"
 iroh = "0.95.1"
 iroh-blobs = { version = "0.97.0", default-features = false }

@@ -31,11 +31,13 @@ impl Endpoint {
             .await?;
         let service = Service::new(endpoint.clone(), person, event_sender);
         let blobs = BlobsProtocol::new(&MemStore::new(), None);
+        let router = Router::builder(endpoint)
+            .accept(SERVICE_ALPN, service.clone())
+            .accept(iroh_blobs::ALPN, blobs.clone())
+            .spawn();
+        router.endpoint().online().await;
         Ok(Self {
-            router: Router::builder(endpoint)
-                .accept(SERVICE_ALPN, service.clone())
-                .accept(iroh_blobs::ALPN, blobs.clone())
-                .spawn(),
+            router,
             service,
             _blobs: blobs,
         })
