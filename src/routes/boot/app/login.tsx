@@ -46,7 +46,7 @@ import { Loading } from "@/components/loading";
 import { toast } from "sonner";
 import { QueryBuilder } from "@/lib/query_builder";
 import { Errored } from "@/components/errored";
-import { Endpoint } from "@/lib/endpoint";
+import { generate_secret_key, get_secret_key_id } from "@/lib/endpoint";
 import type { ID, Person } from "@/lib/types";
 import { AppStore } from "../app";
 import { Avatar } from "@/components/widgets/avatar";
@@ -324,11 +324,11 @@ function Component() {
                     });
                     return;
                   }
-                  const secret_key = await Endpoint.generate_secret_key();
+                  const secret_key = await generate_secret_key();
                   await AppStore.getState().db.execute(
                     QueryBuilder.insertInto("user")
                       .values({
-                        id: await Endpoint.get_secret_key_id(secret_key),
+                        id: await get_secret_key_id(secret_key),
                         key: secret_key,
                         name: form.name,
                         avatar:

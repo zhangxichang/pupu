@@ -1,12 +1,9 @@
-import "@xterm/xterm/css/xterm.css";
 import { DndContext, useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
-import { useEffect, useRef, useState } from "react";
-import { Terminal as XTerm } from "@xterm/xterm";
+import { useEffect, useState } from "react";
 import { restrictToWindowEdges } from "@dnd-kit/modifiers";
 import { createFileRoute, Outlet, useNavigate } from "@tanstack/react-router";
 import { Loading } from "@/components/loading";
-import { AppStore } from "./boot/app";
 
 let tauri_error: typeof import("@/lib/invoke/error") | undefined;
 if (import.meta.env.TAURI_ENV_PLATFORM) {
@@ -68,74 +65,26 @@ function Component() {
 
 function Window(props: { position: { x: number; y: number } }) {
   const { setNodeRef, transform, attributes, listeners } = useDraggable({
-    id: "terminal",
+    id: "debug_view",
   });
   return (
     <div
       ref={setNodeRef}
-      className="absolute"
+      className="absolute w-5xl h-128 flex flex-col border bg-white"
       style={{
         top: props.position.y,
         left: props.position.x,
         transform: CSS.Translate.toString(transform),
       }}
     >
-      <div {...attributes} {...listeners} className="h-6 bg-blue-500" />
-      <Terminal />
+      <div {...attributes} {...listeners} className="h-8">
+        调试界面
+      </div>
+      <DebugView />
     </div>
   );
 }
 
-function Terminal() {
-  const self_ref = useRef(null);
-  useEffect(() => {
-    if (self_ref.current) {
-      const xterm = new XTerm({ fontSize: 12 });
-      xterm.open(self_ref.current);
-      const prompt = ">";
-      let input_buffer = "";
-      xterm.writeln(
-        `开发者终端
-        \r使用"?"命令获取帮助`,
-      );
-      xterm.write(prompt);
-      xterm.onData(async (str) => {
-        switch (str) {
-          case "\r":
-            xterm.write("\r\n");
-            await execute_command(xterm, input_buffer as any);
-            input_buffer = "";
-            xterm.write(prompt);
-            break;
-          case "\x7F":
-          case "\b":
-            if (!input_buffer) return;
-            input_buffer = input_buffer.slice(0, -1);
-            xterm.write("\b \b");
-            break;
-          default:
-            input_buffer += str;
-            xterm.write(str);
-            break;
-        }
-      });
-      return () => xterm.dispose();
-    }
-  }, []);
-  return <div ref={self_ref} />;
-}
-
-type Command = "?" | "db_close";
-async function execute_command(xterm: XTerm, command: Command) {
-  switch (command) {
-    case "?":
-      xterm.writeln(`db_close:关闭数据库连接`);
-      break;
-    case "db_close":
-      await AppStore.getState().db.close();
-      break;
-    default:
-      xterm.writeln(`未知命令:${command}`);
-      break;
-  }
+function DebugView() {
+  return <div className="flex-1 flex flex-col"></div>;
 }

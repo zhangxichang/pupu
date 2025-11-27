@@ -108,7 +108,7 @@ function Component() {
     const update_connection_type_task = setInterval(
       async () =>
         set_connection_type(
-          await AppStore.getState().endpoint.connection_type(params.friend_id),
+          await AppStore.getState().endpoint.conn_type(params.friend_id),
         ),
       1000,
     );

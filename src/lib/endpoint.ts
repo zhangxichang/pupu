@@ -48,24 +48,6 @@ export class Endpoint {
       throw new Error("API缺失");
     }
   }
-  static async generate_secret_key() {
-    if (api.kind === "Native") {
-      return await api.generate_secret_key();
-    } else if (api.kind === "Web") {
-      return api.generate_secret_key();
-    } else {
-      throw new Error("API缺失");
-    }
-  }
-  static async get_secret_key_id(secret_key: Uint8Array) {
-    if (api.kind === "Native") {
-      return await api.get_secret_key_id(secret_key);
-    } else if (api.kind === "Web") {
-      return api.get_secret_key_id(secret_key);
-    } else {
-      throw new Error("API缺失");
-    }
-  }
   async create(secret_key: Uint8Array, person: Person) {
     if (api.kind === "Native") {
       await api.create(secret_key, person);
@@ -127,7 +109,7 @@ export class Endpoint {
       throw new Error("API缺失");
     }
   }
-  async event_next() {
+  async person_protocol_event_next() {
     if (api.kind === "Native") {
       const kind = await api.event_next();
       if (kind === "FriendRequest") {
@@ -143,7 +125,7 @@ export class Endpoint {
       }
     } else if (api.kind === "Web") {
       if (!this.endpoint) throw new Error("未初始化");
-      const event = await this.endpoint.event_next();
+      const event = await this.endpoint.person_protocol_event_next();
       if (!event) return;
       const kind = event.kind();
       if (kind === "FriendRequest") {
@@ -161,12 +143,12 @@ export class Endpoint {
       throw new Error("API缺失");
     }
   }
-  async connection_type(id: string) {
+  async conn_type(id: string) {
     if (api.kind === "Native") {
       return (await api.connection_type(id)) as ConnectionType | undefined;
     } else if (api.kind === "Web") {
       if (!this.endpoint) throw new Error("未初始化");
-      return this.endpoint.connection_type(id) as ConnectionType | undefined;
+      return this.endpoint.conn_type(id) as ConnectionType | undefined;
     } else {
       throw new Error("API缺失");
     }
@@ -177,6 +159,16 @@ export class Endpoint {
     } else if (api.kind === "Web") {
       if (!this.endpoint) throw new Error("未初始化");
       return this.endpoint.latency(id);
+    } else {
+      throw new Error("API缺失");
+    }
+  }
+  async subscribe_group_chat(id: string, bootstrap?: string[]) {
+    if (api.kind === "Native") {
+      throw new Error("未实现");
+    } else if (api.kind === "Web") {
+      if (!this.endpoint) throw new Error("未初始化");
+      await this.endpoint.subscribe_group_chat(id, bootstrap);
     } else {
       throw new Error("API缺失");
     }
@@ -291,5 +283,33 @@ export class Connection {
     } else {
       throw new Error("API缺失");
     }
+  }
+}
+
+export async function generate_secret_key() {
+  if (api.kind === "Native") {
+    return await api.generate_secret_key();
+  } else if (api.kind === "Web") {
+    return api.generate_secret_key();
+  } else {
+    throw new Error("API缺失");
+  }
+}
+export async function get_secret_key_id(secret_key: Uint8Array) {
+  if (api.kind === "Native") {
+    return await api.get_secret_key_id(secret_key);
+  } else if (api.kind === "Web") {
+    return api.get_secret_key_id(secret_key);
+  } else {
+    throw new Error("API缺失");
+  }
+}
+export async function generate_group_id() {
+  if (api.kind === "Native") {
+    throw new Error("未实现");
+  } else if (api.kind === "Web") {
+    return api.generate_group_id();
+  } else {
+    throw new Error("API缺失");
   }
 }

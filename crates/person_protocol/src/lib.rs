@@ -7,9 +7,10 @@ use iroh::{
     protocol::{AcceptError, ProtocolHandler},
 };
 use rkyv::Archive;
+use strum::Display;
 use tokio::sync::{mpsc, oneshot};
 
-pub const SERVICE_ALPN: &[u8] = b"service/v1";
+pub const ALPN: &[u8] = b"person/v1";
 
 #[derive(Archive, rkyv::Serialize, rkyv::Deserialize)]
 enum Request {
@@ -25,17 +26,10 @@ enum Response {
     Chat(bool),
 }
 
+#[derive(Display)]
 pub enum Event {
     FriendRequest(FriendRequest),
     ChatRequest(ChatRequest),
-}
-impl Event {
-    pub fn kind(&self) -> String {
-        match self {
-            Event::FriendRequest(_) => "FriendRequest".to_string(),
-            Event::ChatRequest(_) => "ChatRequest".to_string(),
-        }
-    }
 }
 
 #[derive(
@@ -92,12 +86,12 @@ impl ChatRequest {
 }
 
 #[derive(Debug, Clone)]
-pub struct Service {
+pub struct PersonProtocol {
     endpoint: Endpoint,
     person: Arc<Person>,
     event_sender: mpsc::UnboundedSender<Event>,
 }
-impl Service {
+impl PersonProtocol {
     pub fn new(
         endpoint: Endpoint,
         person: Person,
@@ -154,7 +148,7 @@ impl Service {
         Ok(())
     }
     pub async fn request_person(&self, id: EndpointId) -> Result<Person> {
-        let connection = self.endpoint.connect(id, SERVICE_ALPN).await?;
+        let connection = self.endpoint.connect(id, ALPN).await?;
         let (mut send, mut recv) = connection.open_bi().await?;
         send.write_all(&rkyv::to_bytes::<rkyv::rancor::Error>(&Request::Person)?)
             .await?;
@@ -168,7 +162,7 @@ impl Service {
         Ok(person)
     }
     pub async fn request_friend(&self, id: EndpointId) -> Result<bool> {
-        let connection = self.endpoint.connect(id, SERVICE_ALPN).await?;
+        let connection = self.endpoint.connect(id, ALPN).await?;
         let (mut send, mut recv) = connection.open_bi().await?;
         send.write_all(&rkyv::to_bytes::<rkyv::rancor::Error>(&Request::Friend)?)
             .await?;
@@ -182,7 +176,7 @@ impl Service {
         Ok(result)
     }
     pub async fn request_chat(&self, id: EndpointId) -> Result<Option<Connection>> {
-        let connection = self.endpoint.connect(id, SERVICE_ALPN).await?;
+        let connection = self.endpoint.connect(id, ALPN).await?;
         let (mut send, mut recv) = connection.open_bi().await?;
         send.write_all(&rkyv::to_bytes::<rkyv::rancor::Error>(&Request::Chat)?)
             .await?;
@@ -199,7 +193,7 @@ impl Service {
         Ok(Some(connection))
     }
 }
-impl ProtocolHandler for Service {
+impl ProtocolHandler for PersonProtocol {
     async fn accept(&self, connection: Connection) -> Result<(), AcceptError> {
         self.handle_connection(connection)
             .await

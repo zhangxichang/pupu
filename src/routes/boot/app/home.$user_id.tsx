@@ -126,7 +126,7 @@ export const Route = createFileRoute("/boot/app/home/$user_id")({
           )
         )[0],
       );
-      handle_endpoint_event();
+      handle_person_protocol_event();
     }
   },
 });
@@ -383,9 +383,10 @@ function Component() {
   );
 }
 
-async function handle_endpoint_event() {
+async function handle_person_protocol_event() {
   while (true) {
-    const event = await AppStore.getState().endpoint.event_next();
+    const event =
+      await AppStore.getState().endpoint.person_protocol_event_next();
     if (!event) break;
     if (event.kind === "FriendRequest") {
       handle_friend_request_event(event.value);
