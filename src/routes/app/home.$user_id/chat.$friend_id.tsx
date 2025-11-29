@@ -27,47 +27,45 @@ import { useStore } from "zustand";
 import type { ConnectionType } from "@/lib/endpoint";
 import { AppStore } from "../../app";
 
-export const Route = createFileRoute("/boot/app/home/$user_id/chat/$friend_id")(
-  {
-    component: Component,
-    pendingComponent: () => <Loading hint_text="正在初始化聊天栏" />,
-    beforeLoad: async ({ params }) => {
-      if (!HomeStore.getState().connections.get(params.friend_id)) {
-        (async () => {
-          const connection = await AppStore.getState().endpoint.request_chat(
+export const Route = createFileRoute("/app/home/$user_id/chat/$friend_id")({
+  component: Component,
+  pendingComponent: () => <Loading hint_text="正在初始化聊天栏" />,
+  beforeLoad: async ({ params }) => {
+    if (!HomeStore.getState().connections.get(params.friend_id)) {
+      (async () => {
+        const connection = await AppStore.getState().endpoint.request_chat(
+          params.friend_id,
+        );
+        if (!connection) throw new Error("请求聊天失败");
+        HomeStore.setState((old) => ({
+          connections: old.connections.set(params.friend_id, connection),
+        }));
+        while (true) {
+          const connection = HomeStore.getState().connections.get(
             params.friend_id,
           );
-          if (!connection) throw new Error("请求聊天失败");
-          HomeStore.setState((old) => ({
-            connections: old.connections.set(params.friend_id, connection),
-          }));
-          while (true) {
-            const connection = HomeStore.getState().connections.get(
-              params.friend_id,
-            );
-            if (!connection) break;
-            const message = await connection.recv();
-            if (!message) break;
-            await AppStore.getState().db.execute(
-              QueryBuilder.insertInto("message")
-                .values({
-                  sender_id: params.friend_id,
-                  text: message,
-                })
-                .compile(),
-            );
-          }
-          HomeStore.setState((old) => {
-            old.connections.delete(params.friend_id);
-            return {
-              connections: old.connections,
-            };
-          });
-        })();
-      }
-    },
+          if (!connection) break;
+          const message = await connection.recv();
+          if (!message) break;
+          await AppStore.getState().db.execute(
+            QueryBuilder.insertInto("message")
+              .values({
+                sender_id: params.friend_id,
+                text: message,
+              })
+              .compile(),
+          );
+        }
+        HomeStore.setState((old) => {
+          old.connections.delete(params.friend_id);
+          return {
+            connections: old.connections,
+          };
+        });
+      })();
+    }
   },
-);
+});
 function Component() {
   const params = Route.useParams();
   const user = useStore(HomeStore, (state) => state.user);
