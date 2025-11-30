@@ -67,8 +67,10 @@ import { Errored } from "@/components/errored";
 import { Endpoint } from "@/lib/endpoint";
 
 let tauri_window: typeof import("@tauri-apps/api/window") | undefined;
+let invoke_error: typeof import("@/lib/invoke/error") | undefined;
 if (import.meta.env.TAURI_ENV_PLATFORM) {
   tauri_window = await import("@tauri-apps/api/window");
+  invoke_error = await import("@/lib/invoke/error");
 }
 
 export const AppStore = createStore(
@@ -88,6 +90,11 @@ export const Route = createFileRoute("/app")({
     return <Errored hint_text="我的天呀，应用程序运行出错了" mode="screen" />;
   },
   beforeLoad: async () => {
+    if (invoke_error && !self.onunhandledrejection) {
+      self.onunhandledrejection = async (e) => {
+        await invoke_error.fatal_error(e.reason);
+      };
+    }
     AppStore.getState().fs.init();
     await AppStore.getState().db.init();
     if (!(await AppStore.getState().db.is_open())) {

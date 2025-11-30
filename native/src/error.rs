@@ -45,6 +45,8 @@ pub enum Error {
     IrohClosedStream(#[from] iroh::endpoint::ClosedStream),
     #[error(transparent)]
     StringFromUtf8(#[from] std::string::FromUtf8Error),
+    #[error(transparent)]
+    IrohBind(#[from] iroh::endpoint::BindError),
 }
 impl serde::Serialize for Error {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>

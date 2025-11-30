@@ -1,4 +1,6 @@
 /gen/
 /icons/
-/data.db
 /logs/
+/store/
+
+/data.db

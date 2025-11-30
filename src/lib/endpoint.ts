@@ -111,7 +111,7 @@ export class Endpoint {
   }
   async person_protocol_event_next() {
     if (api.kind === "Native") {
-      const kind = await api.event_next();
+      const kind = await api.person_protocol_event_next();
       if (kind === "FriendRequest") {
         return {
           kind,
@@ -145,7 +145,7 @@ export class Endpoint {
   }
   async conn_type(id: string) {
     if (api.kind === "Native") {
-      return (await api.connection_type(id)) as ConnectionType | undefined;
+      return (await api.conn_type(id)) as ConnectionType | undefined;
     } else if (api.kind === "Web") {
       if (!this.endpoint) throw new Error("未初始化");
       return this.endpoint.conn_type(id) as ConnectionType | undefined;
@@ -183,7 +183,7 @@ export class FriendRequest {
   }
   async remote_id() {
     if (api.kind === "Native") {
-      return await api.event_as_request_remote_id();
+      return await api.person_protocol_event_next_as_request_remote_id();
     } else if (api.kind === "Web") {
       if (!this.wasm_friend_request) throw new Error("未初始化");
       return this.wasm_friend_request.remote_id();
@@ -193,7 +193,7 @@ export class FriendRequest {
   }
   async accept() {
     if (api.kind === "Native") {
-      await api.event_as_request_accept();
+      await api.person_protocol_event_next_as_request_accept();
     } else if (api.kind === "Web") {
       if (!this.wasm_friend_request) throw new Error("未初始化");
       this.wasm_friend_request.accept();
@@ -203,7 +203,7 @@ export class FriendRequest {
   }
   async reject() {
     if (api.kind === "Native") {
-      await api.event_as_request_reject();
+      await api.person_protocol_event_next_as_request_reject();
     } else if (api.kind === "Web") {
       if (!this.wasm_friend_request) throw new Error("未初始化");
       this.wasm_friend_request.reject();
@@ -220,7 +220,7 @@ export class ChatRequest {
   }
   async remote_id() {
     if (api.kind === "Native") {
-      return await api.event_as_request_remote_id();
+      return await api.person_protocol_event_next_as_request_remote_id();
     } else if (api.kind === "Web") {
       if (!this.wasm_chat_request) throw new Error("未初始化");
       return this.wasm_chat_request.remote_id();
@@ -231,7 +231,7 @@ export class ChatRequest {
   async accept() {
     if (api.kind === "Native") {
       return new Connection({
-        id: await api.event_as_chat_request_accept(),
+        id: await api.person_protocol_event_next_as_chat_request_accept(),
       });
     } else if (api.kind === "Web") {
       if (!this.wasm_chat_request) throw new Error("未初始化");
@@ -244,7 +244,7 @@ export class ChatRequest {
   }
   async reject() {
     if (api.kind === "Native") {
-      await api.event_as_request_reject();
+      await api.person_protocol_event_next_as_request_reject();
     } else if (api.kind === "Web") {
       if (!this.wasm_chat_request) throw new Error("未初始化");
       this.wasm_chat_request.reject();

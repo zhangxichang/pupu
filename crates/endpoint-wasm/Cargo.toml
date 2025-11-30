@@ -8,8 +8,8 @@ crate-type = ["cdylib"]
 
 [dependencies]
 person-protocol = { path = "../person_protocol" }
-wasm-bindgen = "0.2.105"
-wasm-bindgen-futures = "0.4.55"
+wasm-bindgen = "0.2.106"
+wasm-bindgen-futures = "0.4.56"
 serde-wasm-bindgen = "0.6.5"
 console_error_panic_hook = "0.1.7"
 wasm-logger = "0.2.0"

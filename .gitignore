@@ -1,7 +1,8 @@
-/public/schema.sql
-
 /node_modules/
 /dist/
 /target/
 /.tanstack/
+
 /pkg_view.html
+
+/public/schema.sql

@@ -116,15 +116,14 @@ impl Connection {
 #[wasm_bindgen]
 pub struct Endpoint {
     router: Router,
-    person_protocol_event_receiver: Mutex<mpsc::UnboundedReceiver<person_protocol::Event>>,
     person_protocol: PersonProtocol,
+    person_protocol_event_receiver: Mutex<mpsc::UnboundedReceiver<person_protocol::Event>>,
     gossip_protocol: Gossip,
     _blobs_protocol: BlobsProtocol,
 }
 #[wasm_bindgen]
 impl Endpoint {
     pub async fn new(secret_key: Vec<u8>, person: Person) -> Result<Self, JsError> {
-        //TODO可以尝试把Gossip协议和Blobs协议封装进Person协议中
         let (person_protocol_event_sender, person_protocol_event_receiver) =
             mpsc::unbounded_channel();
         let endpoint = iroh::Endpoint::builder()
@@ -143,9 +142,9 @@ impl Endpoint {
         Ok(Self {
             router,
             person_protocol,
+            person_protocol_event_receiver: Mutex::new(person_protocol_event_receiver),
             gossip_protocol,
             _blobs_protocol: blobs_protocol,
-            person_protocol_event_receiver: Mutex::new(person_protocol_event_receiver),
         })
     }
     pub fn id(&self) -> String {

@@ -15,9 +15,11 @@ export async function get_secret_key_id(secret_key: Uint8Array) {
     throw new Error(`${error}`);
   }
 }
-export async function event_next() {
+export async function person_protocol_event_next() {
   try {
-    return await invoke<string | undefined>("endpoint_event_next");
+    return await invoke<string | undefined>(
+      "endpoint_person_protocol_event_next",
+    );
   } catch (error) {
     throw new Error(`${error}`);
   }
@@ -57,9 +59,9 @@ export async function request_chat(id: string) {
     throw new Error(`${error}`);
   }
 }
-export async function connection_type(id: string) {
+export async function conn_type(id: string) {
   try {
-    return await invoke<string | undefined>("endpoint_connection_type", { id });
+    return await invoke<string | undefined>("endpoint_conn_type", { id });
   } catch (error) {
     throw new Error(`${error}`);
   }
@@ -71,30 +73,34 @@ export async function latency(id: string) {
     throw new Error(`${error}`);
   }
 }
-export async function event_as_request_remote_id() {
+export async function person_protocol_event_next_as_request_remote_id() {
   try {
-    return await invoke<string>("endpoint_event_as_request_remote_id");
+    return await invoke<string>(
+      "endpoint_person_protocol_event_next_as_request_remote_id",
+    );
   } catch (error) {
     throw new Error(`${error}`);
   }
 }
-export async function event_as_request_accept() {
+export async function person_protocol_event_next_as_request_accept() {
   try {
-    await invoke("endpoint_event_as_request_accept");
+    await invoke("endpoint_person_protocol_event_next_as_request_accept");
   } catch (error) {
     throw new Error(`${error}`);
   }
 }
-export async function event_as_request_reject() {
+export async function person_protocol_event_next_as_request_reject() {
   try {
-    await invoke("endpoint_event_as_request_reject");
+    await invoke("endpoint_person_protocol_event_next_as_request_reject");
   } catch (error) {
     throw new Error(`${error}`);
   }
 }
-export async function event_as_chat_request_accept() {
+export async function person_protocol_event_next_as_chat_request_accept() {
   try {
-    return await invoke<number>("endpoint_event_as_chat_request_accept");
+    return await invoke<number>(
+      "endpoint_person_protocol_event_next_as_chat_request_accept",
+    );
   } catch (error) {
     throw new Error(`${error}`);
   }

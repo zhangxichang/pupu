@@ -7,9 +7,9 @@ pub fn init() {
         )
         .format(flexi_logger::json_format)
         .rotate(
-            flexi_logger::Criterion::Age(flexi_logger::Age::Day),
+            flexi_logger::Criterion::Size(1024 * 1024),
             flexi_logger::Naming::Timestamps,
-            flexi_logger::Cleanup::KeepCompressedFiles(7),
+            flexi_logger::Cleanup::KeepCompressedFiles(10),
         )
         .start()
         .unwrap();
