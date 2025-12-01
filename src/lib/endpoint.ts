@@ -10,11 +10,10 @@ type Native = { kind: "Native" } & typeof import("@/lib/invoke/endpoint");
 type Web = { kind: "Web" } & typeof import("@starlink/endpoint");
 
 let api: Native | Web;
-if (import.meta.env.TAURI_ENV_PLATFORM) {
-  api = { kind: "Native", ...(await import("@/lib/invoke/endpoint")) };
-}
 let wasm_url: string | undefined;
-if (!import.meta.env.TAURI_ENV_PLATFORM) {
+if (import.meta.env.TAURI_ENV_PLATFORM !== undefined) {
+  api = { kind: "Native", ...(await import("@/lib/invoke/endpoint")) };
+} else {
   api = { kind: "Web", ...(await import("@starlink/endpoint")) };
   wasm_url = (await import("@starlink/endpoint/endpoint_wasm_bg.wasm?url"))
     .default;
@@ -38,6 +37,7 @@ export class Endpoint {
 
   async init() {
     if (api.kind === "Native") {
+      return;
     } else if (api.kind === "Web") {
       if (this.wasm_inited) return;
       await api.default({
@@ -92,7 +92,7 @@ export class Endpoint {
   async request_chat(id: string) {
     if (api.kind === "Native") {
       const cid = await api.request_chat(id);
-      if (cid) {
+      if (cid !== undefined) {
         return new Connection({
           id: cid,
         });
@@ -159,16 +159,6 @@ export class Endpoint {
     } else if (api.kind === "Web") {
       if (!this.endpoint) throw new Error("未初始化");
       return this.endpoint.latency(id);
-    } else {
-      throw new Error("API缺失");
-    }
-  }
-  async subscribe_group_chat(id: string, bootstrap?: string[]) {
-    if (api.kind === "Native") {
-      throw new Error("未实现");
-    } else if (api.kind === "Web") {
-      if (!this.endpoint) throw new Error("未初始化");
-      await this.endpoint.subscribe_group_chat(id, bootstrap);
     } else {
       throw new Error("API缺失");
     }
@@ -264,7 +254,7 @@ export class Connection {
   }
   async send(message: string) {
     if (api.kind === "Native") {
-      if (!this.id) throw new Error("未初始化");
+      if (this.id === undefined) throw new Error("未初始化");
       await api.connection_send(this.id, message);
     } else if (api.kind === "Web") {
       if (!this.wasm_connection) throw new Error("未初始化");
@@ -275,7 +265,7 @@ export class Connection {
   }
   async recv() {
     if (api.kind === "Native") {
-      if (!this.id) throw new Error("未初始化");
+      if (this.id === undefined) throw new Error("未初始化");
       return await api.connection_recv(this.id);
     } else if (api.kind === "Web") {
       if (!this.wasm_connection) throw new Error("未初始化");
@@ -300,15 +290,6 @@ export async function get_secret_key_id(secret_key: Uint8Array) {
     return await api.get_secret_key_id(secret_key);
   } else if (api.kind === "Web") {
     return api.get_secret_key_id(secret_key);
-  } else {
-    throw new Error("API缺失");
-  }
-}
-export async function generate_group_id() {
-  if (api.kind === "Native") {
-    throw new Error("未实现");
-  } else if (api.kind === "Web") {
-    return api.generate_group_id();
   } else {
     throw new Error("API缺失");
   }

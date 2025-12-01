@@ -6,6 +6,6 @@ export async function fatal_error(error: Error) {
       stack: error.stack,
     });
   } catch (error) {
-    throw new Error(`${error}`);
+    throw new Error(String(error));
   }
 }

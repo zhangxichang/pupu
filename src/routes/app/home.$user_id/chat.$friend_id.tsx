@@ -1,6 +1,11 @@
 import { Loading } from "@/components/loading";
-import { Button } from "@/components/ui/button";
-import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
+import { Button } from "@/shadcn/components/ui/button";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+} from "@/shadcn/components/ui/form";
 import { QueryBuilder } from "@/lib/query_builder";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createFileRoute } from "@tanstack/react-router";
@@ -30,13 +35,13 @@ import { AppStore } from "../../app";
 export const Route = createFileRoute("/app/home/$user_id/chat/$friend_id")({
   component: Component,
   pendingComponent: () => <Loading hint_text="正在初始化聊天栏" />,
-  beforeLoad: async ({ params }) => {
+  beforeLoad: ({ params }) => {
     if (!HomeStore.getState().connections.get(params.friend_id)) {
-      (async () => {
+      void (async () => {
         const connection = await AppStore.getState().endpoint.request_chat(
           params.friend_id,
         );
-        if (!connection) throw new Error("请求聊天失败");
+        if (!connection) return;
         HomeStore.setState((old) => ({
           connections: old.connections.set(params.friend_id, connection),
         }));
@@ -46,7 +51,7 @@ export const Route = createFileRoute("/app/home/$user_id/chat/$friend_id")({
           );
           if (!connection) break;
           const message = await connection.recv();
-          if (!message) break;
+          if (message === undefined) break;
           await AppStore.getState().db.execute(
             QueryBuilder.insertInto("message")
               .values({
@@ -104,17 +109,19 @@ function Component() {
   //监听连接状态变化
   useEffect(() => {
     const update_connection_type_task = setInterval(
-      async () =>
-        set_connection_type(
-          await AppStore.getState().endpoint.conn_type(params.friend_id),
-        ),
+      () =>
+        void (async () =>
+          set_connection_type(
+            await AppStore.getState().endpoint.conn_type(params.friend_id),
+          ))(),
       1000,
     );
     const update_connection_latency_task = setInterval(
-      async () =>
-        set_connection_latency(
-          await AppStore.getState().endpoint.latency(params.friend_id),
-        ),
+      () =>
+        void (async () =>
+          set_connection_latency(
+            await AppStore.getState().endpoint.latency(params.friend_id),
+          ))(),
       1000,
     );
     return () => {
@@ -134,7 +141,7 @@ function Component() {
         ),
       );
     };
-    update_messages();
+    void update_messages();
     AppStore.getState().db.on_update(update_messages.name, async (e) => {
       if (e.table_name === "message") {
         await update_messages();
@@ -170,7 +177,7 @@ function Component() {
               return <Waypoints className="size-5 text-blue-500" />;
             }
           })()}
-          {connection_latency &&
+          {connection_latency !== undefined &&
             (() => {
               if (connection_latency < 100) {
                 return <Signal className="size-5 text-green-700" />;
@@ -198,45 +205,44 @@ function Component() {
                 transform: `translateY(${message_items.at(0)?.start}px)`,
               }}
             >
-              {messages &&
-                message_items.map((value) => (
-                  <div
-                    ref={message_virtualizer.measureElement}
-                    key={value.key}
-                    data-index={value.index}
-                    className="flex gap-1"
+              {message_items.map((value) => (
+                <div
+                  ref={message_virtualizer.measureElement}
+                  key={value.key}
+                  data-index={value.index}
+                  className="flex gap-1"
+                >
+                  <Avatar
+                    className="size-10"
+                    image={
+                      messages[value.index].sender_id === params.user_id
+                        ? user.avatar
+                        : messages[value.index].sender_id === params.friend_id
+                          ? friend?.avatar
+                          : null
+                    }
                   >
-                    <Avatar
-                      className="size-10"
-                      image={
-                        messages[value.index].sender_id === params.user_id
-                          ? user.avatar
-                          : messages[value.index].sender_id === params.friend_id
-                            ? friend?.avatar
-                            : null
-                      }
+                    {messages[value.index].sender_id === params.user_id
+                      ? user.name.at(0)
+                      : messages[value.index].sender_id === params.friend_id
+                        ? friend?.name.at(0)
+                        : null}
+                  </Avatar>
+                  <div className="flex flex-col items-start">
+                    <Button
+                      variant={"link"}
+                      className="p-0 font-bold text-base"
                     >
                       {messages[value.index].sender_id === params.user_id
-                        ? user.name.at(0)
+                        ? user.name
                         : messages[value.index].sender_id === params.friend_id
-                          ? friend?.name.at(0)
+                          ? friend?.name
                           : null}
-                    </Avatar>
-                    <div className="flex flex-col items-start">
-                      <Button
-                        variant={"link"}
-                        className="p-0 font-bold text-base"
-                      >
-                        {messages[value.index].sender_id === params.user_id
-                          ? user.name
-                          : messages[value.index].sender_id === params.friend_id
-                            ? friend?.name
-                            : null}
-                      </Button>
-                      <span>{messages[value.index].text}</span>
-                    </div>
+                    </Button>
+                    <span>{messages[value.index].text}</span>
                   </div>
-                ))}
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -255,22 +261,24 @@ function Component() {
                     maxRows={16}
                     className="resize-none border rounded p-2 focus:outline-none focus:border-neutral-200 focus:ring-1 focus:ring-neutral-200"
                     placeholder="发送消息"
-                    onKeyDown={async (e) => {
-                      if (e.key !== "Enter" || e.shiftKey) return;
-                      e.preventDefault();
-                      await send_message_form.handleSubmit(async (form) => {
-                        await connection!.send(form.message);
-                        await AppStore.getState().db.execute(
-                          QueryBuilder.insertInto("message")
-                            .values({
-                              sender_id: params.user_id,
-                              text: form.message,
-                            })
-                            .compile(),
-                        );
-                        send_message_form.reset();
-                      })();
-                    }}
+                    onKeyDown={(e) =>
+                      void (async () => {
+                        if (e.key !== "Enter" || e.shiftKey) return;
+                        e.preventDefault();
+                        await send_message_form.handleSubmit(async (form) => {
+                          await connection!.send(form.message);
+                          await AppStore.getState().db.execute(
+                            QueryBuilder.insertInto("message")
+                              .values({
+                                sender_id: params.user_id,
+                                text: form.message,
+                              })
+                              .compile(),
+                          );
+                          send_message_form.reset();
+                        })();
+                      })()
+                    }
                   />
                 </FormControl>
               </FormItem>

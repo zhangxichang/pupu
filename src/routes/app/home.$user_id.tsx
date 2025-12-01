@@ -1,18 +1,18 @@
-import { Button } from "@/components/ui/button";
+import { Button } from "@/shadcn/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "@/shadcn/components/ui/dropdown-menu";
 import { createFileRoute, Outlet } from "@tanstack/react-router";
 import { Check, Clipboard, Contact, Send, UserPlus, X } from "lucide-react";
 import { useMemo, useRef, useState } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
+import { Label } from "@/shadcn/components/ui/label";
+import { Separator } from "@/shadcn/components/ui/separator";
 import { Loading } from "@/components/loading";
-import { Tooltip, TooltipContent } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent } from "@/shadcn/components/ui/tooltip";
 import { TooltipTrigger } from "@radix-ui/react-tooltip";
 import {
   Item,
@@ -21,7 +21,7 @@ import {
   ItemDescription,
   ItemMedia,
   ItemTitle,
-} from "@/components/ui/item";
+} from "@/shadcn/components/ui/item";
 import {
   Dialog,
   DialogContent,
@@ -29,7 +29,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
+} from "@/shadcn/components/ui/dialog";
 import {
   Form,
   FormControl,
@@ -37,11 +37,11 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
+} from "@/shadcn/components/ui/form";
 import z from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Input } from "@/components/ui/input";
+import { Input } from "@/shadcn/components/ui/input";
 import { toast } from "sonner";
 import { createStore, useStore } from "zustand";
 import { subscribeWithSelector } from "zustand/middleware";
@@ -126,7 +126,7 @@ export const Route = createFileRoute("/app/home/$user_id")({
           )
         )[0],
       );
-      handle_person_protocol_event();
+      void handle_person_protocol_event();
     }
   },
 });
@@ -202,41 +202,47 @@ function Component() {
                             {...field}
                             placeholder="输入用户ID"
                             disabled={search_user_form.formState.isSubmitting}
-                            onKeyDown={async (e) => {
-                              if (e.key !== "Enter") return;
-                              e.preventDefault();
-                              await search_user_form.handleSubmit(
-                                async (form) => {
-                                  if (
-                                    (
-                                      await AppStore.getState().db.query(
-                                        QueryBuilder.selectFrom("friend")
-                                          .select("id")
-                                          .where("user_id", "=", params.user_id)
-                                          .where("id", "=", form.id)
-                                          .limit(1)
-                                          .compile(),
-                                      )
-                                    ).length !== 0
-                                  ) {
-                                    search_user_form.setError("id", {
-                                      message: "已经是你的好友了",
+                            onKeyDown={(e) =>
+                              void (async () => {
+                                if (e.key !== "Enter") return;
+                                e.preventDefault();
+                                await search_user_form.handleSubmit(
+                                  async (form) => {
+                                    if (
+                                      (
+                                        await AppStore.getState().db.query(
+                                          QueryBuilder.selectFrom("friend")
+                                            .select("id")
+                                            .where(
+                                              "user_id",
+                                              "=",
+                                              params.user_id,
+                                            )
+                                            .where("id", "=", form.id)
+                                            .limit(1)
+                                            .compile(),
+                                        )
+                                      ).length !== 0
+                                    ) {
+                                      search_user_form.setError("id", {
+                                        message: "已经是你的好友了",
+                                      });
+                                    }
+                                    const person =
+                                      await AppStore.getState().endpoint.request_person(
+                                        form.id,
+                                      );
+                                    set_search_user_result({
+                                      id: form.id,
+                                      ...person,
                                     });
-                                  }
-                                  const person =
-                                    await AppStore.getState().endpoint.request_person(
-                                      form.id,
+                                    set_send_friend_request_button_disabled(
+                                      false,
                                     );
-                                  set_search_user_result({
-                                    id: form.id,
-                                    ...person,
-                                  });
-                                  set_send_friend_request_button_disabled(
-                                    false,
-                                  );
-                                },
-                              )();
-                            }}
+                                  },
+                                )();
+                              })()
+                            }
                           />
                         </FormControl>
                         <FormMessage />
@@ -272,19 +278,19 @@ function Component() {
                                     search_user_result.id,
                                   ))
                                 ) {
-                                  throw "对方拒绝好友请求";
+                                  throw Error("对方拒绝好友请求");
                                 }
                               },
                               {
                                 loading: "等待回应好友请求",
-                                error: (error) => {
+                                error: (error: Error) => {
                                   set_send_friend_request_button_disabled(
                                     false,
                                   );
-                                  return `${error}`;
+                                  return error.message;
                                 },
                                 success: () => {
-                                  (async () => {
+                                  void (async () => {
                                     await AppStore.getState().db.execute(
                                       QueryBuilder.insertInto("friend")
                                         .values({
@@ -369,7 +375,9 @@ function Component() {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start">
               <DropdownMenuItem
-                onClick={() => navigator.clipboard.writeText(params.user_id)}
+                onClick={() =>
+                  void navigator.clipboard.writeText(params.user_id)
+                }
               >
                 <Clipboard />
                 <span>复制用户ID</span>
@@ -389,9 +397,9 @@ async function handle_person_protocol_event() {
       await AppStore.getState().endpoint.person_protocol_event_next();
     if (!event) break;
     if (event.kind === "FriendRequest") {
-      handle_friend_request_event(event.value);
+      void handle_friend_request_event(event.value);
     } else if (event.kind === "ChatRequest") {
-      handle_chat_request_event(event.value);
+      void handle_chat_request_event(event.value);
     }
   }
 }
@@ -414,29 +422,33 @@ async function handle_friend_request_event(friend_request: FriendRequest) {
           <Button
             variant="outline"
             size="icon-sm"
-            onClick={async () => {
-              await AppStore.getState().db.execute(
-                QueryBuilder.insertInto("friend")
-                  .values({
-                    id: friend_id,
-                    user_id: HomeStore.getState().user.id,
-                    ...friend_info,
-                  })
-                  .compile(),
-              );
-              friend_request.accept();
-              toast.dismiss(toast_id);
-            }}
+            onClick={() =>
+              void (async () => {
+                await AppStore.getState().db.execute(
+                  QueryBuilder.insertInto("friend")
+                    .values({
+                      id: friend_id,
+                      user_id: HomeStore.getState().user.id,
+                      ...friend_info,
+                    })
+                    .compile(),
+                );
+                await friend_request.accept();
+                toast.dismiss(toast_id);
+              })()
+            }
           >
             <Check />
           </Button>
           <Button
             variant="outline"
             size="icon-sm"
-            onClick={() => {
-              friend_request.reject();
-              toast.dismiss(toast_id);
-            }}
+            onClick={() =>
+              void (async () => {
+                await friend_request.reject();
+                toast.dismiss(toast_id);
+              })()
+            }
           >
             <X />
           </Button>
@@ -467,7 +479,7 @@ async function handle_chat_request_event(chat_request: ChatRequest) {
       )
     ).length === 0
   ) {
-    chat_request.reject();
+    await chat_request.reject();
   } else {
     const connection = await chat_request.accept();
     HomeStore.setState((old) => ({
@@ -477,7 +489,7 @@ async function handle_chat_request_event(chat_request: ChatRequest) {
       const connection = HomeStore.getState().connections.get(friend_id);
       if (!connection) break;
       const message = await connection.recv();
-      if (!message) break;
+      if (message === undefined) break;
       await AppStore.getState().db.execute(
         QueryBuilder.insertInto("message")
           .values({

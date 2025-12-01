@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button";
+import { Button } from "@/shadcn/components/ui/button";
 import {
   Card,
   CardContent,
@@ -6,8 +6,8 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+} from "@/shadcn/components/ui/card";
+import { Input } from "@/shadcn/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -16,10 +16,15 @@ import {
   SelectLabel,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@/shadcn/components/ui/select";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/shadcn/components/ui/tabs";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -30,7 +35,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+} from "@/shadcn/components/ui/alert-dialog";
 import {
   Form,
   FormControl,
@@ -38,7 +43,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
+} from "@/shadcn/components/ui/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -104,7 +109,7 @@ function Component() {
         ),
       );
     };
-    update_users();
+    void update_users();
     AppStore.getState().db.on_update(update_users.name, async (e) => {
       if (e.table_name === "user") {
         await update_users();
@@ -248,12 +253,14 @@ function Component() {
             <TabsContent value="login" className="flex flex-col gap-1">
               <Button
                 disabled={login_form.formState.isSubmitting}
-                onClick={login_form.handleSubmit(async (form) => {
-                  await navigate({
-                    to: "/app/home/$user_id",
-                    params: { user_id: form.id },
-                  });
-                })}
+                onClick={() =>
+                  void login_form.handleSubmit(async (form) => {
+                    await navigate({
+                      to: "/app/home/$user_id",
+                      params: { user_id: form.id },
+                    });
+                  })()
+                }
               >
                 {login_form.formState.isSubmitting ? "登录中..." : "登录"}
               </Button>
@@ -288,15 +295,17 @@ function Component() {
                   <AlertDialogFooter>
                     <AlertDialogCancel>取消</AlertDialogCancel>
                     <AlertDialogAction
-                      onClick={async () => {
-                        await AppStore.getState().db.execute(
-                          QueryBuilder.deleteFrom("user")
-                            .where("id", "=", login_form.getValues("id"))
-                            .compile(),
-                        );
-                        set_login_user_avatar(undefined);
-                        login_form.reset();
-                      }}
+                      onClick={() =>
+                        void (async () => {
+                          await AppStore.getState().db.execute(
+                            QueryBuilder.deleteFrom("user")
+                              .where("id", "=", login_form.getValues("id"))
+                              .compile(),
+                          );
+                          set_login_user_avatar(undefined);
+                          login_form.reset();
+                        })()
+                      }
                     >
                       确定
                     </AlertDialogAction>
@@ -307,39 +316,43 @@ function Component() {
             <TabsContent value="register" asChild>
               <Button
                 disabled={register_form.formState.isSubmitting}
-                onClick={register_form.handleSubmit(async (form) => {
-                  if (
-                    (
-                      await AppStore.getState().db.query(
-                        QueryBuilder.selectFrom("user")
-                          .select("name")
-                          .where("name", "=", form.name)
-                          .limit(1)
-                          .compile(),
-                      )
-                    ).length !== 0
-                  ) {
-                    register_form.setError("name", {
-                      message: "用户名已经存在了",
-                    });
-                    return;
-                  }
-                  const secret_key = await generate_secret_key();
-                  await AppStore.getState().db.execute(
-                    QueryBuilder.insertInto("user")
-                      .values({
-                        id: await get_secret_key_id(secret_key),
-                        key: secret_key,
-                        name: form.name,
-                        avatar:
-                          form.avatar_file &&
-                          new Uint8Array(await form.avatar_file.arrayBuffer()),
-                      })
-                      .compile(),
-                  );
-                  register_form.reset();
-                  toast.success("账户注册成功");
-                })}
+                onClick={() =>
+                  void register_form.handleSubmit(async (form) => {
+                    if (
+                      (
+                        await AppStore.getState().db.query(
+                          QueryBuilder.selectFrom("user")
+                            .select("name")
+                            .where("name", "=", form.name)
+                            .limit(1)
+                            .compile(),
+                        )
+                      ).length !== 0
+                    ) {
+                      register_form.setError("name", {
+                        message: "用户名已经存在了",
+                      });
+                      return;
+                    }
+                    const secret_key = await generate_secret_key();
+                    await AppStore.getState().db.execute(
+                      QueryBuilder.insertInto("user")
+                        .values({
+                          id: await get_secret_key_id(secret_key),
+                          key: secret_key,
+                          name: form.name,
+                          avatar:
+                            form.avatar_file &&
+                            new Uint8Array(
+                              await form.avatar_file.arrayBuffer(),
+                            ),
+                        })
+                        .compile(),
+                    );
+                    register_form.reset();
+                    toast.success("账户注册成功");
+                  })()
+                }
               >
                 注册
               </Button>

@@ -10,13 +10,13 @@ export type Command =
       kind: "execute";
       return: MessagePort;
       sql: string;
-      params?: any[];
+      params?: SQLiteCompatibleType[];
     }
   | {
       kind: "query";
       return: MessagePort;
       sql: string;
-      params?: any[];
+      params?: SQLiteCompatibleType[];
     }
   | {
       kind: "on_update";
@@ -70,7 +70,7 @@ export class SQLiteConnection {
     });
     this.worker.terminate();
   }
-  async execute(sql: string, params?: any[]) {
+  async execute(sql: string, params?: SQLiteCompatibleType[]) {
     await new Promise((resolve, reject) => {
       const { port1, port2 } = new MessageChannel();
       this.worker.postMessage(
@@ -91,7 +91,7 @@ export class SQLiteConnection {
       };
     });
   }
-  async query<T>(sql: string, params?: any[]) {
+  async query<T>(sql: string, params?: SQLiteCompatibleType[]) {
     return await new Promise<ReadableStream<T>>((resolve, reject) => {
       const { port1, port2 } = new MessageChannel();
       this.worker.postMessage(

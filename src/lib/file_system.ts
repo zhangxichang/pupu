@@ -4,10 +4,9 @@ type Native = { kind: "Native" } & typeof import("@/lib/invoke/file_system");
 type Web = { kind: "Web" } & typeof import("opfs-worker");
 
 let api: Native | Web;
-if (import.meta.env.TAURI_ENV_PLATFORM) {
+if (import.meta.env.TAURI_ENV_PLATFORM !== undefined) {
   api = { kind: "Native", ...(await import("@/lib/invoke/file_system")) };
-}
-if (!import.meta.env.TAURI_ENV_PLATFORM) {
+} else {
   api = { kind: "Web", ...(await import("opfs-worker")) };
 }
 
@@ -20,6 +19,7 @@ export class FileSystem {
 
   init() {
     if (api.kind === "Native") {
+      return;
     } else if (api.kind === "Web") {
       if (this.opfs) return;
       this.opfs = api.createWorker();

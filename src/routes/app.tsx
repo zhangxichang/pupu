@@ -8,16 +8,20 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
+} from "@/shadcn/components/ui/alert-dialog";
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@/shadcn/components/ui/avatar";
+import { Button } from "@/shadcn/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from "@/shadcn/components/ui/dialog";
 import {
   Item,
   ItemActions,
@@ -27,8 +31,8 @@ import {
   ItemMedia,
   ItemSeparator,
   ItemTitle,
-} from "@/components/ui/item";
-import { Label } from "@/components/ui/label";
+} from "@/shadcn/components/ui/item";
+import { Label } from "@/shadcn/components/ui/label";
 import {
   Menubar,
   MenubarContent,
@@ -40,8 +44,8 @@ import {
   MenubarSubContent,
   MenubarSubTrigger,
   MenubarTrigger,
-} from "@/components/ui/menubar";
-import { Toaster } from "@/components/ui/sonner";
+} from "@/shadcn/components/ui/menubar";
+import { Toaster } from "@/shadcn/components/ui/sonner";
 import {
   createFileRoute,
   Outlet,
@@ -68,7 +72,7 @@ import { Endpoint } from "@/lib/endpoint";
 
 let tauri_window: typeof import("@tauri-apps/api/window") | undefined;
 let invoke_error: typeof import("@/lib/invoke/error") | undefined;
-if (import.meta.env.TAURI_ENV_PLATFORM) {
+if (import.meta.env.TAURI_ENV_PLATFORM !== undefined) {
   tauri_window = await import("@tauri-apps/api/window");
   invoke_error = await import("@/lib/invoke/error");
 }
@@ -92,7 +96,7 @@ export const Route = createFileRoute("/app")({
   beforeLoad: async () => {
     if (invoke_error && !self.onunhandledrejection) {
       self.onunhandledrejection = async (e) => {
-        await invoke_error.fatal_error(e.reason);
+        await invoke_error.fatal_error(e.reason as Error);
       };
     }
     AppStore.getState().fs.init();
@@ -123,7 +127,7 @@ function Component() {
   >();
   //导航到子路由
   useEffect(() => {
-    navigate({ to: "/app/login" });
+    void navigate({ to: "/app/login" });
   }, []);
   //窗口配置
   useEffect(() => {
@@ -133,8 +137,7 @@ function Component() {
         await tauri_window.getCurrentWindow().setTitle(document.title);
         //同步标题变化
         const title_observer = new MutationObserver(
-          async () =>
-            await tauri_window.getCurrentWindow().setTitle(document.title),
+          () => void tauri_window.getCurrentWindow().setTitle(document.title),
         );
         title_observer.observe(document.querySelector("title")!, {
           childList: true,
@@ -143,26 +146,25 @@ function Component() {
         //设置窗口缩放状态
         set_is_maximized(await tauri_window.getCurrentWindow().isMaximized());
         //监控窗口缩放
-        const un_on_resized = await tauri_window
-          .getCurrentWindow()
-          .onResized(async () =>
-            set_is_maximized(
-              await tauri_window.getCurrentWindow().isMaximized(),
-            ),
-          );
+        const un_on_resized = await tauri_window.getCurrentWindow().onResized(
+          () =>
+            void (async () => {
+              set_is_maximized(
+                await tauri_window.getCurrentWindow().isMaximized(),
+              );
+            })(),
+        );
         return () => {
           title_observer.disconnect();
           un_on_resized();
         };
       })();
-      return () => {
-        (async () => (await cleanup)())();
-      };
+      return () => void (async () => (await cleanup)())();
     }
   }, []);
   //获取贡献者信息
   useEffect(() => {
-    (async () => {
+    void (async () => {
       const github_user_info = await new Octokit().rest.users.getByUsername({
         username: "ZhangXiChang",
       });
@@ -242,7 +244,7 @@ function Component() {
                             <Button
                               variant="outline"
                               size="icon-sm"
-                              onClick={() => open_url(developer.html_url)}
+                              onClick={() => void open_url(developer.html_url)}
                             >
                               <ExternalLink />
                             </Button>
@@ -269,17 +271,19 @@ function Component() {
                 <AlertDialogFooter>
                   <AlertDialogCancel>取消</AlertDialogCancel>
                   <AlertDialogAction
-                    onClick={async () => {
-                      await AppStore.getState().db.close();
-                      await AppStore.getState().fs.remove_file(
-                        AppPath.DatabaseFile,
-                      );
-                      router.clearCache();
-                      await navigate({ to: "/app/login" });
-                      for (const callback of AppStore.getState().on_resets.values()) {
-                        await callback();
-                      }
-                    }}
+                    onClick={() =>
+                      void (async () => {
+                        await AppStore.getState().db.close();
+                        await AppStore.getState().fs.remove_file(
+                          AppPath.DatabaseFile,
+                        );
+                        router.clearCache();
+                        await navigate({ to: "/app/login" });
+                        for (const callback of AppStore.getState().on_resets.values()) {
+                          await callback();
+                        }
+                      })()
+                    }
                   >
                     确定
                   </AlertDialogAction>
@@ -293,27 +297,23 @@ function Component() {
               <Button
                 variant={"ghost"}
                 className="rounded-none cursor-pointer"
-                onClick={async () =>
-                  await tauri_window.getCurrentWindow().minimize()
-                }
+                onClick={() => void tauri_window.getCurrentWindow().minimize()}
               >
                 <Minimize2 />
               </Button>
               <Button
                 variant={"ghost"}
                 className="rounded-none cursor-pointer"
-                onClick={async () =>
-                  await tauri_window.getCurrentWindow().toggleMaximize()
+                onClick={() =>
+                  void tauri_window.getCurrentWindow().toggleMaximize()
                 }
               >
-                {!is_maximized ? <Maximize /> : <Minimize />}
+                {is_maximized === true ? <Maximize /> : <Minimize />}
               </Button>
               <Button
                 variant={"ghost"}
                 className="rounded-none cursor-pointer hover:bg-red-600 hover:text-white active:bg-red-500"
-                onClick={async () =>
-                  await tauri_window.getCurrentWindow().close()
-                }
+                onClick={() => void tauri_window.getCurrentWindow().close()}
               >
                 <X />
               </Button>

@@ -2,7 +2,7 @@ import {
   Avatar as AvatarComponent,
   AvatarFallback,
   AvatarImage,
-} from "@/components/ui/avatar";
+} from "@/shadcn/components/ui/avatar";
 import { useEffect, useState, type ComponentPropsWithoutRef } from "react";
 
 export function Avatar(
@@ -19,7 +19,7 @@ export function Avatar(
       url = URL.createObjectURL(props.image);
     }
     set_image_url(url);
-    if (url) return () => URL.revokeObjectURL(url);
+    if (url !== undefined) return () => URL.revokeObjectURL(url);
   }, [props.image]);
   return (
     <AvatarComponent {...props}>

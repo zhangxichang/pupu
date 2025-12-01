@@ -1,15 +1,18 @@
 import wasm_url from "wa-sqlite/dist/wa-sqlite.wasm?url";
 import sqlite_esm_factory from "wa-sqlite/dist/wa-sqlite.mjs";
 import * as sqlite from "wa-sqlite";
-//@ts-expect-error
+//@ts-expect-error 导入JS模块
 import { OPFSCoopSyncVFS as VFS } from "wa-sqlite/src/examples/OPFSCoopSyncVFS";
 import { err, ok, type Command } from "./sqlite-api";
 import type { SQLiteUpdateEvent } from "@/lib/sqlite";
 
-(async () => {
+void (async () => {
+  //eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
   const module = await sqlite_esm_factory({ locateFile: () => wasm_url });
   const sqlite_api = sqlite.Factory(module);
+  //eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
   const vfs = await VFS.create("opfs", module);
+  //eslint-disable-next-line @typescript-eslint/no-unsafe-argument
   sqlite_api.vfs_register(vfs);
   const db = await new Promise<number>((resolve) => {
     onmessage = async (e: MessageEvent<string>) => {
@@ -42,7 +45,7 @@ import type { SQLiteUpdateEvent } from "@/lib/sqlite";
               for await (const stmt of sqlite_api.statements(db, args.sql)) {
                 if (args.params) sqlite_api.bind_collection(stmt, args.params);
                 while ((await sqlite_api.step(stmt)) === sqlite.SQLITE_ROW) {
-                  const object: Record<string, any> = {};
+                  const object: Record<string, unknown> = {};
                   for (let i = 0; i < sqlite_api.column_count(stmt); i++) {
                     object[sqlite_api.column_name(stmt, i)] = structuredClone(
                       sqlite_api.column(stmt, i),
@@ -74,7 +77,9 @@ import type { SQLiteUpdateEvent } from "@/lib/sqlite";
         );
       }
     } catch (error) {
-      e.data.return.postMessage(err(new Error(`命令执行失败:${error}`)));
+      e.data.return.postMessage(
+        err(new Error(`命令执行失败:${String(error)}`)),
+      );
     }
   };
   postMessage(null);

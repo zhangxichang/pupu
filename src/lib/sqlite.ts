@@ -5,10 +5,9 @@ type Native = { kind: "Native" } & typeof import("@/lib/invoke/sqlite");
 type Web = { kind: "Web" } & typeof import("@/worker/sqlite-api");
 
 let api: Native | Web;
-if (import.meta.env.TAURI_ENV_PLATFORM) {
+if (import.meta.env.TAURI_ENV_PLATFORM !== undefined) {
   api = { kind: "Native", ...(await import("@/lib/invoke/sqlite")) };
-}
-if (!import.meta.env.TAURI_ENV_PLATFORM) {
+} else {
   api = { kind: "Web", ...(await import("@/worker/sqlite-api")) };
 }
 
@@ -28,7 +27,7 @@ export class Sqlite {
   >();
 
   async init() {
-    if (this.schema_sql) return;
+    if (this.schema_sql !== undefined) return;
     this.schema_sql = await (await fetch("/schema.sql")).text();
   }
   async open(path: string, is_init?: boolean) {
@@ -48,7 +47,7 @@ export class Sqlite {
       throw new Error("API缺失");
     }
     try {
-      if (is_init && this.schema_sql) {
+      if (is_init === true && this.schema_sql !== undefined) {
         if (api.kind === "Native") {
           await api.execute_batch(this.schema_sql);
         } else if (api.kind === "Web") {
@@ -59,7 +58,7 @@ export class Sqlite {
         }
       }
     } catch (error) {
-      throw new Error(`初始化数据库出错:${error}\n${this.schema_sql}`);
+      throw new Error(`初始化数据库出错:${String(error)}\n${this.schema_sql}`);
     }
   }
   async is_open() {
@@ -86,18 +85,21 @@ export class Sqlite {
   async execute(compiled_query: CompiledQuery) {
     try {
       if (api.kind === "Native") {
-        await api.execute(compiled_query.sql, compiled_query.parameters as any);
+        await api.execute(
+          compiled_query.sql,
+          compiled_query.parameters as unknown[],
+        );
       } else if (api.kind === "Web") {
         if (!this.connection) throw new Error("没有连接数据库");
         await this.connection.execute(
           compiled_query.sql,
-          compiled_query.parameters as any,
+          compiled_query.parameters as SQLiteCompatibleType[],
         );
       } else {
         throw new Error("API缺失");
       }
     } catch (error) {
-      throw new Error(`查询错误:${error}\n${compiled_query.sql}`);
+      throw new Error(`查询错误:${String(error)}\n${compiled_query.sql}`);
     }
   }
   async query<T>(compiled_query: CompiledQuery) {
@@ -105,14 +107,14 @@ export class Sqlite {
       if (api.kind === "Native") {
         return await api.query<T>(
           compiled_query.sql,
-          compiled_query.parameters as any,
+          compiled_query.parameters as unknown[],
         );
       } else if (api.kind === "Web") {
         if (!this.connection) throw new Error("没有连接数据库");
-        let result: T[] = [];
+        const result: T[] = [];
         for await (const value of await this.connection.query<T>(
           compiled_query.sql,
-          compiled_query.parameters as any,
+          compiled_query.parameters as SQLiteCompatibleType[],
         )) {
           result.push(value);
         }
@@ -121,7 +123,7 @@ export class Sqlite {
         throw new Error("API缺失");
       }
     } catch (error) {
-      throw new Error(`查询错误:${error}\n${compiled_query.sql}`);
+      throw new Error(`查询错误:${String(error)}\n${compiled_query.sql}`);
     }
   }
   on_update(

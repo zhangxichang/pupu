@@ -1,6 +1,6 @@
 import clsx from "clsx";
-import { Label } from "@/components/ui/label";
-import { Spinner } from "@/components/ui/spinner";
+import { Label } from "@/shadcn/components/ui/label";
+import { Spinner } from "@/shadcn/components/ui/spinner";
 
 export function Loading(props: {
   hint_text: string;

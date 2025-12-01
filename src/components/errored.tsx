@@ -1,5 +1,5 @@
 import clsx from "clsx";
-import { Label } from "@/components/ui/label";
+import { Label } from "@/shadcn/components/ui/label";
 import { Bug } from "lucide-react";
 
 export function Errored(props: {
