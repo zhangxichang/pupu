@@ -68,7 +68,6 @@ import { open_url } from "@/lib/opener";
 import { AppPath, FileSystem } from "@/lib/file_system";
 import { Sqlite } from "@/lib/sqlite";
 import { Errored } from "@/components/errored";
-import { Endpoint } from "@/lib/endpoint";
 
 let tauri_window: typeof import("@tauri-apps/api/window") | undefined;
 let invoke_error: typeof import("@/lib/invoke/error") | undefined;
@@ -81,7 +80,6 @@ export const AppStore = createStore(
   subscribeWithSelector(() => ({
     fs: new FileSystem(),
     db: new Sqlite(),
-    endpoint: new Endpoint(),
     on_resets: new Map<string, () => void | Promise<void>>(),
   })),
 );
@@ -104,7 +102,6 @@ export const Route = createFileRoute("/app")({
     if (!(await AppStore.getState().db.is_open())) {
       await AppStore.getState().db.open(AppPath.DatabaseFile, true);
     }
-    await AppStore.getState().endpoint.init();
   },
 });
 function Component() {
