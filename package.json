@@ -1,7 +1,6 @@
 {
   "private": true,
   "type": "module",
-  "packageManager": "bun@1.3.2",
   "scripts": {
     "build:deps": "bun run build:endpoint",
     "build:endpoint": "wasm-pack build crates/endpoint-wasm --target web --release",
@@ -12,7 +11,7 @@
   },
   "stackblitz": {
     "installDependencies": false,
-    "startCommand": "bun run build:deps && bun i && bun run dev"
+    "startCommand": "curl -fsSL https://bun.sh/install | bash && bun run build:deps && bun i && bun run dev"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
