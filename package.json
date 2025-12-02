@@ -11,7 +11,7 @@
   },
   "stackblitz": {
     "installDependencies": false,
-    "startCommand": "curl https://bun.sh/install | bash && bun run build:deps && bun i && bun run dev"
+    "startCommand": false
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
