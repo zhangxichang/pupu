@@ -9,6 +9,10 @@
     "build": "vite build && tsc && eslint src",
     "preview": "vite preview"
   },
+  "stackblitz": {
+    "installDependencies": false,
+    "startCommand": false
+  },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
     "@tailwindcss/vite": "^4.1.17",
