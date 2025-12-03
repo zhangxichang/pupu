@@ -71,10 +71,10 @@ import { Errored } from "@/components/errored";
 import { Endpoint } from "@/lib/endpoint";
 
 let tauri_window: typeof import("@tauri-apps/api/window") | undefined;
-let invoke_error: typeof import("@/lib/invoke/error") | undefined;
+let invoke_log: typeof import("@/lib/invoke/log") | undefined;
 if (import.meta.env.TAURI_ENV_PLATFORM !== undefined) {
   tauri_window = await import("@tauri-apps/api/window");
-  invoke_error = await import("@/lib/invoke/error");
+  invoke_log = await import("@/lib/invoke/log");
 }
 
 export const AppStore = createStore(
@@ -94,9 +94,15 @@ export const Route = createFileRoute("/app")({
     return <Errored hint_text="我的天呀，应用程序运行出错了" mode="screen" />;
   },
   beforeLoad: async () => {
-    if (invoke_error && !self.onunhandledrejection) {
+    if (invoke_log && !self.onunhandledrejection) {
       self.onunhandledrejection = async (e) => {
-        await invoke_error.fatal_error(e.reason as Error);
+        if (e.reason instanceof Error) {
+          await invoke_log.log_error(
+            e.reason.stack ?? "未捕获的异常:异常没有栈信息",
+          );
+        } else {
+          await invoke_log.log_error("未捕获的异常:非标准异常错误");
+        }
       };
     }
     AppStore.getState().fs.init();
