@@ -8,11 +8,11 @@ name = "app_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]
-tauri-build = "2.5.3"
+tauri-build = { version = "2.5.3", features = [] }
 
 [dependencies]
 person-protocol = { path = "../crates/person-protocol" }
-tauri = "2.9.4"
+tauri = { version = "2.9.4", features = [] }
 serde_json = "1.0.145"
 tauri-plugin-prevent-default = { version = "4.0.3", features = [
     "platform-windows",
