@@ -41,7 +41,7 @@ export const Route = createFileRoute(
   beforeLoad: ({ params }) => {
     if (!HomeStore.getState().connections.get(params.friend_id)) {
       void (async () => {
-        const connection = await AppStore.getState().endpoint.request_chat(
+        const connection = await HomeStore.getState().endpoint.request_chat(
           params.friend_id,
         );
         if (!connection) return;
@@ -116,7 +116,7 @@ export const Route = createFileRoute(
         () =>
           void (async () =>
             set_connection_type(
-              await AppStore.getState().endpoint.conn_type(params.friend_id),
+              await HomeStore.getState().endpoint.conn_type(params.friend_id),
             ))(),
         1000,
       );
@@ -124,7 +124,7 @@ export const Route = createFileRoute(
         () =>
           void (async () =>
             set_connection_latency(
-              await AppStore.getState().endpoint.latency(params.friend_id),
+              await HomeStore.getState().endpoint.latency(params.friend_id),
             ))(),
         1000,
       );
