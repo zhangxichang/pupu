@@ -5,44 +5,46 @@ use rusqlite::{hooks::Action, params_from_iter};
 use tauri::ipc::Channel;
 
 use crate::{
-    error::{Error, OptionGet},
-    sqlite::types::{SQLiteType, SQLiteUpdateEvent},
-    state::State,
+    api::{
+        Api,
+        sqlite::types::{SQLiteType, SQLiteUpdateEvent},
+    },
+    error::Error,
+    option_ext::OptionGet,
 };
 
 #[derive(Default)]
 pub struct Sqlite {
-    connection: Mutex<Option<rusqlite::Connection>>,
+    inner: Mutex<Option<rusqlite::Connection>>,
 }
 #[tauri::command(rename_all = "snake_case")]
-pub async fn sqlite_open(state: tauri::State<'_, State>, path: String) -> Result<(), Error> {
-    state
-        .db
-        .connection
+pub async fn sqlite_open(api: tauri::State<'_, Api>, path: String) -> Result<(), Error> {
+    api.sqlite
+        .inner
         .lock()
         .replace(rusqlite::Connection::open(path)?);
     Ok(())
 }
 #[tauri::command(rename_all = "snake_case")]
-pub async fn sqlite_is_open(state: tauri::State<'_, State>) -> Result<bool, Error> {
-    Ok(state.db.connection.lock().is_some())
+pub async fn sqlite_is_open(api: tauri::State<'_, Api>) -> Result<bool, Error> {
+    Ok(api.sqlite.inner.lock().is_some())
 }
 #[tauri::command(rename_all = "snake_case")]
-pub async fn sqlite_close(state: tauri::State<'_, State>) -> Result<(), Error> {
-    if let Some(db) = state.db.connection.lock().take() {
+pub async fn sqlite_close(api: tauri::State<'_, Api>) -> Result<(), Error> {
+    if let Some(db) = api.sqlite.inner.lock().take() {
         db.close().map_err(|v| v.1)?;
     }
     Ok(())
 }
 #[tauri::command(rename_all = "snake_case")]
 pub async fn sqlite_on_update(
-    state: tauri::State<'_, State>,
+    api: tauri::State<'_, Api>,
     channel: Channel<SQLiteUpdateEvent>,
 ) -> Result<(), Error> {
-    state.db.connection.lock().get()?.update_hook(Some(
-        move |update_type: Action, db_name: &str, table_name: &str, row_id| {
+    api.sqlite.inner.lock().get()?.update_hook(Some(
+        move |action: Action, db_name: &str, table_name: &str, row_id| {
             if let Err(err) = channel.send(SQLiteUpdateEvent {
-                update_type: match update_type {
+                update_type: match action {
                     Action::SQLITE_DELETE => 9,
                     Action::SQLITE_INSERT => 18,
                     Action::SQLITE_UPDATE => 23,
@@ -59,20 +61,17 @@ pub async fn sqlite_on_update(
     Ok(())
 }
 #[tauri::command(rename_all = "snake_case")]
-pub async fn sqlite_execute_batch(
-    state: tauri::State<'_, State>,
-    sql: String,
-) -> Result<(), Error> {
-    state.db.connection.lock().get()?.execute_batch(&sql)?;
+pub async fn sqlite_execute_batch(api: tauri::State<'_, Api>, sql: String) -> Result<(), Error> {
+    api.sqlite.inner.lock().get()?.execute_batch(&sql)?;
     Ok(())
 }
 #[tauri::command(rename_all = "snake_case")]
 pub async fn sqlite_execute(
-    state: tauri::State<'_, State>,
+    api: tauri::State<'_, Api>,
     sql: String,
     params: Vec<serde_json::Value>,
 ) -> Result<(), Error> {
-    state.db.connection.lock().get()?.execute(
+    api.sqlite.inner.lock().get()?.execute(
         &sql,
         params_from_iter(
             params
@@ -85,11 +84,11 @@ pub async fn sqlite_execute(
 }
 #[tauri::command(rename_all = "snake_case")]
 pub async fn sqlite_query(
-    state: tauri::State<'_, State>,
+    api: tauri::State<'_, Api>,
     sql: String,
     params: Vec<serde_json::Value>,
 ) -> Result<Vec<serde_json::Value>, Error> {
-    let db = state.db.connection.lock();
+    let db = api.sqlite.inner.lock();
     let db = db.get()?;
     let mut statement = db.prepare(&sql)?;
     Ok(statement

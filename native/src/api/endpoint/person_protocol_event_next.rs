@@ -1,16 +1,25 @@
 use person_protocol::Event;
 
 use crate::{
-    error::{Error, OptionGet},
-    state::State,
+    api::Api,
+    error::Error,
+    option_ext::{OptionGet, OptionGetClone},
 };
 
 #[tauri::command(rename_all = "snake_case")]
 pub async fn endpoint_person_protocol_event_next_as_request_remote_id(
-    state: tauri::State<'_, State>,
+    api: tauri::State<'_, Api>,
 ) -> Result<String, Error> {
     Ok(
-        match state.endpoint.person_protocol_event_next.lock().get()? {
+        match api
+            .endpoint
+            .inner
+            .read()
+            .get()?
+            .person_protocol_event_next
+            .lock()
+            .get()?
+        {
             Event::FriendRequest(friend_request) => friend_request.remote_id().to_string(),
             Event::ChatRequest(chat_request) => chat_request.remote_id().to_string(),
         },
@@ -18,11 +27,14 @@ pub async fn endpoint_person_protocol_event_next_as_request_remote_id(
 }
 #[tauri::command(rename_all = "snake_case")]
 pub async fn endpoint_person_protocol_event_next_as_request_accept(
-    state: tauri::State<'_, State>,
+    api: tauri::State<'_, Api>,
 ) -> Result<(), Error> {
     Ok(
-        match state
+        match api
             .endpoint
+            .inner
+            .read()
+            .get()?
             .person_protocol_event_next
             .lock()
             .take()
@@ -35,11 +47,14 @@ pub async fn endpoint_person_protocol_event_next_as_request_accept(
 }
 #[tauri::command(rename_all = "snake_case")]
 pub async fn endpoint_person_protocol_event_next_as_request_reject(
-    state: tauri::State<'_, State>,
+    api: tauri::State<'_, Api>,
 ) -> Result<(), Error> {
     Ok(
-        match state
+        match api
             .endpoint
+            .inner
+            .read()
+            .get()?
             .person_protocol_event_next
             .lock()
             .take()
@@ -52,17 +67,25 @@ pub async fn endpoint_person_protocol_event_next_as_request_reject(
 }
 #[tauri::command(rename_all = "snake_case")]
 pub async fn endpoint_person_protocol_event_next_as_chat_request_accept(
-    state: tauri::State<'_, State>,
+    api: tauri::State<'_, Api>,
 ) -> Result<usize, Error> {
     Ok(
-        if let Event::ChatRequest(value) = state
+        if let Event::ChatRequest(value) = api
             .endpoint
+            .inner
+            .read()
+            .get()?
             .person_protocol_event_next
             .lock()
             .take()
             .get_move()?
         {
-            state.endpoint.connections.write().insert(value.accept()?)
+            api.endpoint
+                .inner
+                .read()
+                .get_clone()?
+                .connections
+                .insert(value.accept()?)
         } else {
             return Err("类型错误".to_string().into());
         },

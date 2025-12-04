@@ -1,6 +1,8 @@
 pub mod connection;
 pub mod person_protocol_event_next;
 
+use std::sync::Arc;
+
 use iroh::{
     SecretKey, Watcher,
     endpoint::{Connection, ConnectionType},
@@ -14,20 +16,26 @@ use slab::Slab;
 use tokio::sync::mpsc;
 
 use crate::{
-    error::{Error, OptionGet, OptionGetClone},
-    state::State,
+    api::Api,
+    error::Error,
+    option_ext::{OptionGet, OptionGetClone},
 };
+
+#[derive(Clone)]
+struct Inner {
+    router: Router,
+    person_protocol: PersonProtocol,
+    _gossip_protocol: Gossip,
+    _blobs_protocol: BlobsProtocol,
+    connections: Slab<Connection>,
+    person_protocol_event_receiver:
+        Arc<tokio::sync::Mutex<mpsc::UnboundedReceiver<person_protocol::Event>>>,
+    person_protocol_event_next: Arc<parking_lot::Mutex<Option<person_protocol::Event>>>,
+}
 
 #[derive(Default)]
 pub struct Endpoint {
-    router: RwLock<Option<Router>>,
-    person_protocol: RwLock<Option<PersonProtocol>>,
-    person_protocol_event_receiver:
-        tokio::sync::Mutex<Option<mpsc::UnboundedReceiver<person_protocol::Event>>>,
-    person_protocol_event_next: parking_lot::Mutex<Option<person_protocol::Event>>,
-    gossip_protocol: RwLock<Option<Gossip>>,
-    blobs_protocol: RwLock<Option<BlobsProtocol>>,
-    connections: RwLock<Slab<Connection>>,
+    inner: RwLock<Option<Inner>>,
 }
 #[tauri::command(rename_all = "snake_case")]
 pub async fn endpoint_generate_secret_key() -> Result<Vec<u8>, Error> {
@@ -41,7 +49,7 @@ pub async fn endpoint_get_secret_key_id(secret_key: Vec<u8>) -> Result<String, E
 }
 #[tauri::command(rename_all = "snake_case")]
 pub async fn endpoint_create(
-    state: tauri::State<'_, State>,
+    api: tauri::State<'_, Api>,
     secret_key: Vec<u8>,
     person: Person,
 ) -> Result<(), Error> {
@@ -52,23 +60,7 @@ pub async fn endpoint_create(
         .await?;
     let person_protocol =
         PersonProtocol::new(endpoint.clone(), person, person_protocol_event_sender);
-    state
-        .endpoint
-        .person_protocol_event_receiver
-        .lock()
-        .await
-        .replace(person_protocol_event_receiver);
-    state
-        .endpoint
-        .person_protocol
-        .write()
-        .replace(person_protocol.clone());
     let gossip_protocol = Gossip::builder().spawn(endpoint.clone());
-    state
-        .endpoint
-        .gossip_protocol
-        .write()
-        .replace(gossip_protocol.clone());
     let blobs_protocol = BlobsProtocol::new(
         &FsStore::load("store")
             .await
@@ -76,77 +68,81 @@ pub async fn endpoint_create(
             .into(),
         None,
     );
-    state
-        .endpoint
-        .blobs_protocol
-        .write()
-        .replace(blobs_protocol.clone());
-    state.endpoint.router.write().replace(
-        Router::builder(endpoint)
-            .accept(person_protocol::ALPN, person_protocol)
-            .accept(iroh_gossip::ALPN, gossip_protocol)
-            .accept(iroh_blobs::ALPN, blobs_protocol)
+    api.endpoint.inner.write().replace(Inner {
+        router: Router::builder(endpoint)
+            .accept(person_protocol::ALPN, person_protocol.clone())
+            .accept(iroh_gossip::ALPN, gossip_protocol.clone())
+            .accept(iroh_blobs::ALPN, blobs_protocol.clone())
             .spawn(),
-    );
+        person_protocol,
+        _gossip_protocol: gossip_protocol,
+        _blobs_protocol: blobs_protocol,
+        connections: Default::default(),
+        person_protocol_event_receiver: Arc::new(tokio::sync::Mutex::new(
+            person_protocol_event_receiver,
+        )),
+        person_protocol_event_next: Default::default(),
+    });
     Ok(())
 }
 #[tauri::command(rename_all = "snake_case")]
-pub async fn endpoint_is_create(state: tauri::State<'_, State>) -> Result<bool, Error> {
-    Ok(state.endpoint.router.read().is_some())
+pub async fn endpoint_is_create(api: tauri::State<'_, Api>) -> Result<bool, Error> {
+    Ok(api.endpoint.inner.read().is_some())
 }
 #[tauri::command(rename_all = "snake_case")]
 pub async fn endpoint_person_protocol_event_next(
-    state: tauri::State<'_, State>,
+    api: tauri::State<'_, Api>,
 ) -> Result<Option<String>, Error> {
-    let next = state
-        .endpoint
+    let inner = api.endpoint.inner.read().get_clone()?;
+    let next = inner
         .person_protocol_event_receiver
         .lock()
         .await
-        .get_mut()?
         .recv()
         .await;
     let kind = next.as_ref().map(|v| v.to_string());
-    *state.endpoint.person_protocol_event_next.lock() = next;
+    *inner.person_protocol_event_next.lock() = next;
     Ok(kind)
 }
 #[tauri::command(rename_all = "snake_case")]
 pub async fn endpoint_request_person(
-    state: tauri::State<'_, State>,
+    api: tauri::State<'_, Api>,
     id: String,
 ) -> Result<Person, Error> {
-    let endpoint = state.endpoint.person_protocol.read().get_clone()?;
-    Ok(endpoint.request_person(id.parse()?).await?)
+    let inner = api.endpoint.inner.read().get_clone()?;
+    Ok(inner.person_protocol.request_person(id.parse()?).await?)
 }
 #[tauri::command(rename_all = "snake_case")]
 pub async fn endpoint_request_friend(
-    state: tauri::State<'_, State>,
+    api: tauri::State<'_, Api>,
     id: String,
 ) -> Result<bool, Error> {
-    let endpoint = state.endpoint.person_protocol.read().get_clone()?;
-    Ok(endpoint.request_friend(id.parse()?).await?)
+    let inner = api.endpoint.inner.read().get_clone()?;
+    Ok(inner.person_protocol.request_friend(id.parse()?).await?)
 }
 #[tauri::command(rename_all = "snake_case")]
 pub async fn endpoint_request_chat(
-    state: tauri::State<'_, State>,
+    api: tauri::State<'_, Api>,
     id: String,
 ) -> Result<Option<usize>, Error> {
-    let endpoint = state.endpoint.person_protocol.read().get_clone()?;
-    Ok(endpoint
+    let mut inner = api.endpoint.inner.read().get_clone()?;
+    Ok(inner
+        .person_protocol
         .request_chat(id.parse()?)
         .await?
-        .map(|v| state.endpoint.connections.write().insert(v)))
+        .map(|v| inner.connections.insert(v)))
 }
 #[tauri::command(rename_all = "snake_case")]
 pub async fn endpoint_conn_type(
-    state: tauri::State<'_, State>,
+    api: tauri::State<'_, Api>,
     id: String,
 ) -> Result<Option<String>, Error> {
-    Ok(state
+    Ok(api
         .endpoint
-        .router
+        .inner
         .read()
         .get()?
+        .router
         .endpoint()
         .conn_type(id.parse()?)
         .map(|mut value| {
@@ -161,14 +157,15 @@ pub async fn endpoint_conn_type(
 }
 #[tauri::command(rename_all = "snake_case")]
 pub async fn endpoint_latency(
-    state: tauri::State<'_, State>,
+    api: tauri::State<'_, Api>,
     id: String,
 ) -> Result<Option<u128>, Error> {
-    Ok(state
+    Ok(api
         .endpoint
-        .router
+        .inner
         .read()
         .get()?
+        .router
         .endpoint()
         .latency(id.parse()?)
         .map(|v| v.as_millis()))

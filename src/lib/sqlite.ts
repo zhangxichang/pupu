@@ -1,4 +1,4 @@
-import { SQLiteConnection } from "@/worker/sqlite-api";
+import type { SQLiteConnection } from "@/worker/sqlite-api";
 import type { CompiledQuery } from "kysely";
 
 type Native = { kind: "Native" } & typeof import("@/lib/invoke/sqlite");
@@ -40,7 +40,7 @@ export class Sqlite {
       await api.open(path);
       await api.on_update(callback);
     } else if (api.kind === "Web") {
-      const connection = await SQLiteConnection.new(path);
+      const connection = await api.SQLiteConnection.new(path);
       connection.on_update(callback);
       this.connection = connection;
     } else {

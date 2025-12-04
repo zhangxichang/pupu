@@ -1,7 +1,7 @@
 use rusqlite::{ToSql, types::FromSql};
 use serde::{Deserialize, Serialize};
 
-use crate::error::{Error, OptionGet};
+use crate::{error::Error, option_ext::OptionGet};
 
 pub enum SQLiteType {
     Null,

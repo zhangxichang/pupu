@@ -1,10 +1,7 @@
 import clsx from "clsx";
 import Loader from "./widgets/loader";
 
-export function Loading(props: {
-  hint_text: string;
-  mode?: "screen" | "flex";
-}) {
+export function Loading(props: { mode?: "screen" | "flex" }) {
   return (
     <div
       className={clsx(

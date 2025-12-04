@@ -2,10 +2,7 @@ import clsx from "clsx";
 import { Label } from "@/shadcn/components/ui/label";
 import { Bug } from "lucide-react";
 
-export function Errored(props: {
-  hint_text: string;
-  mode?: "screen" | "flex";
-}) {
+export function Errored(props: { mode?: "screen" | "flex"; text: string }) {
   return (
     <div
       className={clsx(
@@ -15,7 +12,7 @@ export function Errored(props: {
       )}
     >
       <Bug className="size-6 text-red-600" />
-      <Label className="font-bold text-red-600">{props.hint_text}</Label>
+      <Label className="font-bold text-red-600">{props.text}</Label>
     </div>
   );
 }

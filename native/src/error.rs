@@ -1,28 +1,3 @@
-pub trait OptionGet<T> {
-    fn get(&self) -> Result<&T, Error>;
-    fn get_mut(&mut self) -> Result<&mut T, Error>;
-    fn get_move(self) -> Result<T, Error>;
-}
-impl<T> OptionGet<T> for Option<T> {
-    fn get(&self) -> Result<&T, Error> {
-        self.as_ref().ok_or("空值".to_string().into())
-    }
-    fn get_mut(&mut self) -> Result<&mut T, Error> {
-        self.as_mut().ok_or("空值".to_string().into())
-    }
-    fn get_move(self) -> Result<T, Error> {
-        self.ok_or("空值".to_string().into())
-    }
-}
-pub trait OptionGetClone<T> {
-    fn get_clone(&self) -> Result<T, Error>;
-}
-impl<T: Clone> OptionGetClone<T> for Option<T> {
-    fn get_clone(&self) -> Result<T, Error> {
-        self.clone().ok_or("空值".to_string().into())
-    }
-}
-
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
     #[error("{error}")]
@@ -60,10 +35,4 @@ impl From<String> for Error {
     fn from(value: String) -> Self {
         Self::User { error: value }
     }
-}
-
-#[tauri::command(rename_all = "snake_case")]
-pub async fn fatal_error(stack: Option<String>) -> Result<(), Error> {
-    log::error!("{}", stack.unwrap_or("没有栈信息".to_string()));
-    Ok(())
 }
