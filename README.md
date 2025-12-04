@@ -68,17 +68,6 @@
    ```
 2. 构建输出目录`target/release` 调试构建输出目录`target/debug`
 
-## 参与开发
-
-欢迎参与贡献，请参考以下流程：
-
-1. [提交 Issue](https://github.com/ZhangXiChang/starlink/issues)
-2. Fork 本仓库
-3. 创建您的分支 (`git checkout -b issues/<Issue ID>`)
-4. 提交您的更改
-5. 推送分支
-6. 提交 Pull Request
-
 ---
 
 如有任何问题或建议，请[提交 Issue](https://github.com/ZhangXiChang/starlink/issues)。
