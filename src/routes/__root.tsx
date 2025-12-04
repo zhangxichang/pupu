@@ -4,13 +4,10 @@ export const Route = createRootRoute({
   head: () => ({
     meta: [{ title: "星链" }],
   }),
-  component: Component,
-});
-function Component() {
-  return (
+  component: () => (
     <>
       <HeadContent />
       <Outlet />
     </>
-  );
-}
+  ),
+});
