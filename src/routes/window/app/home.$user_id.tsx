@@ -46,7 +46,6 @@ import type { ID, Person } from "@/lib/types";
 import { Avatar } from "@/components/widgets/avatar";
 import { useShallow } from "zustand/shallow";
 import {
-  Endpoint,
   type ChatRequest,
   type Connection,
   type FriendRequest,
@@ -57,7 +56,6 @@ export const HomeStore = createStore(
   subscribeWithSelector(() => ({
     user: {} as Person & ID,
     friends: new Map<string, Person & ID>(),
-    endpoint: new Endpoint(),
     connections: new Map<string, Connection>(),
   })),
 );
@@ -104,9 +102,8 @@ export const Route = createFileRoute("/window/app/home/$user_id")({
         await update_friends();
       }
     });
-    await HomeStore.getState().endpoint.init();
-    if (!(await HomeStore.getState().endpoint.is_create())) {
-      await HomeStore.getState().endpoint.create(
+    if (!(await AppStore.getState().endpoint.is_create())) {
+      await AppStore.getState().endpoint.create(
         (
           await AppStore.getState().db.query<{ key: Uint8Array }>(
             QueryBuilder.selectFrom("user")
@@ -237,7 +234,7 @@ export const Route = createFileRoute("/window/app/home/$user_id")({
                                         });
                                       }
                                       const person =
-                                        await HomeStore.getState().endpoint.request_person(
+                                        await AppStore.getState().endpoint.request_person(
                                           form.id,
                                         );
                                       set_search_user_result({
@@ -284,7 +281,7 @@ export const Route = createFileRoute("/window/app/home/$user_id")({
                               toast.promise(
                                 async () => {
                                   if (
-                                    !(await HomeStore.getState().endpoint.request_friend(
+                                    !(await AppStore.getState().endpoint.request_friend(
                                       search_user_result.id,
                                     ))
                                   ) {
@@ -389,7 +386,7 @@ export const Route = createFileRoute("/window/app/home/$user_id")({
 async function handle_person_protocol_event() {
   while (true) {
     const event =
-      await HomeStore.getState().endpoint.person_protocol_event_next();
+      await AppStore.getState().endpoint.person_protocol_event_next();
     if (!event) break;
     if (event.kind === "FriendRequest") {
       void handle_friend_request_event(event.value);
@@ -401,7 +398,7 @@ async function handle_person_protocol_event() {
 async function handle_friend_request_event(friend_request: FriendRequest) {
   const friend_id = await friend_request.remote_id();
   const friend_info =
-    await HomeStore.getState().endpoint.request_person(friend_id);
+    await AppStore.getState().endpoint.request_person(friend_id);
   const toast_id = toast(
     <div className="flex-1">
       <Label className="font-bold">好友请求</Label>
