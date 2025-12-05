@@ -365,7 +365,7 @@ export const Route = createFileRoute("/window/app/home/$user_id")({
           </div>
           {/* 用户 */}
           <div className="p-2">
-            <Item variant={"outline"} asChild>
+            <Item variant={"outline"}>
               <ItemMedia>
                 <Avatar className="size-10" image={user.avatar}>
                   {user.name.at(0)}
