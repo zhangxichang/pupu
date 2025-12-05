@@ -188,6 +188,7 @@ export const Route = createFileRoute("/window/app/home/$user_id")({
                   <DialogDescription>输入用户ID按回车搜索</DialogDescription>
                 </DialogHeader>
                 <Button
+                  variant={"outline"}
                   onClick={() =>
                     void navigator.clipboard.writeText(params.user_id)
                   }
