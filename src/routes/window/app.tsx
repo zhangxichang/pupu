@@ -6,6 +6,7 @@ import { subscribeWithSelector } from "zustand/middleware";
 import { AppPath, FileSystem } from "@/lib/file_system";
 import { Sqlite } from "@/lib/sqlite";
 import { Errored } from "@/components/errored";
+import { Endpoint } from "@/lib/endpoint";
 
 let invoke_log: typeof import("@/lib/invoke/log") | undefined;
 if (import.meta.env.TAURI_ENV_PLATFORM !== undefined) {
@@ -16,6 +17,7 @@ export const AppStore = createStore(
   subscribeWithSelector(() => ({
     fs: new FileSystem(),
     db: new Sqlite(),
+    endpoint: new Endpoint(),
     on_resets: new Map<string, () => void | Promise<void>>(),
   })),
 );
@@ -41,6 +43,7 @@ export const Route = createFileRoute("/window/app")({
     if (!(await AppStore.getState().db.is_open())) {
       await AppStore.getState().db.open(AppPath.DatabaseFile, true);
     }
+    await AppStore.getState().endpoint.init();
   },
   component: () => {
     const navigate = useNavigate();
