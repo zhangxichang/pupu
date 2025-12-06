@@ -86,6 +86,11 @@ pub async fn endpoint_create(
     Ok(())
 }
 #[tauri::command(rename_all = "snake_case")]
+pub async fn _endpoint_close(api: tauri::State<'_, Api>) -> Result<(), Error> {
+    api.endpoint.inner.write().take();
+    Ok(())
+}
+#[tauri::command(rename_all = "snake_case")]
 pub async fn endpoint_is_create(api: tauri::State<'_, Api>) -> Result<bool, Error> {
     Ok(api.endpoint.inner.read().is_some())
 }
