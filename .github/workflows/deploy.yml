@@ -16,7 +16,10 @@ jobs:
           fetch-depth: 0
       #执行流程
       - name: 导入 GPG 公钥
-        run: echo "${{secrets.GPG_PUBLIC_KEY}}" | gpg --import
+        run: |
+          echo "${{secrets.GPG_PUBLIC_KEY}}" > a
+          cat a
+          gpg --import a
       - name: 验证 Tag 签名
         run: |
           git tag -n
