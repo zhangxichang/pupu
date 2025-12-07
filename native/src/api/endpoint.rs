@@ -48,7 +48,7 @@ pub async fn endpoint_get_secret_key_id(secret_key: Vec<u8>) -> Result<String, E
         .to_string())
 }
 #[tauri::command(rename_all = "snake_case")]
-pub async fn endpoint_create(
+pub async fn endpoint_open(
     api: tauri::State<'_, Api>,
     secret_key: Vec<u8>,
     person: Person,
@@ -86,13 +86,13 @@ pub async fn endpoint_create(
     Ok(())
 }
 #[tauri::command(rename_all = "snake_case")]
+pub async fn endpoint_is_open(api: tauri::State<'_, Api>) -> Result<bool, Error> {
+    Ok(api.endpoint.inner.read().is_some())
+}
+#[tauri::command(rename_all = "snake_case")]
 pub async fn endpoint_close(api: tauri::State<'_, Api>) -> Result<(), Error> {
     api.endpoint.inner.write().take();
     Ok(())
-}
-#[tauri::command(rename_all = "snake_case")]
-pub async fn endpoint_is_create(api: tauri::State<'_, Api>) -> Result<bool, Error> {
-    Ok(api.endpoint.inner.read().is_some())
 }
 #[tauri::command(rename_all = "snake_case")]
 pub async fn endpoint_person_protocol_event_next(
