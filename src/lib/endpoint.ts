@@ -48,9 +48,9 @@ export class Endpoint {
       throw new Error("API缺失");
     }
   }
-  async create(secret_key: Uint8Array, person: Person) {
+  async open(secret_key: Uint8Array, person: Person) {
     if (api.kind === "Native") {
-      await api.create(secret_key, person);
+      await api.open(secret_key, person);
     } else if (api.kind === "Web") {
       this.endpoint = await api.Endpoint.new(
         secret_key,
@@ -60,11 +60,23 @@ export class Endpoint {
       throw new Error("API缺失");
     }
   }
-  async is_create() {
+  async is_open() {
     if (api.kind === "Native") {
-      return await api.is_create();
+      return await api.is_open();
     } else if (api.kind === "Web") {
       return this.endpoint ? true : false;
+    } else {
+      throw new Error("API缺失");
+    }
+  }
+  async close() {
+    if (api.kind === "Native") {
+      await api.close();
+    } else if (api.kind === "Web") {
+      if (this.endpoint) {
+        this.endpoint.free();
+        this.endpoint = undefined;
+      }
     } else {
       throw new Error("API缺失");
     }

@@ -24,16 +24,23 @@ export async function person_protocol_event_next() {
     throw new Error(String(error));
   }
 }
-export async function create(secret_key: Uint8Array, person: Person) {
+export async function open(secret_key: Uint8Array, person: Person) {
   try {
-    await invoke("endpoint_create", { secret_key, person });
+    await invoke("endpoint_open", { secret_key, person });
   } catch (error) {
     throw new Error(String(error));
   }
 }
-export async function is_create() {
+export async function is_open() {
   try {
-    return await invoke<boolean>("endpoint_is_create");
+    return await invoke<boolean>("endpoint_is_open");
+  } catch (error) {
+    throw new Error(String(error));
+  }
+}
+export async function close() {
+  try {
+    await invoke("endpoint_close");
   } catch (error) {
     throw new Error(String(error));
   }
