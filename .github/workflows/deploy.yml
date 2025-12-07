@@ -11,14 +11,12 @@ jobs:
     steps:
       #环境依赖
       - uses: actions/checkout@v5
-        with:
-          fetch-tags: true
-          fetch-depth: 0
       #执行流程
       - name: 导入 GPG 公钥
         run: echo "${{secrets.GPG_PUBLIC_KEY}}" | gpg --import
       - name: 验证 Tag 签名
         run: |
+          git fetch origin tag ${GITHUB_REF#refs/tags/} -f
           git verify-tag ${GITHUB_REF#refs/tags/} || {
             exit 1
           }
