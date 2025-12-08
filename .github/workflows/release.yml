@@ -12,7 +12,6 @@ jobs:
     steps:
       #环境依赖
       - uses: actions/checkout@v6
-      - uses: Swatinem/rust-cache@v2
       - uses: cargo-bins/cargo-binstall@main
       - uses: oven-sh/setup-bun@v2
         with:
@@ -44,7 +43,6 @@ jobs:
     steps:
       #环境依赖
       - uses: actions/checkout@v6
-      - uses: Swatinem/rust-cache@v2
       - uses: cargo-bins/cargo-binstall@main
       - uses: oven-sh/setup-bun@v2
         with:
