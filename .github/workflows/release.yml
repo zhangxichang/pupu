@@ -45,10 +45,17 @@ jobs:
       #环境依赖
       - uses: actions/checkout@v6
       - uses: Swatinem/rust-cache@v2
+      - uses: cargo-bins/cargo-binstall@main
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
       #执行流程
+      - name: 安装 wasm32-unknown-unknown
+        run: rustup target install wasm32-unknown-unknown
+      - name: 安装 wasm-pack
+        run: cargo binstall wasm-pack
+      - name: 构建依赖包
+        run: bun run build:deps
       - name: 安装依赖包
         run: bun install
       - name: 生成应用图标资源
