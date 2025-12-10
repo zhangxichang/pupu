@@ -1,0 +1,78 @@
+name: 发布
+on:
+  release:
+    types:
+      - published
+permissions:
+  contents: read
+jobs:
+  build-release-web:
+    name: 构建发布 Web
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: cargo-bins/cargo-binstall@main
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - name: 初始化项目
+        run: |
+          rustup target install wasm32-unknown-unknown
+          cargo binstall wasm-pack
+          bun run build:deps
+          bun install
+          TAG_NAME="${{github.event.release.tag_name}}"
+          bun scripts/generate_version.ts ${TAG_NAME#v}
+      - name: 构建
+        run: bun run build
+      - name: 发布
+        uses: cloudflare/wrangler-action@v3
+        with:
+          wranglerVersion: latest
+          packageManager: bun
+          accountId: ${{secrets.CLOUDFLARE_ACCOUNT_ID}}
+          apiToken: ${{secrets.CLOUDFLARE_API_TOKEN}}
+  build-windows:
+    name: 构建 Windows
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: cargo-bins/cargo-binstall@main
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - name: 初始化项目
+        run: |
+          rustup target install wasm32-unknown-unknown
+          cargo binstall wasm-pack
+          bun run build:deps
+          bun install
+          TAG_NAME="${{github.event.release.tag_name}}"
+          bun scripts/generate_version.ts ${TAG_NAME#v}
+          bun tauri icon public/icon.svg
+      - name: 构建
+        run: bun tauri build
+      - name: 后处理构建产物
+        run: |
+          $TARGET_PATH="target/release/starlink-windows.exe"
+          echo "TARGET_PATH=$TARGET_PATH" >> $env:GITHUB_ENV
+          Move-Item -Path target/release/native.exe -Destination $TARGET_PATH
+      - name: 上传构建产物
+        uses: actions/upload-artifact@v6
+        with:
+          name: starlink-windows
+          path: ${{env.TARGET_PATH}}
+  release:
+    needs:
+      - build-windows
+    name: 发布
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: 发布
+        uses: softprops/action-gh-release@v2
+        env:
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+        with:
+          files: ${{env.TARGET_PATH}}

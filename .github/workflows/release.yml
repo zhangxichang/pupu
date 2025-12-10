@@ -1,92 +1,23 @@
 name: 发布
 on:
-  release:
-    types:
-      - published
+  push:
+    branches:
+      - release
 permissions:
   contents: read
 jobs:
-  web:
-    name: 发布到 Web
+  check:
+    name: 检查是否需要发布
     runs-on: ubuntu-latest
+    outputs:
+      release: ${{steps.check.outputs.release}}
     steps:
-      #环境依赖
       - uses: actions/checkout@v6
-      - uses: cargo-bins/cargo-binstall@main
-      - uses: oven-sh/setup-bun@v2
         with:
-          bun-version: latest
-      #执行流程
-      - name: 安装 wasm32-unknown-unknown
-        run: rustup target install wasm32-unknown-unknown
-      - name: 安装 wasm-pack
-        run: cargo binstall wasm-pack
-      - name: 构建依赖包
-        run: bun run build:deps
-      - name: 安装依赖包
-        run: bun install
-      - name: 生成版本号
-        run: |
-          TAG_NAME="${{github.event.release.tag_name}}"
-          bun scripts/generate_version.ts ${TAG_NAME#v}
-      - name: 构建
-        run: bun run build
-      #发布
-      - name: 发布
-        uses: cloudflare/wrangler-action@v3
-        with:
-          wranglerVersion: latest
-          packageManager: bun
-          accountId: ${{secrets.CLOUDFLARE_ACCOUNT_ID}}
-          apiToken: ${{secrets.CLOUDFLARE_API_TOKEN}}
-  windows:
-    name: 发布到 Windows
-    runs-on: windows-latest
-    permissions:
-      contents: write
-      id-token: write
-      attestations: write
-    steps:
-      #环境依赖
-      - uses: actions/checkout@v6
-      - uses: cargo-bins/cargo-binstall@main
-      - uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
-      #执行流程
-      - name: 安装 wasm32-unknown-unknown
-        run: rustup target install wasm32-unknown-unknown
-      - name: 安装 wasm-pack
-        run: cargo binstall wasm-pack
-      - name: 构建依赖包
-        run: bun run build:deps
-      - name: 安装依赖包
-        run: bun install
-      - name: 生成版本号
-        run: |
-          TAG_NAME="${{github.event.release.tag_name}}"
-          bun scripts/generate_version.ts ${TAG_NAME#v}
-      - name: 生成应用图标资源
-        run: bun tauri icon public/icon.svg
-      - name: 构建
-        run: bun tauri build
-      #发布
-      - name: 后处理构建产物
-        run: |
-          $TARGET_PATH="target/release/starlink-windows.exe"
-          echo "TARGET_PATH=$TARGET_PATH" >> $env:GITHUB_ENV
-          Move-Item -Path target/release/native.exe -Destination $TARGET_PATH
-      - name: 生成证明文件
-        uses: actions/attest-build-provenance@v3
-        id: attest
-        with:
-          subject-path: ${{env.TARGET_PATH}}
-      - name: 发布
-        uses: softprops/action-gh-release@v2
+          fetch-depth: 0
+      - name: 检查
+        id: check
         env:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
-        with:
-          files: |
-            LICENSE
-            ${{env.TARGET_PATH}}
-            ${{steps.attest.outputs.bundle-path}}
+        run: |
+          npx --package conventional-changelog-conventionalcommits --package @semantic-release/exec --package semantic-release semantic-release --dry-run
