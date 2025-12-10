@@ -20,4 +20,5 @@ jobs:
         env:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
         run: |
+          cat .releaserc.json
           npx --package conventional-changelog-conventionalcommits --package @semantic-release/exec --package semantic-release semantic-release --dry-run
