@@ -45,8 +45,13 @@ export const Route = createFileRoute("/window")({
     //获取版本
     useEffect(
       () =>
-        void (async () =>
-          set_version(await (await fetch("/version")).text()))(),
+        void (async () => {
+          const version = await fetch("/version");
+          const content_type = version.headers.get("Content-Type");
+          if (content_type !== "text/html") {
+            set_version(await version.text());
+          }
+        })(),
       [],
     );
     //导航到子路由
