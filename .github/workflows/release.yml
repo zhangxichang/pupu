@@ -107,7 +107,12 @@ jobs:
       - uses: actions/download-artifact@v6
         with:
           path: artifact
+      - uses: actions/create-github-app-token@v2
+        id: app_token
+        with:
+          app-id: ${{vars.STARLINK_RELEASE_BOT_ID}}
+          private-key: ${{secrets.STARLINK_RELEASE_BOT_PRIVATE_KEY}}
       - name: 发布
         env:
-          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+          GITHUB_TOKEN: ${{steps.app_token.outputs.token}}
         run: npx --package conventional-changelog-conventionalcommits --package @semantic-release/exec --package semantic-release semantic-release
