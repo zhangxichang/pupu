@@ -6,7 +6,7 @@ on:
 permissions:
   contents: read
 jobs:
-  check:
+  check-release:
     name: 检查是否需要发布
     outputs:
       release: ${{steps.check.outputs.release}}
@@ -35,8 +35,8 @@ jobs:
   build-release-web:
     name: 构建发布 Web
     needs:
-      - check
-    if: ${{needs.check.outputs.release=='true'}}
+      - check-release
+    if: ${{needs.check-release.outputs.release=='true'}}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -50,7 +50,7 @@ jobs:
           cargo binstall wasm-pack
           bun run build:deps
           bun install
-          bun scripts/generate_version.ts ${{needs.check.outputs.version}}
+          bun scripts/generate_version.ts ${{needs.check-release.outputs.version}}
       - name: 构建
         run: bun run build
       - name: 发布
@@ -63,8 +63,8 @@ jobs:
   build-windows:
     name: 构建 Windows
     needs:
-      - check
-    if: ${{needs.check.outputs.release=='true'}}
+      - check-release
+    if: ${{needs.check-release.outputs.release=='true'}}
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v6
@@ -78,7 +78,7 @@ jobs:
           cargo binstall wasm-pack
           bun run build:deps
           bun install
-          bun scripts/generate_version.ts ${{needs.check.outputs.version}}
+          bun scripts/generate_version.ts ${{needs.check-release.outputs.version}}
           bun tauri icon public/icon.svg
       - name: 构建
         run: bun tauri build
@@ -101,18 +101,17 @@ jobs:
       issues: write
       pull-requests: write
     steps:
-      - uses: actions/create-github-app-token@v2
-        id: app_token
-        with:
-          app-id: ${{vars.STARLINK_RELEASE_BOT_ID}}
-          private-key: ${{secrets.STARLINK_RELEASE_BOT_PRIVATE_KEY}}
-      - uses: actions/checkout@v6
-        with:
-          token: ${{steps.app_token.outputs.token}}
-          fetch-depth: 0
       - uses: actions/download-artifact@v6
         with:
           path: artifact
+      - uses: actions/create-github-app-token@v2
+        id: app_token
+        with:
+          app-id: ${{vars.BOT_ID}}
+          private-key: ${{secrets.BOT_PRIVATE_KEY}}
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
       - name: 发布
         env:
           GITHUB_TOKEN: ${{steps.app_token.outputs.token}}
