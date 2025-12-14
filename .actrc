@@ -1,0 +1,2 @@
+-W task.yml
+--artifact-server-path artifacts

@@ -2,6 +2,7 @@
 /dist/
 /target/
 /.tanstack/
+/artifacts/
 
 /pkg_view.html
 
