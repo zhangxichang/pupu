@@ -1,5 +1,5 @@
-import type { SQLiteUpdateEvent } from "@/lib/sqlite";
 import Worker from "@/worker/sqlite?worker";
+import type { SQLiteUpdateEvent } from "../lib/sqlite";
 
 export type Command =
   | {

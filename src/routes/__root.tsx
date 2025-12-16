@@ -1,4 +1,4 @@
-import { createRootRoute, HeadContent, Outlet } from "@tanstack/react-router";
+import { createRootRoute, HeadContent, Outlet } from "@tanstack/solid-router";
 
 export const Route = createRootRoute({
   head: () => ({

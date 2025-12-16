@@ -1,14 +1,10 @@
 {
-  "exclude": ["src/shadcn"],
   "compilerOptions": {
-    "baseUrl": ".",
-    "paths": {
-      "@/*": ["src/*"]
-    },
     "target": "esnext",
     "module": "esnext",
     "lib": ["ESNext", "DOM", "DOM.AsyncIterable"],
-    "jsx": "react-jsx",
+    "jsx": "preserve",
+    "jsxImportSource": "solid-js",
     "noEmit": true,
     "moduleResolution": "bundler",
     "moduleDetection": "force",

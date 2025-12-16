@@ -1,7 +1,6 @@
 import { defineConfig } from "vite";
-import path from "path";
-import react from "@vitejs/plugin-react";
 import { tanstackRouter } from "@tanstack/router-plugin/vite";
+import solid from "vite-plugin-solid";
 import tailwindcss from "@tailwindcss/vite";
 import { visualizer } from "rollup-plugin-visualizer";
 
@@ -11,14 +10,9 @@ export default defineConfig({
     target: "esnext",
   },
   envPrefix: ["VITE_", "TAURI_ENV_"],
-  resolve: {
-    alias: {
-      "@": path.resolve(__dirname, "src"),
-    },
-  },
   plugins: [
-    tanstackRouter({ target: "react", autoCodeSplitting: true }),
-    react(),
+    tanstackRouter({ target: "solid", autoCodeSplitting: true }),
+    solid(),
     tailwindcss(),
     visualizer({
       filename: "pkg_view.html",

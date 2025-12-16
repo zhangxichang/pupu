@@ -1,11 +1,10 @@
-import { StrictMode } from "react";
-import { createRoot } from "react-dom/client";
 import {
   RouterProvider,
   createMemoryHistory,
   createRouter,
-} from "@tanstack/react-router";
+} from "@tanstack/solid-router";
 import { routeTree } from "./routeTree.gen";
+import { render } from "solid-js/web";
 
 const Router = createRouter({
   routeTree,
@@ -13,15 +12,10 @@ const Router = createRouter({
     initialEntries: ["/window"],
   }),
 });
-declare module "@tanstack/react-router" {
+declare module "@tanstack/solid-router" {
   interface Register {
     router: typeof Router;
   }
 }
-export function render() {
-  createRoot(document.body).render(
-    <StrictMode>
-      <RouterProvider router={Router} />
-    </StrictMode>,
-  );
-}
+
+render(() => <RouterProvider router={Router} />, document.body);

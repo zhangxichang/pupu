@@ -3,16 +3,17 @@ import type {
   FriendRequest as WasmFriendRequest,
   ChatRequest as WasmChatRequest,
   Connection as WasmConnection,
+  Group as WasmGroup,
 } from "@starlink/endpoint";
 import type { Person } from "./types";
 
-type Native = { kind: "Native" } & typeof import("@/lib/invoke/endpoint");
+type Native = { kind: "Native" } & typeof import("./invoke/endpoint");
 type Web = { kind: "Web" } & typeof import("@starlink/endpoint");
 
 let api: Native | Web;
 let wasm_url: string | undefined;
 if (import.meta.env.TAURI_ENV_PLATFORM !== undefined) {
-  api = { kind: "Native", ...(await import("@/lib/invoke/endpoint")) };
+  api = { kind: "Native", ...(await import("./invoke/endpoint")) };
 } else {
   api = { kind: "Web", ...(await import("@starlink/endpoint")) };
   wasm_url = (await import("@starlink/endpoint/endpoint_wasm_bg.wasm?url"))
@@ -174,6 +175,71 @@ export class Endpoint {
     } else {
       throw new Error("API缺失");
     }
+  }
+  async subscribe_group(ticket: string) {
+    if (api.kind === "Native") {
+      throw new Error("未实现");
+    } else if (api.kind === "Web") {
+      if (!this.endpoint) throw new Error("未初始化");
+      return new Group({
+        wasm_group: await this.endpoint.subscribe_group(ticket),
+      });
+    } else {
+      throw new Error("API缺失");
+    }
+  }
+}
+
+type GroupEvent =
+  | "Lagged"
+  | {
+      NeighborUp: string;
+    }
+  | {
+      NeighborDown: string;
+    }
+  | {
+      Received: {
+        content: Uint8Array;
+        delivered_from: string;
+        scope: "Neighbors" | { Swarm: number };
+      };
+    };
+
+export class Group {
+  private wasm_group?: WasmGroup;
+
+  constructor(options: { wasm_group?: WasmGroup }) {
+    this.wasm_group = options.wasm_group;
+  }
+  async next_event() {
+    if (api.kind === "Native") {
+      throw new Error("未实现");
+    } else if (api.kind === "Web") {
+      if (!this.wasm_group) throw new Error("未初始化");
+      return (await this.wasm_group.next_event()) as GroupEvent | undefined;
+    } else {
+      throw new Error("API缺失");
+    }
+  }
+}
+
+export function generate_group_id() {
+  if (api.kind === "Native") {
+    throw new Error("未实现");
+  } else if (api.kind === "Web") {
+    return api.generate_group_id();
+  } else {
+    throw new Error("API缺失");
+  }
+}
+export function generate_ticket(group_id: string, bootstrap: string[]) {
+  if (api.kind === "Native") {
+    throw new Error("未实现");
+  } else if (api.kind === "Web") {
+    return api.generate_ticket(group_id, bootstrap);
+  } else {
+    throw new Error("API缺失");
   }
 }
 
