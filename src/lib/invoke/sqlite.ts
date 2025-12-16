@@ -27,7 +27,7 @@ export async function on_update(
 ) {
   try {
     const channel = new Channel<SQLiteUpdateEvent>();
-    channel.onmessage = (e) => void callback(e);
+    channel.onmessage = (e) => callback(e);
     await invoke("sqlite_on_update", { channel });
   } catch (error) {
     throw new Error(String(error));
