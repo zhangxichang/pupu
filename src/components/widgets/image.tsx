@@ -11,7 +11,7 @@ export function Image(
     image?: Uint8Array | Array<number> | File | string | null;
   } & JSX.ImgHTMLAttributes<HTMLImageElement>,
 ) {
-  const [split_props, other_props] = splitProps(props, ["image", "src"]);
+  const [split_props, rest_props] = splitProps(props, ["image", "src"]);
   const [image_url, set_image_url] = createSignal<string>();
   onMount(() => {
     if (
@@ -33,5 +33,5 @@ export function Image(
       set_image_url();
     }
   });
-  return <img {...other_props} src={image_url()} />;
+  return <img {...rest_props} src={image_url()} />;
 }

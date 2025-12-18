@@ -1,6 +1,5 @@
 //@refresh reload
+export default () => {};
 import { mount, StartClient } from "@solidjs/start/client";
 
-export default function ClientEntry() {
-  mount(() => <StartClient />, document.body);
-}
+mount(() => <StartClient />, document.body);
