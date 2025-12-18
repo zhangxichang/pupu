@@ -1,8 +1,14 @@
 import { createSignal, ErrorBoundary, lazy, Show, Suspense } from "solid-js";
 import ErrorModal from "../modal/error";
 import LoadingModal from "../modal/loading";
+import { WindowControlBar } from "./window_control_bar";
 
 const LazyAboutModal = lazy(() => import("~/components/modal/about"));
+
+let tauri_window: typeof import("@tauri-apps/api/window") | undefined;
+if (import.meta.env.TAURI_ENV_PLATFORM !== undefined) {
+  tauri_window = await import("@tauri-apps/api/window");
+}
 
 export default function MenuBar() {
   let about_dialog: HTMLDialogElement | undefined;
@@ -32,6 +38,9 @@ export default function MenuBar() {
           </ErrorBoundary>
         </Show>
       </dialog>
+      <Show when={tauri_window}>
+        {(v) => <WindowControlBar tauri_window={v()} />}
+      </Show>
     </div>
   );
 }

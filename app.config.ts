@@ -9,7 +9,6 @@ export default defineConfig({
     },
   },
   vite: {
-    clearScreen: false,
     build: {
       target: "esnext",
     },
