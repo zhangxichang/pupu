@@ -1,8 +1,7 @@
-import { useNavigate, type RouteSectionProps } from "@solidjs/router";
+import { useNavigate } from "@solidjs/router";
 import { onMount } from "solid-js";
 
-export default function Index(props: RouteSectionProps) {
+export default function Index() {
   const navigate = useNavigate();
-  onMount(() => navigate("/login"));
-  return props.children;
+  onMount(() => navigate("app", { replace: true }));
 }
