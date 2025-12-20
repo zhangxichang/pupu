@@ -12,7 +12,7 @@ export default function App() {
       root={(props) => (
         <div class="absolute w-dvw h-dvh flex flex-col bg-base-200">
           <MenuBar />
-          <ErrorBoundary fallback={() => <Error />}>
+          <ErrorBoundary fallback={(error) => <Error error={error as Error} />}>
             <Suspense fallback={<Loading />}>{props.children}</Suspense>
           </ErrorBoundary>
         </div>

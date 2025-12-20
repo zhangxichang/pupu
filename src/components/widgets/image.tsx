@@ -1,10 +1,4 @@
-import {
-  createSignal,
-  onCleanup,
-  onMount,
-  splitProps,
-  type JSX,
-} from "solid-js";
+import { createMemo, onCleanup, splitProps, type JSX } from "solid-js";
 
 export default function Image(
   props: {
@@ -12,8 +6,7 @@ export default function Image(
   } & JSX.ImgHTMLAttributes<HTMLImageElement>,
 ) {
   const [split_props, rest_props] = splitProps(props, ["image", "src"]);
-  const [image_url, set_image_url] = createSignal<string>();
-  onMount(() => {
+  const image_url = createMemo(() => {
     if (
       split_props.image instanceof Uint8Array ||
       split_props.image instanceof Array
@@ -22,15 +15,13 @@ export default function Image(
         new Blob([Uint8Array.from(split_props.image)]),
       );
       onCleanup(() => URL.revokeObjectURL(url));
-      set_image_url(url);
+      return url;
     } else if (split_props.image instanceof File) {
       const url = URL.createObjectURL(split_props.image);
       onCleanup(() => URL.revokeObjectURL(url));
-      set_image_url(url);
+      return url;
     } else if (typeof split_props.image === "string") {
-      set_image_url(split_props.image);
-    } else {
-      set_image_url();
+      return split_props.image;
     }
   });
   return <img {...rest_props} src={image_url()} />;

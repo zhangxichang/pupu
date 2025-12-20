@@ -1,19 +1,25 @@
-import { createSignal, ErrorBoundary, lazy, Show, Suspense } from "solid-js";
-import ErrorModal from "../modal/error";
-import LoadingModal from "../modal/loading";
+import {
+  createSignal,
+  ErrorBoundary,
+  lazy,
+  onMount,
+  Show,
+  Suspense,
+} from "solid-js";
 import WindowControlBar from "./window_control_bar";
+import { get_window } from "~/lib/window";
+import type { Window } from "@tauri-apps/api/window";
+import Error from "../widgets/error";
+import Loading from "../widgets/loading";
 
 const LazyAboutModal = lazy(() => import("~/components/modal/about"));
-
-let tauri_window: typeof import("@tauri-apps/api/window") | undefined;
-if (import.meta.env.TAURI_ENV_PLATFORM !== undefined) {
-  tauri_window = await import("@tauri-apps/api/window");
-}
 
 export default function MenuBar() {
   let about_dialog: HTMLDialogElement | undefined;
   const [lazy_about_modal_load, set_lazy_about_modal_load] =
     createSignal(false);
+  const [window, set_window] = createSignal<Window>();
+  onMount(() => set_window(get_window()));
   return (
     <div class="flex items-start">
       <ul class="menu menu-horizontal">
@@ -31,16 +37,26 @@ export default function MenuBar() {
       </ul>
       <dialog ref={about_dialog} class="modal">
         <Show when={lazy_about_modal_load()}>
-          <ErrorBoundary fallback={() => <ErrorModal />}>
-            <Suspense fallback={<LoadingModal />}>
+          <ErrorBoundary
+            fallback={(error) => (
+              <div class="modal-box flex">
+                <Error error={error as Error} />
+              </div>
+            )}
+          >
+            <Suspense
+              fallback={
+                <div class="modal-box flex">
+                  <Loading />
+                </div>
+              }
+            >
               <LazyAboutModal />
             </Suspense>
           </ErrorBoundary>
         </Show>
       </dialog>
-      <Show when={tauri_window}>
-        {(v) => <WindowControlBar tauri_window={v()} />}
-      </Show>
+      <Show when={window()}>{(v) => <WindowControlBar window={v()} />}</Show>
     </div>
   );
 }

@@ -1,11 +1,11 @@
-let tauri_opener: typeof import("@tauri-apps/plugin-opener") | undefined;
+let opener: typeof import("@tauri-apps/plugin-opener") | undefined;
 if (import.meta.env.TAURI_ENV_PLATFORM !== undefined) {
-  tauri_opener = await import("@tauri-apps/plugin-opener");
+  opener = await import("@tauri-apps/plugin-opener");
 }
 
 export async function open_url(url: string) {
-  if (tauri_opener) {
-    await tauri_opener.openUrl(url);
+  if (opener) {
+    await opener.openUrl(url);
   } else {
     open(url);
   }

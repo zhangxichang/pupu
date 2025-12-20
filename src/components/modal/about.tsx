@@ -1,12 +1,14 @@
-import { For } from "solid-js";
+import { ErrorBoundary, For, Suspense } from "solid-js";
 import { open_url } from "~/lib/opener";
 import { createAsync } from "@solidjs/router";
-import { query_contributors, query_version } from "~/query";
+import { get_contributors, get_version } from "~/query";
 import Image from "../widgets/image";
+import Loading from "../widgets/loading";
+import Error from "../widgets/error";
 
 export default function AboutModal() {
-  const version = createAsync(() => query_version());
-  const contributors = createAsync(() => query_contributors());
+  const version = createAsync(() => get_version());
+  const contributors = createAsync(() => get_contributors());
   return (
     <div class="modal-box flex flex-col relative">
       <span class="text-base-content font-bold text-lg">关于</span>
@@ -24,13 +26,19 @@ export default function AboutModal() {
             贡献者们
           </span>
           <div class="avatar-group w-full justify-center -space-x-6">
-            <For each={contributors()}>
-              {(v) => (
-                <div class="avatar">
-                  <Image class="size-10" image={v.avatar_url} />
-                </div>
-              )}
-            </For>
+            <ErrorBoundary
+              fallback={(error) => <Error error={error as Error} />}
+            >
+              <Suspense fallback={<Loading />}>
+                <For each={contributors()}>
+                  {(v) => (
+                    <div class="avatar">
+                      <Image class="size-10" image={v.avatar_url} />
+                    </div>
+                  )}
+                </For>
+              </Suspense>
+            </ErrorBoundary>
           </div>
         </div>
         <div class="flex flex-col items-start">

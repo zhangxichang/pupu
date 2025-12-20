@@ -1,3 +1,7 @@
 export default function Loading() {
-  return <div>加载中...</div>;
+  return (
+    <div class="flex-1 flex items-center justify-center">
+      <span class="loading loading-ring" />
+    </div>
+  );
 }
