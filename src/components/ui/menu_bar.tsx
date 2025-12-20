@@ -1,14 +1,6 @@
-import {
-  createSignal,
-  ErrorBoundary,
-  lazy,
-  onMount,
-  Show,
-  Suspense,
-} from "solid-js";
+import { createSignal, ErrorBoundary, lazy, Show, Suspense } from "solid-js";
 import WindowControlBar from "./window_control_bar";
 import { get_window } from "~/lib/window";
-import type { Window } from "@tauri-apps/api/window";
 import Error from "../widgets/error";
 import Loading from "../widgets/loading";
 
@@ -18,8 +10,6 @@ export default function MenuBar() {
   let about_dialog: HTMLDialogElement | undefined;
   const [lazy_about_modal_load, set_lazy_about_modal_load] =
     createSignal(false);
-  const [window, set_window] = createSignal<Window>();
-  onMount(() => set_window(get_window()));
   return (
     <div class="flex items-start">
       <ul class="menu menu-horizontal">
@@ -56,7 +46,9 @@ export default function MenuBar() {
           </ErrorBoundary>
         </Show>
       </dialog>
-      <Show when={window()}>{(v) => <WindowControlBar window={v()} />}</Show>
+      <Show when={get_window()}>
+        {(v) => <WindowControlBar window={v()} />}
+      </Show>
     </div>
   );
 }

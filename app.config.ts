@@ -1,8 +1,10 @@
-import { defineConfig } from "@solidjs/start/config";
+import {
+  defineConfig,
+  type SolidStartInlineConfig,
+} from "@solidjs/start/config";
 import tailwindcss from "@tailwindcss/vite";
-import { visualizer } from "rollup-plugin-visualizer";
 
-export default defineConfig({
+export const config: SolidStartInlineConfig = {
   server: {
     preset: "cloudflare_module",
     rollupConfig: {
@@ -15,6 +17,7 @@ export default defineConfig({
       target: "esnext",
     },
     envPrefix: ["VITE_", "TAURI_ENV_"],
-    plugins: [tailwindcss(), visualizer()],
+    plugins: [tailwindcss()],
   },
-});
+};
+export default defineConfig(config);

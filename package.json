@@ -8,7 +8,8 @@
     "check": "tsc && eslint src",
     "dev": "vinxi dev",
     "build": "vinxi build && bun run check",
-    "build:static": "vinxi build --preset static && bun run check",
+    "dev:native": "vinxi dev --config native.config.ts",
+    "build:native": "vinxi build --config native.config.ts && bun run check",
     "preview": "wrangler dev",
     "deploy": "wrangler deploy"
   },
@@ -25,7 +26,6 @@
     "eslint": "^9.39.2",
     "prisma": "^7.2.0",
     "prisma-kysely": "^2.2.1",
-    "rollup-plugin-visualizer": "^6.0.5",
     "tailwindcss": "^4.1.18",
     "typescript-eslint": "^8.50.0",
     "wrangler": "^4.56.0"
