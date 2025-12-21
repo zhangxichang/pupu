@@ -1,13 +1,14 @@
+import { createAsync } from "@solidjs/router";
 import type { Window } from "@tauri-apps/api/window";
 import { Maximize, Minimize, Minimize2, X } from "lucide-solid";
 import { createSignal, onCleanup, onMount, Show } from "solid-js";
 
 export default function WindowControlBar(props: { window: Window }) {
   const [is_maximized, set_is_maximized] = createSignal<boolean>();
+  createAsync(async () => {
+    set_is_maximized(await props.window.isMaximized());
+  });
   onMount(() => {
-    //设置窗口缩放状态
-    void (async () => set_is_maximized(await props.window.isMaximized()))();
-    //监控窗口缩放
     const un_on_resized = props.window.onResized(async () =>
       set_is_maximized(await props.window.isMaximized()),
     );

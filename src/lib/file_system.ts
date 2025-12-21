@@ -12,9 +12,9 @@ if (import.meta.env.TAURI_ENV_PLATFORM !== undefined) {
 
 export function create_file_system(): FileSystemAdapter {
   if (api.kind === "Native") {
-    return api.NativeFileSystem.new();
+    return new api.NativeFileSystem();
   } else if (api.kind === "Web") {
-    return api.WebFileSystem.new();
+    return new api.WebFileSystem();
   } else {
     throw new Error("API缺失");
   }

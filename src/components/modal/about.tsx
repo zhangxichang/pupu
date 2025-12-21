@@ -1,14 +1,26 @@
+import { Octokit } from "octokit";
 import { ErrorBoundary, For, Suspense } from "solid-js";
 import { open_url } from "~/lib/opener";
 import { createAsync } from "@solidjs/router";
-import { get_contributors, get_version } from "~/query";
 import Image from "../widgets/image";
 import Loading from "../widgets/loading";
 import Error from "../widgets/error";
 
 export default function AboutModal() {
-  const version = createAsync(() => get_version());
-  const contributors = createAsync(() => get_contributors());
+  const version = createAsync(async () => {
+    const version = await fetch("/version");
+    const content_type = version.headers.get("Content-Type");
+    if (content_type !== "text/html") {
+      return await version.text();
+    }
+  });
+  const contributors = createAsync(async () => {
+    const contributors = await new Octokit().rest.repos.listContributors({
+      owner: "ZhangXiChang",
+      repo: "starlink",
+    });
+    return contributors.data;
+  });
   return (
     <div class="modal-box flex flex-col relative">
       <span class="text-base-content font-bold text-lg">关于</span>

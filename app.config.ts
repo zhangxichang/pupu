@@ -5,6 +5,7 @@ import {
 import tailwindcss from "@tailwindcss/vite";
 
 export const config: SolidStartInlineConfig = {
+  ssr: false,
   server: {
     preset: "cloudflare_module",
     rollupConfig: {
@@ -13,6 +14,7 @@ export const config: SolidStartInlineConfig = {
     esbuild: { options: { target: "esnext" } },
   },
   vite: {
+    clearScreen: false,
     build: {
       target: "esnext",
     },

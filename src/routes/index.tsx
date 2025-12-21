@@ -3,5 +3,5 @@ import { onMount } from "solid-js";
 
 export default function Index() {
   const navigate = useNavigate();
-  onMount(() => navigate("app", { replace: true }));
+  onMount(() => navigate("login"));
 }
