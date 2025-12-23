@@ -1,22 +1,28 @@
-import { wrap } from "comlink";
+import type { Remote } from "comlink";
 import type { SQLiteAdapter } from "./sqlite/interface";
-import Worker from "./sqlite/web?worker";
 
-type Native = { kind: "Native" } & typeof import("./sqlite/native");
-type Web = { kind: "Web" };
+type Native = { kind: "Native" };
+type Web = {
+  kind: "Web";
+  worker: typeof import("*?worker");
+} & typeof import("comlink");
 
 let api: Native | Web;
 if (import.meta.env.TAURI_ENV_PLATFORM !== undefined) {
-  api = { kind: "Native", ...(await import("./sqlite/native")) };
+  api = { kind: "Native" };
 } else {
-  api = { kind: "Web" };
+  api = {
+    kind: "Web",
+    worker: await import("./sqlite/web?worker"),
+    ...(await import("comlink")),
+  };
 }
 
-export function create_sqlite(): SQLiteAdapter {
+export function create_sqlite(): SQLiteAdapter | Remote<SQLiteAdapter> {
   if (api.kind === "Native") {
-    return new api.NativeSQLite();
+    throw new Error("未实现");
   } else if (api.kind === "Web") {
-    return wrap<SQLiteAdapter>(new Worker());
+    return api.wrap<SQLiteAdapter>(new api.worker.default());
   } else {
     throw new Error("API缺失");
   }

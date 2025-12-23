@@ -1,6 +1,6 @@
 import { createAsync } from "@solidjs/router";
 import type { Window } from "@tauri-apps/api/window";
-import { Maximize, Minimize, Minimize2, X } from "lucide-solid";
+import { MaximizeIcon, MinimizeIcon, Minimize2Icon, XIcon } from "lucide-solid";
 import { createSignal, onCleanup, onMount, Show } from "solid-js";
 
 export default function WindowControlBar(props: { window: Window }) {
@@ -20,21 +20,21 @@ export default function WindowControlBar(props: { window: Window }) {
         class="btn btn-square btn-ghost btn-sm rounded-none"
         onClick={() => props.window.minimize()}
       >
-        <Minimize2 size={"16px"} />
+        <Minimize2Icon class="size-4" />
       </button>
       <button
         class="btn btn-square btn-ghost btn-sm rounded-none"
         onClick={() => props.window.toggleMaximize()}
       >
-        <Show when={is_maximized()} fallback={<Maximize size={"16px"} />}>
-          <Minimize size={"16px"} />
+        <Show when={is_maximized()} fallback={<MaximizeIcon class="size-4" />}>
+          <MinimizeIcon class="size-4" />
         </Show>
       </button>
       <button
         class="btn btn-square btn-ghost btn-sm rounded-none btn-error text-base-content"
         onClick={() => props.window.close()}
       >
-        <X size={"16px"} />
+        <XIcon class="size-4" />
       </button>
     </div>
   );

@@ -28,8 +28,8 @@ export default function MenuBar() {
           <LazyAboutModal />
         </Show>
       </dialog>
-      <Show when={get_window()}>
-        {(v) => <WindowControlBar window={v()} />}
+      <Show keyed when={get_window()}>
+        {(v) => <WindowControlBar window={v} />}
       </Show>
     </div>
   );

@@ -18,6 +18,9 @@ export const config: SolidStartInlineConfig = {
     build: {
       target: "esnext",
     },
+    worker: {
+      format: "es",
+    },
     envPrefix: ["VITE_", "TAURI_ENV_"],
     plugins: [tailwindcss()],
   },
