@@ -1,13 +1,9 @@
-import type { Remote } from "comlink";
 import { createContext, useContext } from "solid-js";
-import type { SQLiteAdapter } from "~/lib/sqlite/interface";
+import type { MainStore } from "~/stores/main";
 
-export interface MainState {
-  db: SQLiteAdapter | Remote<SQLiteAdapter>;
-}
-export const MainContext = createContext<MainState>();
-export function use_main() {
-  const state = useContext(MainContext);
-  if (!state) throw new Error("上下文不存在");
-  return state;
+export const MainContext = createContext<MainStore>();
+export function use_main_store() {
+  const store = useContext(MainContext);
+  if (!store) throw new Error("上下文不存在");
+  return store;
 }

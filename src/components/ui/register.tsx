@@ -3,6 +3,8 @@ import Image from "../widgets/image";
 import { createForm } from "@tanstack/solid-form";
 import { For, Show } from "solid-js";
 import { type } from "arktype";
+import { use_main_store } from "../context";
+import { QueryBuilder } from "~/lib/query_builder";
 
 const FormSchema = type({
   user_name: type("string > 0").configure({ message: "用户名不能为空" }),
@@ -10,6 +12,7 @@ const FormSchema = type({
 });
 
 export default function Register() {
+  const main_store = use_main_store();
   let avatar_file_input: HTMLInputElement | undefined;
   const form = createForm(() => ({
     defaultValues: { user_name: "", avatar: null as File | null | undefined },
@@ -68,10 +71,16 @@ export default function Register() {
             <form.Field
               name="user_name"
               validators={{
-                onSubmitAsync: ({ value }) => {
-                  if (value === "123") {
-                    return { message: "用户名不能为123" };
-                  }
+                onSubmitAsync: async ({ value }) => {
+                  console.info(
+                    await main_store.db.query(
+                      QueryBuilder.selectFrom("user")
+                        .select((eb) => eb.val(1).as("exists"))
+                        .where("name", "=", value)
+                        .limit(1)
+                        .compile(),
+                    ),
+                  );
                 },
               }}
             >

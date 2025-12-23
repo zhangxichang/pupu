@@ -1,14 +1,14 @@
 import { createAsync, type RouteSectionProps } from "@solidjs/router";
 import { onCleanup, Show } from "solid-js";
-import { MainContext, type MainState } from "~/components/context";
-import { create_sqlite } from "~/lib/sqlite";
+import { MainContext } from "~/components/context";
+import { MainStore } from "~/stores/main";
 
 export default function Main(props: RouteSectionProps) {
-  const state = createAsync<MainState>(create_state);
+  const store = createAsync(() => MainStore.new());
   return (
-    <Show keyed when={state()}>
+    <Show keyed when={store()}>
       {(v) => {
-        onCleanup(async () => await cleanup_state(v));
+        onCleanup(() => v.cleanup());
         return (
           <MainContext.Provider value={v}>
             {props.children}
@@ -17,16 +17,4 @@ export default function Main(props: RouteSectionProps) {
       }}
     </Show>
   );
-}
-async function create_state() {
-  const db = create_sqlite();
-  await db.init();
-  await db.open("data.db");
-  return {
-    db,
-  };
-}
-async function cleanup_state(state: MainState) {
-  await state.db.close();
-  await state.db.free();
 }

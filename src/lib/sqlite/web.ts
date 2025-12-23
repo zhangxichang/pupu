@@ -6,6 +6,7 @@ import * as sqlite from "wa-sqlite";
 //@ts-expect-error 导入JS模块
 import { OPFSCoopSyncVFS as VFS } from "wa-sqlite/src/examples/OPFSCoopSyncVFS";
 import type { CompiledQuery } from "kysely";
+import type { SQLiteUpdateEvent } from "./types";
 
 export class WebSQLite implements SQLiteAdapter {
   api?: SQLiteAPI;
@@ -44,6 +45,11 @@ export class WebSQLite implements SQLiteAdapter {
     await this.get_api().close(this.db);
     this.db = undefined;
   }
+  async execute_sql(sql: string) {
+    for await (const stmt of this.get_api().statements(this.get_db(), sql)) {
+      await this.get_api().step(stmt);
+    }
+  }
   async execute(compiled_query: CompiledQuery) {
     for await (const stmt of this.get_api().statements(
       this.get_db(),
@@ -72,15 +78,12 @@ export class WebSQLite implements SQLiteAdapter {
     }
     return result;
   }
-  on_update(
-    callback: (
-      update_type: number,
-      db_name: string | null,
-      table_name: string | null,
-      row_id: bigint,
-    ) => void,
-  ) {
-    this.get_api().update_hook(this.get_db(), callback);
+  on_update(callback: (event: SQLiteUpdateEvent) => void) {
+    this.get_api().update_hook(
+      this.get_db(),
+      (update_type, db_name, table_name, row_id) =>
+        callback({ update_type, db_name, table_name, row_id }),
+    );
   }
 }
 expose(new WebSQLite());
