@@ -1,7 +1,10 @@
+mod api;
+mod sqlite;
+
 use specta_typescript::BigIntExportBehavior;
 use taurpc::{Router, Typescript};
 
-use crate::{
+use crate::router::{
     api::{Api, ApiImpl},
     sqlite::{SQLite, SQLiteImpl},
 };

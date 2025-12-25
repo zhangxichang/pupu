@@ -1,12 +1,19 @@
-mod api;
 mod option_ext;
 mod router;
-mod sqlite;
 
 pub use crate::router::router;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
-pub fn run() {
+pub fn entry() {
+    tokio::runtime::Builder::new_multi_thread()
+        .enable_all()
+        .build()
+        .unwrap()
+        .block_on(async {
+            main().await;
+        })
+}
+async fn main() {
     flexi_logger::Logger::with(flexi_logger::LogSpecification::info())
         .log_to_file(
             flexi_logger::FileSpec::default()
