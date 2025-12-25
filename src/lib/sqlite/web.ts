@@ -8,9 +8,9 @@ import { OPFSCoopSyncVFS as VFS } from "wa-sqlite/src/examples/OPFSCoopSyncVFS";
 import type { CompiledQuery } from "kysely";
 import type { SQLiteUpdateEvent } from "./types";
 
-export class WebSQLite implements SQLiteAdapter {
-  api?: SQLiteAPI;
-  db?: number;
+export class SQLite implements SQLiteAdapter {
+  private api?: SQLiteAPI;
+  private db?: number;
 
   async init() {
     //eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -29,16 +29,16 @@ export class WebSQLite implements SQLiteAdapter {
     if (!this.api) throw new Error("Sqlite没有初始化");
     return this.api;
   }
-  private get_db() {
-    if (this.db === undefined) throw new Error("没有打开数据库");
-    return this.db;
-  }
   async open(path: string) {
     this.db = await this.get_api().open_v2(
       path,
       sqlite.SQLITE_OPEN_CREATE | sqlite.SQLITE_OPEN_READWRITE,
       "opfs",
     );
+  }
+  private get_db() {
+    if (this.db === undefined) throw new Error("没有打开数据库");
+    return this.db;
   }
   async close() {
     if (this.db === undefined) return;
@@ -59,8 +59,8 @@ export class WebSQLite implements SQLiteAdapter {
       await this.get_api().step(stmt);
     }
   }
-  async query<T>(compiled_query: CompiledQuery) {
-    const result: T[] = [];
+  async query(compiled_query: CompiledQuery) {
+    const result: unknown[] = [];
     for await (const stmt of this.get_api().statements(
       this.get_db(),
       compiled_query.sql,
@@ -74,7 +74,7 @@ export class WebSQLite implements SQLiteAdapter {
             i,
           );
         }
-        result.push(object as T);
+        result.push(object);
       }
     }
     return result;
@@ -82,9 +82,10 @@ export class WebSQLite implements SQLiteAdapter {
   on_update(callback: (event: SQLiteUpdateEvent) => void) {
     this.get_api().update_hook(
       this.get_db(),
-      (update_type, db_name, table_name, row_id) =>
-        callback({ update_type, db_name, table_name, row_id }),
+      (update_type, db_name, table_name, row_id) => {
+        callback({ update_type, db_name, table_name, row_id });
+      },
     );
   }
 }
-expose(new WebSQLite());
+expose(new SQLite());

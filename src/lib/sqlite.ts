@@ -21,16 +21,16 @@ if (import.meta.env.TAURI_ENV_PLATFORM !== undefined) {
 
 export function create_sqlite(): SQLiteAdapter | Remote<SQLiteAdapter> {
   if (api.kind === "Native") {
-    return new api.NativeSQLite();
+    return new api.SQLite();
   } else if (api.kind === "Web") {
     return new Proxy(api.wrap<SQLiteAdapter>(new api.worker.default()), {
-      get: (target, prop, receiver) => {
-        if (prop === "on_update") {
+      get: (target, p, receiver) => {
+        if (p === "on_update") {
           return async (callback: (event: SQLiteUpdateEvent) => void) => {
             return await target.on_update(api.proxy(callback));
           };
         }
-        return Reflect.get(target, prop, receiver) as unknown;
+        return Reflect.get(target, p, receiver) as unknown;
       },
     });
   } else {
