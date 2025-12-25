@@ -8,5 +8,5 @@ export interface SQLiteAdapter extends Instance {
   execute_sql(sql: string): Promise<void>;
   execute(compiled_query: CompiledQuery): Promise<void>;
   query<T>(compiled_query: CompiledQuery): Promise<T[]>;
-  on_update(callback: (event: SQLiteUpdateEvent) => void): void;
+  on_update(callback: (event: SQLiteUpdateEvent) => void): void | Promise<void>;
 }

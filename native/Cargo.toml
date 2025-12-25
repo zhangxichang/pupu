@@ -16,7 +16,7 @@ person-protocol = { path = "../crates/person-protocol" }
 tauri = { version = "2.9.5", features = ["test"] }
 serde_json = "1.0.147"
 taurpc = "0.5.2"
-specta = "2.0.0-rc.22"
+specta = { version = "2.0.0-rc.22", features = ["serde_json"] }
 specta-typescript = "0.0.9"
 tauri-plugin-prevent-default = { version = "4.0.3", features = [
     "platform-windows",
