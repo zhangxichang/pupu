@@ -66,12 +66,12 @@ export class SQLite implements SQLiteAdapter {
       compiled_query.sql,
     )) {
       this.get_api().bind_collection(stmt, compiled_query.parameters as []);
+      const column_names = this.get_api().column_names(stmt);
       while ((await this.get_api().step(stmt)) === sqlite.SQLITE_ROW) {
         const object: Record<string, unknown> = {};
-        for (let i = 0; i < this.get_api().column_count(stmt); i++) {
-          object[this.get_api().column_name(stmt, i)] = this.get_api().column(
-            stmt,
-            i,
+        for (let i = 0; i < column_names.length; i++) {
+          object[column_names[i]] = structuredClone(
+            this.get_api().column(stmt, i),
           );
         }
         result.push(object);
