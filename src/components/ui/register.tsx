@@ -32,6 +32,7 @@ export default function Register() {
           })
           .compile(),
       );
+      form.reset();
     },
   }));
   const is_submitting = form.useStore((state) => state.isSubmitting);
@@ -125,11 +126,7 @@ export default function Register() {
               )}
             </form.Field>
           </div>
-          <button
-            type="submit"
-            class="btn btn-neutral"
-            disabled={is_submitting()}
-          >
+          <button class="btn btn-neutral" disabled={is_submitting()}>
             注册
           </button>
         </div>
