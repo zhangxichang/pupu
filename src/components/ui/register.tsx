@@ -5,6 +5,7 @@ import { For, Show } from "solid-js";
 import { type } from "arktype";
 import { use_main_store } from "../context";
 import { QueryBuilder } from "~/lib/query_builder";
+import { generate_secret_key, get_secret_key_id } from "~/lib/endpoint";
 
 const FormSchema = type({
   user_name: type("string > 0").configure({ message: "用户名不能为空" }),
@@ -17,8 +18,21 @@ export default function Register() {
   const form = createForm(() => ({
     defaultValues: { user_name: "", avatar: null as File | null | undefined },
     validators: { onChange: FormSchema },
-    onSubmit: ({ value }) => {
-      console.info(value);
+    onSubmit: async ({ value }) => {
+      const secret_key = generate_secret_key();
+      const user_id = get_secret_key_id(secret_key);
+      await main_store.sqlite.execute(
+        QueryBuilder.insertInto("user")
+          .values({
+            id: user_id,
+            key: secret_key,
+            name: value.user_name,
+            avatar:
+              value.avatar && new Uint8Array(await value.avatar.arrayBuffer()),
+          })
+          .compile(),
+      );
+      form.reset();
     },
   }));
   const is_submitting = form.useStore((state) => state.isSubmitting);
@@ -72,15 +86,14 @@ export default function Register() {
               name="user_name"
               validators={{
                 onSubmitAsync: async ({ value }) => {
-                  console.info(
-                    await main_store.db.query(
-                      QueryBuilder.selectFrom("user")
-                        .select((eb) => eb.val(1).as("exists"))
-                        .where("name", "=", value)
-                        .limit(1)
-                        .compile(),
-                    ),
+                  const result = await main_store.sqlite.query(
+                    QueryBuilder.selectFrom("user")
+                      .select((eb) => eb.val(1).as("exists"))
+                      .where("name", "=", value)
+                      .limit(1)
+                      .compile(),
                   );
+                  if (result.length !== 0) return { message: "用户名已存在" };
                 },
               }}
             >
@@ -113,11 +126,7 @@ export default function Register() {
               )}
             </form.Field>
           </div>
-          <button
-            type="submit"
-            class="btn btn-neutral"
-            disabled={is_submitting()}
-          >
+          <button class="btn btn-neutral" disabled={is_submitting()}>
             注册
           </button>
         </div>

@@ -1,26 +1,36 @@
-import { createAsync } from "@solidjs/router";
 import { UserIcon } from "lucide-solid";
-import { createSignal, For, Show } from "solid-js";
-import type { ID, Person } from "~/lib/types";
+import { createResource, createSignal, For, Show, Suspense } from "solid-js";
 import Image from "../widgets/image";
 import { type } from "arktype";
 import { createForm } from "@tanstack/solid-form";
+import { use_main_store } from "../context";
+import { QueryBuilder } from "~/lib/query_builder";
 
 const FormSchema = type({
   user_id: type("string").configure({ message: "请选择一个账户" }),
 });
 
 export default function Login() {
-  const users = createAsync<(Person & ID)[]>(async () => {
-    await Promise.resolve();
-    return [];
+  const main_store = use_main_store();
+  const [users, users_actions] = createResource(async () => {
+    return (await main_store.sqlite.query(
+      QueryBuilder.selectFrom("user")
+        .select(["id", "name", "avatar"])
+        .compile(),
+    )) as { id: string; name: string; avatar?: Uint8Array }[];
+  });
+  main_store.on_sqlite_update(async (e) => {
+    if (e.table_name === "user") {
+      await users_actions.refetch();
+    }
   });
   const [preview_avatar, set_preview_avatar] = createSignal<Uint8Array>();
   const form = createForm(() => ({
-    defaultValues: { user_id: null as string | null | undefined },
+    defaultValues: { user_id: undefined as string | undefined },
     validators: { onChange: FormSchema },
     onSubmit: ({ value }) => {
       console.info(value);
+      form.reset();
     },
   }));
   const is_submitting = form.useStore((state) => state.isSubmitting);
@@ -58,35 +68,41 @@ export default function Login() {
                       name={field().name}
                       onBlur={field().handleBlur}
                       onChange={(e) => {
-                        const user = users()?.at(Number(e.target.value));
+                        const user = users()?.find(
+                          (v) => v.id === e.target.value,
+                        );
                         set_preview_avatar(user?.avatar);
                         field().handleChange(user?.id);
                       }}
                     >
-                      <option disabled={true}>选择账户</option>
-                      <For each={users()}>
-                        {(v, i) => (
-                          <option value={i()}>
-                            <div class="avatar">
-                              <Show
-                                keyed
-                                when={v.avatar}
-                                fallback={
-                                  <UserIcon class="size-8 rounded-full bg-base-300" />
-                                }
-                              >
-                                {(avatar) => (
-                                  <Image
-                                    class="size-8 rounded-full"
-                                    image={avatar}
-                                  />
-                                )}
-                              </Show>
-                            </div>
-                            <span class="text-base-content">{v.name}</span>
-                          </option>
-                        )}
-                      </For>
+                      <option>
+                        <label class="label">选择账户</label>
+                      </option>
+                      <Suspense>
+                        <For each={users()}>
+                          {(v) => (
+                            <option value={v.id}>
+                              <div class="avatar">
+                                <Show
+                                  keyed
+                                  when={v.avatar}
+                                  fallback={
+                                    <UserIcon class="size-8 rounded-full bg-base-300" />
+                                  }
+                                >
+                                  {(avatar) => (
+                                    <Image
+                                      class="size-8 rounded-full"
+                                      image={avatar}
+                                    />
+                                  )}
+                                </Show>
+                              </div>
+                              <span class="text-base-content">{v.name}</span>
+                            </option>
+                          )}
+                        </For>
+                      </Suspense>
                     </select>
                   </label>
                   <Show
@@ -105,17 +121,20 @@ export default function Login() {
               )}
             </form.Field>
           </div>
-          <button
-            type="submit"
-            class="btn btn-neutral"
-            disabled={is_submitting()}
-          >
+          <button class="btn btn-neutral" disabled={is_submitting()}>
             登录
           </button>
           <button
+            type="button"
             class="btn"
-            onClick={() => {
-              console.info(form.state.values.user_id);
+            onClick={async () => {
+              if (form.state.values.user_id === undefined) return;
+              await main_store.sqlite.execute(
+                QueryBuilder.deleteFrom("user")
+                  .where("id", "=", form.state.values.user_id)
+                  .compile(),
+              );
+              form.reset();
             }}
           >
             删除账户
