@@ -1,0 +1,15 @@
+import type { CompiledQuery } from "kysely";
+import type { SQLiteUpdateEvent } from "./types";
+import type { Free } from "../interface";
+
+export interface SQLiteModule extends Free {
+  create_sqlite(path: string): Promise<SQLite>;
+}
+
+export interface SQLite {
+  close(): Promise<void>;
+  execute_sql(sql: string): Promise<void>;
+  execute(compiled_query: CompiledQuery): Promise<void>;
+  query<T>(compiled_query: CompiledQuery): Promise<T[]>;
+  on_update(callback: (event: SQLiteUpdateEvent) => void): () => void;
+}

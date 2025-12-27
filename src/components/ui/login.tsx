@@ -1,5 +1,13 @@
 import { UserIcon } from "lucide-solid";
-import { createResource, createSignal, For, Show, Suspense } from "solid-js";
+import {
+  createResource,
+  createSignal,
+  For,
+  onCleanup,
+  onMount,
+  Show,
+  Suspense,
+} from "solid-js";
 import Image from "../widgets/image";
 import { type } from "arktype";
 import { createForm } from "@tanstack/solid-form";
@@ -15,17 +23,23 @@ export default function Login() {
   const navigate = useNavigate();
   const main_store = use_main_store();
   const [users, users_actions] = createResource(async () => {
-    return (await main_store.sqlite.query(
+    return await main_store.sqlite.query<{
+      id: string;
+      name: string;
+      avatar?: Uint8Array;
+    }>(
       QueryBuilder.selectFrom("user")
         .select(["id", "name", "avatar"])
         .compile(),
-    )) as { id: string; name: string; avatar?: Uint8Array }[];
+    );
   });
-  main_store.on_sqlite_update(async (e) => {
-    if (e.table_name === "user") {
-      await users_actions.refetch();
-    }
-  });
+  onMount(() =>
+    onCleanup(
+      main_store.sqlite.on_update(async () => {
+        await users_actions.refetch();
+      }),
+    ),
+  );
   const [preview_avatar, set_preview_avatar] = createSignal<Uint8Array>();
   const form = createForm(() => ({
     defaultValues: { user_id: undefined as string | undefined },

@@ -5,7 +5,6 @@ import { For, Show } from "solid-js";
 import { type } from "arktype";
 import { use_main_store } from "../context";
 import { QueryBuilder } from "~/lib/query_builder";
-import { generate_secret_key, get_secret_key_id } from "~/lib/module/endpoint";
 
 const FormSchema = type({
   user_name: type("string > 0").configure({ message: "用户名不能为空" }),
@@ -19,8 +18,8 @@ export default function Register() {
     defaultValues: { user_name: "", avatar: null as File | null | undefined },
     validators: { onChange: FormSchema },
     onSubmit: async ({ value }) => {
-      const secret_key = generate_secret_key();
-      const user_id = get_secret_key_id(secret_key);
+      const secret_key = main_store.endpoint_module.generate_secret_key();
+      const user_id = main_store.endpoint_module.get_secret_key_id(secret_key);
       await main_store.sqlite.execute(
         QueryBuilder.insertInto("user")
           .values({
