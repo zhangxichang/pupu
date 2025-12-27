@@ -1,12 +1,15 @@
 import type { CompiledQuery } from "kysely";
-import type { Module } from "../module";
 import type { SQLiteUpdateEvent } from "./types";
+import type { Free, Init } from "../interface";
 
-export interface SQLiteAdapter extends Module {
-  open(path: string): Promise<void>;
+export interface SQLiteModule extends Init, Free {
+  create_sqlite(path: string): Promise<SQLite>;
+}
+
+export interface SQLite {
   close(): Promise<void>;
   execute_sql(sql: string): Promise<void>;
   execute(compiled_query: CompiledQuery): Promise<void>;
-  query(compiled_query: CompiledQuery): Promise<unknown[]>;
-  on_update(callback: (event: SQLiteUpdateEvent) => void): void | Promise<void>;
+  query<T>(compiled_query: CompiledQuery): Promise<T[]>;
+  on_update(callback: (event: SQLiteUpdateEvent) => void): () => void;
 }

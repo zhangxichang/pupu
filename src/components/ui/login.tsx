@@ -1,35 +1,51 @@
 import { UserIcon } from "lucide-solid";
-import { createResource, createSignal, For, Show, Suspense } from "solid-js";
+import {
+  createResource,
+  createSignal,
+  For,
+  onCleanup,
+  onMount,
+  Show,
+  Suspense,
+} from "solid-js";
 import Image from "../widgets/image";
 import { type } from "arktype";
 import { createForm } from "@tanstack/solid-form";
 import { use_main_store } from "../context";
 import { QueryBuilder } from "~/lib/query_builder";
+import { useNavigate } from "@solidjs/router";
 
 const FormSchema = type({
   user_id: type("string").configure({ message: "请选择一个账户" }),
 });
 
 export default function Login() {
+  const navigate = useNavigate();
   const main_store = use_main_store();
   const [users, users_actions] = createResource(async () => {
-    return (await main_store.sqlite.query(
+    return await main_store.sqlite.query<{
+      id: string;
+      name: string;
+      avatar?: Uint8Array;
+    }>(
       QueryBuilder.selectFrom("user")
         .select(["id", "name", "avatar"])
         .compile(),
-    )) as { id: string; name: string; avatar?: Uint8Array }[];
+    );
   });
-  main_store.on_sqlite_update(async (e) => {
-    if (e.table_name === "user") {
-      await users_actions.refetch();
-    }
-  });
+  onMount(() =>
+    onCleanup(
+      main_store.sqlite.on_update(async () => {
+        await users_actions.refetch();
+      }),
+    ),
+  );
   const [preview_avatar, set_preview_avatar] = createSignal<Uint8Array>();
   const form = createForm(() => ({
     defaultValues: { user_id: undefined as string | undefined },
     validators: { onChange: FormSchema },
     onSubmit: ({ value }) => {
-      console.info(value);
+      navigate(`/home/${value.user_id}`);
       form.reset();
     },
   }));
@@ -37,7 +53,7 @@ export default function Login() {
   return (
     <fieldset class="fieldset bg-base-100 border border-base-300 rounded-box p-6 pt-2">
       <legend class="fieldset-legend">登录账户</legend>
-      <label class="label">选择你的账户登录</label>
+      <span class="label">选择你的账户登录</span>
       <div class="flex flex-col pt-4">
         <div class="flex justify-center mb-6">
           <div class="avatar">
@@ -75,9 +91,7 @@ export default function Login() {
                         field().handleChange(user?.id);
                       }}
                     >
-                      <option>
-                        <label class="label">选择账户</label>
-                      </option>
+                      <option class="text-base-content">选择账户</option>
                       <Suspense>
                         <For each={users()}>
                           {(v) => (
