@@ -11,7 +11,7 @@ use sharded_slab::Slab;
 
 #[derive(Clone)]
 pub struct Endpoint {
-    _router: Router,
+    router: Router,
     _person_protocol: PersonProtocol,
     _gossip_protocol: Gossip,
     _blobs_protocol: BlobsProtocol,
@@ -53,7 +53,7 @@ impl Endpoint {
             .accept(iroh_blobs::ALPN, blobs_protocol.clone())
             .spawn();
         Ok(Self {
-            _router: router,
+            router,
             _person_protocol: person_protocol,
             _gossip_protocol: gossip_protocol,
             _blobs_protocol: blobs_protocol,
@@ -61,5 +61,9 @@ impl Endpoint {
             _person_protocol_event_receiver: person_protocol_event_receiver,
             _person_protocol_event_next: Default::default(),
         })
+    }
+    pub async fn close(&self) -> Result<()> {
+        self.router.shutdown().await?;
+        Ok(())
     }
 }

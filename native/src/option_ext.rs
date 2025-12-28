@@ -1,13 +1,9 @@
 use eyre::{Result, eyre};
 
 pub trait OptionGet<T> {
-    fn get(&self) -> Result<&T>;
     fn get_move(self) -> Result<T>;
 }
 impl<T> OptionGet<T> for Option<T> {
-    fn get(&self) -> Result<&T> {
-        self.as_ref().ok_or(eyre!("空值"))
-    }
     fn get_move(self) -> Result<T> {
         self.ok_or(eyre!("空值"))
     }

@@ -36,7 +36,9 @@ impl EndpointApi for EndpointApiImpl {
     }
     async fn close_endpoint(self, id: usize) -> Result<(), String> {
         async {
-            self.endpoint_pool.remove(id);
+            if let Some(endpoint) = self.endpoint_pool.take(id) {
+                endpoint.close().await?;
+            }
             eyre::Ok(())
         }
         .await
