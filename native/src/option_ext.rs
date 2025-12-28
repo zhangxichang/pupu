@@ -12,11 +12,11 @@ impl<T> OptionGet<T> for Option<T> {
         self.ok_or(eyre!("空值"))
     }
 }
-pub trait OptionGetClone<T> {
-    fn get_clone(&self) -> Result<T>;
-}
-impl<T: Clone> OptionGetClone<T> for Option<T> {
-    fn get_clone(&self) -> Result<T> {
-        self.clone().ok_or(eyre!("空值"))
-    }
-}
+// pub trait OptionGetClone<T> {
+//     fn get_clone(&self) -> Result<T>;
+// }
+// impl<T: Clone> OptionGetClone<T> for Option<T> {
+//     fn get_clone(&self) -> Result<T> {
+//         self.clone().ok_or(eyre!("空值"))
+//     }
+// }
