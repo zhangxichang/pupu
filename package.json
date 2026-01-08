@@ -3,7 +3,7 @@
   "type": "module",
   "scripts": {
     "build:deps": "bun run build:endpoint",
-    "build:endpoint": "wasm-pack build crates/endpoint-wasm --target web --release",
+    "build:endpoint": "wasm-pack build wasm/endpoint --target web --release",
     "generate:deps": "bun run generate:app-icon && bun run generate:ipc-bindings && bun run generate:db-schema",
     "generate:app-icon": "bun tauri icon public/icon.svg",
     "generate:ipc-bindings": "cargo run --bin generate_ipc_bindings",
@@ -37,7 +37,7 @@
     "@solidjs/meta": "^0.29.4",
     "@solidjs/router": "^0.15.4",
     "@solidjs/start": "^1.2.1",
-    "@starlink/endpoint": "file:crates/endpoint-wasm/pkg",
+    "@starlink/endpoint": "file:wasm/endpoint/pkg",
     "@tanstack/solid-form": "^1.27.6",
     "@tanstack/solid-virtual": "^3.13.13",
     "@tauri-apps/api": "^2.9.1",

@@ -4,5 +4,7 @@
 /.output/
 /.vinxi/
 /.wrangler/
+/.venv/
+/.virtual_documents/
 
 /public/db_schema.sql

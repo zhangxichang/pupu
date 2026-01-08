@@ -8,7 +8,6 @@ use iroh::{
     protocol::{AcceptError, ProtocolHandler},
 };
 use rkyv::Archive;
-use strum::Display;
 
 pub const ALPN: &[u8] = b"person/v1";
 
@@ -24,12 +23,6 @@ enum Response {
     Person(Person),
     Friend(bool),
     Chat(bool),
-}
-
-#[derive(Display)]
-pub enum Event {
-    FriendRequest(FriendRequest),
-    ChatRequest(ChatRequest),
 }
 
 #[derive(
@@ -90,17 +83,16 @@ pub struct PersonProtocol {
     endpoint: Endpoint,
     person: Arc<Person>,
     event_sender: async_channel::Sender<Event>,
+    event_receiver: async_channel::Receiver<Event>,
 }
 impl PersonProtocol {
-    pub fn new(
-        endpoint: Endpoint,
-        person: Person,
-        event_sender: async_channel::Sender<Event>,
-    ) -> Self {
+    pub fn new(endpoint: Endpoint, person: Person) -> Self {
+        let (event_sender, event_receiver) = async_channel::bounded(10);
         Self {
             endpoint,
             person: Arc::new(person),
             event_sender,
+            event_receiver,
         }
     }
     async fn handle_connection(&self, connection: Connection) -> Result<()> {
@@ -150,6 +142,9 @@ impl PersonProtocol {
             }
         }
         Ok(())
+    }
+    pub async fn next_event(&self) -> Result<Event> {
+        Ok(self.event_receiver.recv().await?)
     }
     pub async fn request_person(&self, id: EndpointId) -> Result<Person> {
         let connection = self.endpoint.connect(id, ALPN).await?;

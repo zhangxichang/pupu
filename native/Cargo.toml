@@ -12,6 +12,7 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 tauri-build = { version = "2.5.3", features = [] }
 
 [dependencies]
+endpoint = { path = "../crates/endpoint" }
 person-protocol = { path = "../crates/person-protocol" }
 
 tauri = { version = "2.9.5", features = ["test"] }
@@ -49,3 +50,6 @@ iroh = { version = "0.95.1", features = [
 iroh-gossip = "0.95.0"
 iroh-blobs = "0.97.0"
 iroh-relay = { version = "0.95.1", default-features = false }
+base64 = "0.22.1"
+futures-lite = "2.6.1"
+bytes = "1.11.0"

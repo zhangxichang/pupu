@@ -9,6 +9,5 @@ n0-error = "0.1.2"
 iroh = { version = "0.95.1", default-features = false }
 rkyv = "0.8.12"
 serde = { version = "1.0.228", features = ["derive"] }
-strum = { version = "0.27.2", features = ["derive"] }
 futures = "0.3.31"
 async-channel = "2.5.0"
