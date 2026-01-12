@@ -4,21 +4,17 @@
     "type": "split",
     "children": [
       {
-        "id": "917cec1802af73b7",
+        "id": "47fbb9f7dd0880c2",
         "type": "tabs",
         "children": [
           {
-            "id": "8ca55b2eff5abee1",
+            "id": "617fd0bf1bd50e56",
             "type": "leaf",
             "state": {
-              "type": "markdown",
-              "state": {
-                "file": "README.md",
-                "mode": "preview",
-                "source": false
-              },
+              "type": "empty",
+              "state": {},
               "icon": "lucide-file",
-              "title": "README"
+              "title": "新标签页"
             }
           }
         ]
@@ -198,11 +194,12 @@
       "homepage:Open homepage": false
     }
   },
-  "active": "8ca55b2eff5abee1",
+  "active": "ece9e16ceb22819f",
   "lastOpenFiles": [
+    "docs/CONTRIBUTING.md",
+    "README.md",
     "docs/DEVELOPER_GUIDE.md",
     "docs/arch/arch_zh.md",
-    "README.md",
     "CONTRIBUTING.md",
     "docs/ACCEPTABLE_USE_POLICY.md",
     "node_modules/ms/license.md",
