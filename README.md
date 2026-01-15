@@ -15,7 +15,7 @@
 - [项目架构设计](docs/arch/arch_zh)
 - [开发者指南](docs/DEVELOPER_GUIDE)
 ## 🤝 参与贡献
-我们欢迎任何形式的贡献！详细贡献流程请查阅 [贡献指南](CONTRIBUTING)
+我们欢迎任何形式的贡献！详细贡献流程请查阅 [贡献指南](docs/CONTRIBUTING)
 ## 💬 反馈与建议
 遇到问题或有改进想法？我们期待您的声音：
 - 🐞 提交 Bug：[创建 Issue](https://github.com/ZhangXiChang/starlink/issues/new?template=你遇到了bug-.md)
