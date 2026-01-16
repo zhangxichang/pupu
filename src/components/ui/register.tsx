@@ -18,8 +18,9 @@ export default function Register() {
     defaultValues: { user_name: "", avatar: null as File | null | undefined },
     validators: { onChange: FormSchema },
     onSubmit: async ({ value }) => {
-      const secret_key = main_store.endpoint_module.generate_secret_key();
-      const user_id = main_store.endpoint_module.get_secret_key_id(secret_key);
+      const secret_key = await main_store.endpoint_module.generate_secret_key();
+      const user_id =
+        await main_store.endpoint_module.get_secret_key_id(secret_key);
       await main_store.sqlite.execute(
         QueryBuilder.insertInto("user")
           .values({
