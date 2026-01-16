@@ -7,13 +7,15 @@ export class EndpointModuleImpl implements EndpointModule {
   async create_endpoint(secret_key: Uint8Array, person: Person) {
     return await EndpointImpl.new(secret_key, person);
   }
-  generate_secret_key() {
-    throw new Error("todo");
-    return new Uint8Array();
+  async generate_secret_key() {
+    return Uint8Array.from(
+      await createTauRPCProxy().endpoint.generate_secret_key(),
+    );
   }
-  get_secret_key_id() {
-    throw new Error("todo");
-    return "";
+  async get_secret_key_id(secret_key: Uint8Array) {
+    return await createTauRPCProxy().endpoint.get_secret_key_id(
+      Array.from(secret_key),
+    );
   }
 }
 

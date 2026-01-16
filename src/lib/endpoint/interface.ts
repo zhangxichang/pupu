@@ -3,8 +3,8 @@ import type { Init } from "../interface";
 
 export interface EndpointModule extends Init {
   create_endpoint(secret_key: Uint8Array, person: Person): Promise<Endpoint>;
-  generate_secret_key(): Uint8Array;
-  get_secret_key_id(secret_key: Uint8Array): string;
+  generate_secret_key(): Uint8Array | Promise<Uint8Array>;
+  get_secret_key_id(secret_key: Uint8Array): string | Promise<string>;
 }
 
 export interface Endpoint {
