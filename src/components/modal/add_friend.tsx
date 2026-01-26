@@ -1,5 +1,6 @@
 export default function AddFriend() {
   const search_user = async () => {
+    //TODO
     await Promise.resolve();
   };
   return (
