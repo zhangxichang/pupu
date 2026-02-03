@@ -1,125 +1,160 @@
-# DP2P Agent Guidelines
+# AGENTS.md
 
-## Build/Lint/Test Commands
+This document provides guidelines for AI agents working on this codebase.
 
-### Development
+## Build Commands
+
 ```bash
-bun run dev              # Dev server (Vinxi)
-bun run dev:native       # Native desktop (Tauri)
-bun run build            # Production build with type check
-bun run build:native     # Native desktop build
-bun run preview          # Cloudflare Workers preview
+bun run check              # TypeScript check + ESLint
+bun run build              # Full production build
+bun run dev                # Start development server
+bun run dev:native         # Start Tauri native app dev server
+bun run build:native       # Build Tauri native app
+bun run preview            # Preview Cloudflare Workers deployment
 ```
 
-### Testing
+## Test Commands
+
 ```bash
-bun run test                              # Run all Playwright tests
-bun run test -t "test title"              # Run single test by title
-bun run test --project=chrome tests/ui.test.ts  # Run specific file
-bun run test:ui                           # Tests with UI
-bun run test:report                       # Show test report
+bun run test               # Run all Playwright tests
+npx playwright test tests/auth.test.ts                    # Run single test file
+npx playwright test tests/auth.test.ts -t "有头像完整流程"  # Run specific test by name
+npx playwright test --project=chrome                     # Run in Chrome only
 ```
 
-### Dependencies
-```bash
-bun run build:deps        # Build Rust endpoint
-bun run generate:deps     # Generate all dependencies
-bun run check             # TypeScript + ESLint validation
-```
+**Test setup requirements:**
+- Preview server runs on `http://127.0.0.1:8787`
+- Tests use Chinese descriptions (e.g., "有头像完整流程")
+- Failed tests save screenshots to `test-results/`
 
 ## Code Style Guidelines
 
-### TypeScript/JavaScript
-- **Formatting**: Prettier (VS Code default)
-- **Linting**: ESLint with TypeScript rules
-- **Strict Mode**: Enabled
-- **Module System**: ES Modules (`type: "module"`)
-- **Path Alias**: `~` → `./src/`
+### Naming Conventions
 
-### Import Order
 ```typescript
-// 1. Type imports first
-import type { Endpoint, EndpointModule } from "./interface";
+// Variables and functions: snake_case
+const secret_key = await generate_secret_key();
+function get_user_info() { ... }
 
-// 2. Standard library
-import { createSignal, onMount } from "solid-js";
+// Components: PascalCase
+import Register from "../ui/register";
+import Login from "../ui/login";
 
-// 3. Third-party
-import { QueryBuilder } from "~/lib/query_builder";
-
-// 4. Internal (use ~ alias)
-import { MainStore } from "~/stores/main";
+// Properties in objects: camelCase
+const user = { userName: "john", avatarUrl: "/path" };
 ```
 
-### Naming Conventions
-| Category | Convention | Examples |
-|----------|------------|----------|
-| Components | PascalCase | `Login.tsx`, `FriendList.tsx` |
-| Stores | PascalCase | `MainStore.ts`, `HomeStore.ts` |
-| Utilities | camelCase | `query_builder.ts`, `endpoint.ts` |
-| Routes | kebab-case | `home[user_id].tsx` |
-| Constants | UPPER_SNAKE_CASE |
-| Variables/Functions | camelCase |
+### Imports
 
-### TypeScript Rules
-- Use `strict: true` in tsconfig
-- Enable `noUnusedLocals: true`, `noUnusedParameters: true`
-- Explicit types for parameters and return values
-- Use `import type { X } from "y"` for type imports
+- Use absolute imports with `~/*` alias:
+  ```typescript
+  import { DB } from "~/generated/db_schema";
+  import { QueryBuilder } from "~/lib/query_builder";
+  ```
+- Group imports by category (external, internal):
+  ```typescript
+  import { For, Show } from "solid-js";
+  import { createForm } from "@tanstack/solid-form";
+  import { QueryBuilder } from "~/lib/query_builder";
+  import { MainContext, use_context } from "../context";
+  ```
+
+### TypeScript
+
+- Enable strict mode: `strict: true` in tsconfig.json
+- Use ArkType for runtime validation:
+  ```typescript
+  import { type } from "arktype";
+  const FormSchema = type({
+    user_name: type("string > 0").configure({ message: "用户名不能为空" }),
+  });
+  ```
+- Explicitly type async functions and complex objects
+- Use `unknown` instead of `any` when type is unknown
 
 ### Error Handling
-```typescript
-// Context validation
-export function use_context<T>(context: Context<T | undefined>) {
-  const store = useContext(context);
+
+- Log errors with `console.error()` in components
+- Use `ErrorBoundary` from `solid-js` for component-level error catching:
+  ```typescript
+  <ErrorBoundary fallback={(error) => <Error error={error as Error} />}>
+    <Suspense fallback={<Loading />}>{props.children}</Suspense>
+  </ErrorBoundary>
+  ```
+- Throw descriptive errors for missing context:
+  ```typescript
   if (store === undefined) throw new Error("上下文不存在");
-  return store;
-}
+  ```
 
-// SolidJS error boundaries
-<ErrorBoundary fallback={(error) => <Error error={error as Error} />}>
-  <Suspense fallback={<Loading />}>{props.children}</Suspense>
-</ErrorBoundary>
+### SolidJS Patterns
+
+- Use `createForm` from `@tanstack/solid-form` for forms
+- Use `Show` for conditional rendering, `For` for lists
+- Use `Suspense` for async operations with fallback
+- Use `use_context()` helper for context access:
+  ```typescript
+  const main_store = use_context(MainContext);
+  ```
+
+### Database (Prisma/Kysely)
+
+- Database schema in `schema.prisma`
+- Generated types in `src/generated/db_schema.ts`
+- Use `QueryBuilder` from `~/lib/query_builder` for queries:
+  ```typescript
+  await main_store.sqlite.query(
+    QueryBuilder.selectFrom("user")
+      .selectAll()
+      .where("id", "=", user_id)
+      .compile(),
+  );
+  ```
+
+### Styling
+
+- Tailwind CSS v4 with daisyUI theme
+- Custom theme defined in `src/app.css` with CSS `@plugin` syntax
+- Use DaisyUI component classes: `btn`, `input`, `select`, `modal`, etc.
+- Custom colors defined with oklch color space
+
+### Comments
+
+- Write comments and error messages in Chinese
+- Avoid unnecessary comments on obvious logic
+- Document complex algorithms and non-obvious decisions
+- Use JSDoc for exported functions when helpful
+
+### File Organization
+
+```
+src/
+├── app.tsx              # App shell with Router
+├── app.css              # Tailwind + daisyUI theme
+├── components/
+│   ├── ui/             # UI components (login, register, sidebar, etc.)
+│   ├── widgets/        # Reusable widgets (error, loading, image)
+│   └── modal/          # Modal dialogs
+├── lib/                # Core libraries (sqlite, endpoint, query_builder)
+├── stores/             # State stores (main, home)
+├── routes/             # Page routes
+└── generated/          # Auto-generated code (Prisma/Kysely)
+tests/                  # Playwright E2E tests
 ```
 
-## Architecture Patterns
+### Environment Variables
 
-### Store Pattern
-```typescript
-export interface Store {
-  cleanup(): Promise<void>;
-}
+- Prefix: `VITE_` or `TAURI_ENV_` for client-side env vars
+- Check for Tauri environment:
+  ```typescript
+  if (import.meta.env.TAURI_ENV_PLATFORM !== undefined) { ... }
+  ```
 
-export class MainStore implements Store {
-  static async new() {
-    return new MainStore(sqlite_module, endpoint_module, sqlite);
-  }
-  async cleanup() { /* cleanup */ }
-}
-```
+### Key Technologies
 
-### Platform Abstraction
-```typescript
-export let EndpointModuleAdapter:
-  | typeof import("./endpoint/native")["EndpointModuleImpl"]
-  | typeof import("./endpoint/web")["EndpointModuleImpl"];
-
-if (import.meta.env.TAURI_ENV_PLATFORM !== undefined) {
-  // Native implementation
-} else {
-  // Web implementation
-}
-```
-
-## Technology Stack
-- **Frontend**: SolidJS 1.9.10, TypeScript (strict), Tailwind CSS 4, DaisyUI
-- **Backend**: Rust (2024 edition), WebAssembly, SQLite, Tauri
-- **Database**: Kysely query builder, Prisma
-- **Testing**: Playwright (E2E), Cloudflare Workers
-
-## Important Notes
-1. Always use `~` for src imports
-2. Implement error boundaries in SolidJS components
-3. Validate context in store hooks before use
-4. Implement `cleanup()` methods in stores
-5. Run `bun run check` before committing
+- **Framework**: SolidJS with SolidStart
+- **Runtime**: Bun
+- **Database**: SQLite with Prisma + Kysely
+- **Styling**: Tailwind CSS v4 + daisyUI
+- **Testing**: Playwright
+- **Native**: Tauri
+- **Deployment**: Cloudflare Workers (Wrangler)
