@@ -6,5 +6,8 @@
 /.wrangler/
 /.venv/
 /.virtual_documents/
+/test-results/
+/playwright-report/
+/.opencode/
 
 /public/db_schema.sql

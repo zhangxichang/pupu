@@ -8,16 +8,20 @@
   "scripts": {
     "build:deps": "bun run build:endpoint",
     "build:endpoint": "wasm-pack build wasm/endpoint --target web --release",
-    "generate:deps": "bun run generate:app-icon && bun run generate:ipc-bindings && bun run generate:db-schema",
+    "generate:deps": "bun run generate:app-icon && bun run generate:ipc-bindings && bun run generate:db-schema && bun run generate:test-deps",
     "generate:app-icon": "bun tauri icon public/icon.svg",
     "generate:ipc-bindings": "cargo run --bin generate_ipc_bindings",
     "generate:db-schema": "prisma generate && bun prisma db push && uv run scripts/db_into_schema.py temp.db",
+    "generate:test-deps": "playwright install --with-deps",
     "check": "tsc && eslint src",
     "dev": "vinxi dev",
     "build": "bun run check && vinxi build",
     "dev:native": "vinxi dev --config native.config.ts",
     "build:native": "vinxi build --config native.config.ts && bun run check",
-    "preview": "wrangler dev"
+    "preview": "wrangler dev",
+    "test": "playwright test",
+    "test:report": "playwright show-report",
+    "test:ui": "playwright test --ui"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.2",
@@ -32,10 +36,11 @@
     "wrangler": "^4.59.2"
   },
   "dependencies": {
+    "@dp2p/endpoint": "file:wasm/endpoint/pkg",
+    "@floating-ui/dom": "^1.7.4",
     "@solidjs/meta": "^0.29.4",
     "@solidjs/router": "^0.15.4",
     "@solidjs/start": "^1.2.1",
-    "@dp2p/endpoint": "file:wasm/endpoint/pkg",
     "@tanstack/solid-form": "^1.27.7",
     "@tanstack/solid-virtual": "^3.13.18",
     "@tauri-apps/api": "^2.9.1",
