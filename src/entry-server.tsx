@@ -12,7 +12,7 @@ export default createHandler(() => (
             content="width=device-width, initial-scale=1.0"
           />
           <link rel="icon" href="/icon.svg" />
-          <title>DP2P</title>
+          <title>噗噗</title>
           {assets}
           {scripts}
         </head>

@@ -69,17 +69,17 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - name: 构建
-        run: cargo build -p dp2p-relay --release
+        run: cargo build -p pupu-relay --release
       - name: 上传构建产物
         uses: actions/upload-artifact@v6
         with:
-          path: target/release/dp2p-relay
+          path: target/release/pupu-relay
   build-windows:
     name: 构建 Windows 版本
     needs: [app-test, check-release]
     runs-on: windows-latest
     env:
-      TARGET_PATH: target/release/dp2p-windows.exe
+      TARGET_PATH: target/release/pupu-windows.exe
     steps:
       - uses: ./.github/actions/initialize-project
       - name: 构建
@@ -123,7 +123,7 @@ jobs:
         uses: trustedinster/sync-release-gitee@v1.3
         with:
           github_owner: ZhangXiChang
-          github_repo: dp2p
+          github_repo: pupu
           gitee_owner: zhangxichang
-          gitee_repo: dp2p-release-latest
+          gitee_repo: pupu-release-latest
           gitee_token: ${{ secrets.GITEE_TOKEN }}

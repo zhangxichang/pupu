@@ -11,3 +11,4 @@
 /.opencode/
 
 /public/db_schema.sql
+/keystore.properties

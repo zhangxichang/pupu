@@ -1,4 +1,4 @@
-# Distributed Peer-to-Peer Communication Software
+# Pupu
 
 [中文](docs/zh/README.md)
 
@@ -9,14 +9,14 @@ A cross-platform network chat application built on modern web technologies. It c
 ## ✨ Core Advantages
 
 - **True Cross-Platform Experience** - Seamlessly supports Web and Windows with consistent, fluid user experience
-- **Instant Web Application** - No installation required; simply access **[DP2P](https://dp2p.zhangxichang.com)** through your browser to start using
+- **Instant Web Application** - No installation required; simply access **[Pupu](https://pupu.zhangxichang.com)** through your browser to start using
 - **High-Performance Rust Backend** - Core application components (WebAssembly modules and native backend) written in Rust, combining excellent performance with memory safety
 - **Distributed P2P Communication** - Utilizes the Kademlia protocol to build a distributed network, ensuring reliable user connectivity
 
 ## ⬇️ Download Options
 
-- **[GitHub Release](https://github.com/ZhangXiChang/dp2p/releases)** - Primary distribution channel for international users
-- **[Gitee Release](https://gitee.com/zhangxichang/dp2p-release-latest/releases)** - Faster download experience for users in China
+- **[GitHub Release](https://github.com/ZhangXiChang/pupu/releases)** - Primary distribution channel for international users
+- **[Gitee Release](https://gitee.com/zhangxichang/pupu-release-latest/releases)** - Faster download experience for users in China
 
 ## 📚 Documentation & Architecture
 
@@ -33,6 +33,6 @@ We sincerely welcome contributions of all kinds! Whether it's code submissions, 
 
 Your feedback drives our progress! We look forward to your valuable input:
 
-- 🐞 **Report Issues**: [Submit a Bug](https://github.com/ZhangXiChang/dp2p/issues/new?template=you-encountered-a-bug-.md)
-- 💡 **Feature Requests**: [Suggest New Features](https://github.com/ZhangXiChang/dp2p/issues/new?template=you-have-an-improvement-idea-.md)
+- 🐞 **Report Issues**: [Submit a Bug](https://github.com/ZhangXiChang/pupu/issues/new?template=you-encountered-a-bug-.md)
+- 💡 **Feature Requests**: [Suggest New Features](https://github.com/ZhangXiChang/pupu/issues/new?template=you-have-an-improvement-idea-.md)
 - 💬 **Community Discussion**: Join our discussion area to share experiences with other users

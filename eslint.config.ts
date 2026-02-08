@@ -12,5 +12,6 @@ export default defineConfig({
   rules: {
     "@typescript-eslint/strict-boolean-expressions": "error",
     "@typescript-eslint/no-misused-promises": "off",
+    "no-unassigned-vars": "off",
   },
 });
