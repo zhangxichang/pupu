@@ -2,8 +2,8 @@ import wasm_init, {
   generate_secret_key as wasm_generate_secret_key,
   get_secret_key_id as wasm_get_secret_key_id,
   Endpoint as WasmEndpoint,
-} from "@dp2p/endpoint";
-import wasm_url from "@dp2p/endpoint/endpoint_wasm_bg.wasm?url";
+} from "@pupu/endpoint";
+import wasm_url from "@pupu/endpoint/endpoint_wasm_bg.wasm?url";
 import type { Person } from "~/lib/types";
 import type { Endpoint, EndpointModule } from "./interface";
 import type { PersonProtocolEvent } from "./types";
