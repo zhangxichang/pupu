@@ -107,6 +107,7 @@ jobs:
           echo "keyAlias=${{secrets.ANDROID_KEYSTORE_KEYALIAS}}" >> keystore.properties
           echo "password=${{secrets.ANDROID_KEYSTORE_PASSWORD}}" >> keystore.properties
           bun run android:init
+          bun run generate:icon
       - name: 构建
         run: |
           echo ${{needs.check-release.outputs.version}} > public/version
