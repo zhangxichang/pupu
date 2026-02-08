@@ -93,9 +93,33 @@ jobs:
         uses: actions/upload-artifact@v6
         with:
           path: ${{ env.TARGET_PATH }}
+  build-android:
+    name: 构建 Android 版本
+    needs: [app-test, check-release]
+    runs-on: ubuntu-latest
+    env:
+      TARGET_PATH: target/release/pupu-android.apk
+    steps:
+      - uses: ./.github/actions/initialize-project
+      - name: 初始化安卓构建
+        run: |
+          echo "storeFile=${{secrets.ANDROID_KEYSTORE_FILE}}" >> keystore.properties
+          echo "keyAlias=${{secrets.ANDROID_KEYSTORE_KEYALIAS}}" >> keystore.properties
+          echo "password=${{secrets.ANDROID_KEYSTORE_PASSWORD}}" >> keystore.properties
+          bun run android:init
+      - name: 构建
+        run: |
+          echo ${{needs.check-release.outputs.version}} > public/version
+          bun run android:build
+      - name: 处理构建产物
+        run: mv native/gen/android/app/build/outputs/apk/arm64/release/app-arm64-release.apk ${{ env.TARGET_PATH }}
+      - name: 上传构建产物
+        uses: actions/upload-artifact@v6
+        with:
+          path: ${{ env.TARGET_PATH }}
   release:
     name: 发布
-    needs: [build-relay, build-windows]
+    needs: [build-relay, build-windows, build-android]
     runs-on: ubuntu-latest
     permissions:
       contents: write
