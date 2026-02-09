@@ -50,13 +50,12 @@ export default function FriendList() {
               <UserPlusIcon class="size-4" />
             </button>
           </div>
-          <dialog
-            ref={add_friend_dialog_ref}
-            class="modal"
-            closedby="closerequest"
-          >
+          <dialog ref={add_friend_dialog_ref} class="modal" closedby="any">
             <Show when={lazy_add_friend_modal_load()}>
               <LazyAddFriendModal />
+              <form method="dialog" class="modal-backdrop">
+                <button />
+              </form>
             </Show>
           </dialog>
         </div>

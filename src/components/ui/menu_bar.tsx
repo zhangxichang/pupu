@@ -29,9 +29,12 @@ export default function MenuBar() {
           </button>
         </li>
       </ul>
-      <dialog ref={about_dialog_ref} class="modal" closedby="closerequest">
+      <dialog ref={about_dialog_ref} class="modal" closedby="any">
         <Show when={lazy_about_modal_load()}>
           <LazyAboutModal />
+          <form method="dialog" class="modal-backdrop">
+            <button />
+          </form>
         </Show>
       </dialog>
       <Show when={import.meta.env.TAURI_ENV_PLATFORM !== "android"}>
