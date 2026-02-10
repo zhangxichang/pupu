@@ -40,6 +40,7 @@
     "@tanstack/solid-form": "^1.28.0",
     "@tanstack/solid-virtual": "^3.13.18",
     "@tauri-apps/api": "^2.10.1",
+    "@tauri-apps/plugin-notification": "^2.3.3",
     "@tauri-apps/plugin-opener": "^2.5.3",
     "@tauri-apps/plugin-os": "^2.3.2",
     "animejs": "^4.3.5",

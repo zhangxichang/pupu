@@ -44,8 +44,10 @@ impl SQLiteApi for SQLiteApiImpl {
             eyre::Ok(
                 self.connection_pool
                     .insert(
-                        tokio_rusqlite::Connection::open(window.path().app_data_dir()?.join(path))
-                            .await?,
+                        tokio_rusqlite::Connection::open(
+                            window.path().app_local_data_dir()?.join(path),
+                        )
+                        .await?,
                     )
                     .get()?,
             )

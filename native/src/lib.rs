@@ -40,6 +40,7 @@ async fn main() {
         .plugin(tauri_plugin_prevent_default.build())
         .plugin(tauri_plugin_os::init())
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_notification::init())
         .invoke_handler(router().into_handler())
         .setup(|app| {
             flexi_logger::Logger::with(flexi_logger::LogSpecification::info())
