@@ -1,9 +1,8 @@
-import { env } from "bun";
 import { defineConfig, devices } from "@playwright/test";
 
 export default defineConfig({
   testDir: "tests",
-  reporter: env.CI ? "github" : "html",
+  reporter: process.env.CI ? "github" : "html",
   webServer: {
     command: "bun run preview",
     url: "http://127.0.0.1:8787",
