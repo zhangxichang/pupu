@@ -1,7 +1,7 @@
 import { MessageCircleMoreIcon, UserIcon, UsersIcon } from "lucide-solid";
 import type { Setter } from "solid-js";
 
-export type SidebarButtonGroupState = "message" | "friend" | "group";
+export type SidebarButtonGroupState = null | "message" | "friend" | "group";
 
 export default function SidebarButtonGroup(props: {
   set_state: Setter<SidebarButtonGroupState>;
@@ -13,7 +13,16 @@ export default function SidebarButtonGroup(props: {
           type="radio"
           class="hidden"
           name="options"
-          onClick={() => props.set_state("message")}
+          onClick={(e) =>
+            props.set_state((v) => {
+              if (v !== "message") {
+                return "message";
+              } else {
+                e.currentTarget.checked = false;
+                return null;
+              }
+            })
+          }
         />
         <MessageCircleMoreIcon />
       </label>
@@ -22,8 +31,16 @@ export default function SidebarButtonGroup(props: {
           type="radio"
           class="hidden"
           name="options"
-          checked
-          onClick={() => props.set_state("friend")}
+          onClick={(e) =>
+            props.set_state((v) => {
+              if (v !== "friend") {
+                return "friend";
+              } else {
+                e.currentTarget.checked = false;
+                return null;
+              }
+            })
+          }
         />
         <UserIcon />
       </label>
@@ -32,7 +49,16 @@ export default function SidebarButtonGroup(props: {
           type="radio"
           class="hidden"
           name="options"
-          onClick={() => props.set_state("group")}
+          onClick={(e) =>
+            props.set_state((v) => {
+              if (v !== "group") {
+                return "group";
+              } else {
+                e.currentTarget.checked = false;
+                return null;
+              }
+            })
+          }
         />
         <UsersIcon />
       </label>

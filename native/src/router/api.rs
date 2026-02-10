@@ -4,7 +4,7 @@ pub trait Api {
 }
 
 #[derive(Clone, Default)]
-pub struct ApiImpl {}
+pub struct ApiImpl;
 #[taurpc::resolvers]
 impl Api for ApiImpl {
     async fn unreachable(self) {

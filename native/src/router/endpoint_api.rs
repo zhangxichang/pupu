@@ -4,7 +4,7 @@ use endpoint::Endpoint;
 use sharded_slab::Slab;
 use utils::option_ext::OptionGet;
 
-use crate::router::error::MapStringError;
+use crate::error::MapStringError;
 
 #[taurpc::procedures(path = "endpoint")]
 pub trait EndpointApi {

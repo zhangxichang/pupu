@@ -14,6 +14,7 @@
         "@tauri-apps/api": "^2.10.1",
         "@tauri-apps/plugin-opener": "^2.5.3",
         "@tauri-apps/plugin-os": "^2.3.2",
+        "animejs": "^4.3.5",
         "arktype": "^2.1.29",
         "comlink": "^4.4.2",
         "kysely": "^0.28.11",
@@ -673,6 +674,8 @@
     "agent-base": ["agent-base@7.1.4", "", {}, "sha512-MnA+YT8fwfJPgBx3m60MNqakm30XOkyIoH1y6huTQvC0PwZG7ki8NacLBcrPbNoo8vEZy7Jpuk7+jMO+CUovTQ=="],
 
     "ajv": ["ajv@6.12.6", "", { "dependencies": { "fast-deep-equal": "^3.1.1", "fast-json-stable-stringify": "^2.0.0", "json-schema-traverse": "^0.4.1", "uri-js": "^4.2.2" } }, "sha512-j3fVLgvTo527anyYyJOGTYJbG+vnnQYvE0m5mmkc1TK+nxAppkCLMIL0aZ4dblVCNoGShhm+kzE4ZUykBoMg4g=="],
+
+    "animejs": ["animejs@4.3.5", "", {}, "sha512-yuQo/r97TCE+DDu3dTRKjyhBKSEGBcZorWeRW7WCE7EkAQpBoNd2E82dAAD/MDdrbREv7qsw/u7MAqiUX544WQ=="],
 
     "ansi-align": ["ansi-align@3.0.1", "", { "dependencies": { "string-width": "^4.1.0" } }, "sha512-IOfwwBF5iczOjp/WeY4YxyjqAFMQoZufdQWDd19SEExbVLNXqvpzSJ/M7Za4/sCPmQ0+GRquoA7bGcINcxew6w=="],
 

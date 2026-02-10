@@ -10,14 +10,10 @@ export default function UserInfoWindow(props: {
 }) {
   let self_ref: HTMLDivElement | undefined;
   onMount(() => {
-    if (!props.trigger_ref || !self_ref) {
-      throw new Error("对象为空");
-    }
+    if (!props.trigger_ref || !self_ref) throw new Error("对象为空");
     onCleanup(
       autoUpdate(props.trigger_ref, self_ref, async () => {
-        if (!props.trigger_ref) {
-          throw new Error("对象为空");
-        }
+        if (!props.trigger_ref) throw new Error("对象为空");
         const pos = await computePosition(props.trigger_ref, self_ref, {
           placement: "top",
           middleware: [offset(4), shift({ padding: 8 })],
