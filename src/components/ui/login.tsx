@@ -46,7 +46,6 @@ export default function Login() {
     validators: { onChange: FormSchema },
     onSubmit: ({ value }) => {
       navigate(`/home/${value.user_id}`);
-      form.reset();
     },
   }));
   const is_submitting = form.useStore((state) => state.isSubmitting);
@@ -149,6 +148,7 @@ export default function Login() {
                   .compile(),
               );
               form.reset();
+              set_preview_avatar();
             }}
           >
             删除账户
