@@ -141,7 +141,10 @@ export default function Login() {
             type="button"
             class="btn"
             onClick={async () => {
-              if (form.state.values.user_id === undefined) return;
+              if (form.state.values.user_id === undefined) {
+                await form.validateField("user_id", "submit");
+                return;
+              }
               await main_store.sqlite.execute(
                 QueryBuilder.deleteFrom("user")
                   .where("id", "=", form.state.values.user_id)
