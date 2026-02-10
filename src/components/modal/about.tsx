@@ -23,10 +23,7 @@ export default function AboutModal() {
     return contributors.data;
   });
   return (
-    <div class="modal-box flex flex-col relative">
-      <span class="absolute top-3 right-3 select-none text-base-content/60 text-sm">
-        按<kbd class="kbd kbd-sm">ESC</kbd>关闭
-      </span>
+    <div class="modal-box flex flex-col">
       <span class="text-base-content font-bold text-lg">关于</span>
       <span class="text-sm text-base-content/60">桃李不言，下自成蹊。</span>
       <div class="flex flex-col mt-3 gap-2">

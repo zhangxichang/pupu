@@ -10,9 +10,9 @@ use sharded_slab::Slab;
 use tauri::{Manager, Runtime, Window, ipc::Channel};
 use tokio_rusqlite::{hooks::Action, params_from_iter};
 
-use crate::router::{
+use crate::{
     error::MapStringError,
-    sqlite_api::{traits::IntoJSONValue, types::SQLiteUpdateEvent, utils::json_sql_params},
+    router::sqlite_api::{traits::IntoJSONValue, types::SQLiteUpdateEvent, utils::json_sql_params},
 };
 
 #[taurpc::procedures(path = "sqlite")]
