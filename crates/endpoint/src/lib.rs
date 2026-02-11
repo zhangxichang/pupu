@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{path::Path, sync::Arc};
 
 use base64::{Engine, prelude::BASE64_STANDARD};
 use eyre::Result;
@@ -35,7 +35,11 @@ pub struct Endpoint {
     group_pool: Arc<Slab<(GossipSender, GossipReceiver)>>,
 }
 impl Endpoint {
-    pub async fn new(secret_key: Vec<u8>, person: Person) -> Result<Self> {
+    pub async fn new(
+        secret_key: Vec<u8>,
+        person: Person,
+        store_path: impl AsRef<Path>,
+    ) -> Result<Self> {
         let relay_map = RelayMode::Default.relay_map();
         relay_map.insert(
             "https://dev.zhangxichang.com:10281".parse()?,
@@ -69,7 +73,7 @@ impl Endpoint {
             use eyre::eyre;
             use iroh_blobs::store::fs::FsStore;
 
-            store = FsStore::load("store")
+            store = FsStore::load(store_path.as_ref())
                 .await
                 .map_err(|err| eyre!(err))?
                 .into();

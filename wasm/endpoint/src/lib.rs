@@ -17,7 +17,7 @@ pub struct Endpoint(endpoint::Endpoint);
 impl Endpoint {
     pub async fn new(secret_key: Vec<u8>, person: JsValue) -> Result<Self, JsError> {
         Ok(Self(
-            endpoint::Endpoint::new(secret_key, serde_wasm_bindgen::from_value(person)?)
+            endpoint::Endpoint::new(secret_key, serde_wasm_bindgen::from_value(person)?, "")
                 .await
                 .mje()?,
         ))
