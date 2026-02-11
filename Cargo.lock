@@ -6882,7 +6882,7 @@ dependencies = [
 [[package]]
 name = "taurpc"
 version = "0.6.0"
-source = "git+https://github.com/zhangxichang/TauRPC#9b3613316bd591ce1bcb5f38f9fa1d28436a4ed0"
+source = "git+https://github.com/zhangxichang/TauRPC?branch=fix%2Fandroid-debugging-issues#9a321a17064ff47ac41947725cb51f05847e9b60"
 dependencies = [
  "anyhow",
  "heck 0.4.1",
@@ -6901,7 +6901,7 @@ dependencies = [
 [[package]]
 name = "taurpc-macros"
 version = "0.6.0"
-source = "git+https://github.com/zhangxichang/TauRPC#9b3613316bd591ce1bcb5f38f9fa1d28436a4ed0"
+source = "git+https://github.com/zhangxichang/TauRPC?branch=fix%2Fandroid-debugging-issues#9a321a17064ff47ac41947725cb51f05847e9b60"
 dependencies = [
  "proc-macro2",
  "quote",
