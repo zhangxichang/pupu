@@ -2,7 +2,7 @@
 
 <div align="center">
   <div>
-    <a href="https://github.com/zhangxichang/pupu"><img alt="P2P" src="https://img.shields.io/badge/P2P-通信-009688?style=flat-square" /></a>
+    <a href="https://github.com/zhangxichang/pupu"><img alt="P2P" src="https://img.shields.io/badge/P2P-即时通讯-009688?style=flat-square" /></a>
     <a href="https://github.com/zhangxichang/pupu"><img alt="Local Storage" src="https://img.shields.io/badge/数据-本地存储-4CAF50?style=flat-square" /></a>
     <a href="https://github.com/zhangxichang/pupu"><img alt="Privacy" src="https://img.shields.io/badge/隐私-优先-673AB7?style=flat-square" /></a>
   </div>
@@ -26,7 +26,7 @@
 
 ## 💬 开发者的话
 
-很久以前就想实现一个跨平台的P2P网络通信软件，并且希望界面美观。现在借助Tauri框架，省去了跨平台适配的诸多麻烦，前端实现也让界面十分美观。未来只要Tauri支持的平台，我都计划支持。
+很久以前就想实现一个跨平台的P2P即时通讯软件，并且希望界面美观。现在借助Tauri框架，省去了跨平台适配的诸多麻烦，前端实现也让界面十分美观。未来只要Tauri支持的平台，我都计划支持。
 
 ## ✨ 功能特色
 
