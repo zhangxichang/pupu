@@ -43,19 +43,33 @@ async fn main() {
         .plugin(tauri_plugin_notification::init())
         .invoke_handler(router().into_handler())
         .setup(|app| {
-            flexi_logger::Logger::with(flexi_logger::LogSpecification::info())
-                .log_to_file(
-                    flexi_logger::FileSpec::default()
-                        .directory(app.path().app_log_dir()?)
-                        .suppress_basename(),
-                )
+            let log_spec;
+            #[cfg(not(debug_assertions))]
+            {
+                log_spec = flexi_logger::LogSpecification::info()
+            }
+            #[cfg(debug_assertions)]
+            {
+                log_spec = flexi_logger::LogSpecification::debug()
+            }
+            #[allow(unused_mut)]
+            let mut logger = flexi_logger::Logger::with(log_spec)
                 .format(flexi_logger::json_format)
                 .rotate(
                     flexi_logger::Criterion::Size(1024 * 1024),
                     flexi_logger::Naming::Timestamps,
                     flexi_logger::Cleanup::KeepCompressedFiles(10),
                 )
-                .start()?;
+                .log_to_file(
+                    flexi_logger::FileSpec::default()
+                        .directory(app.path().app_log_dir()?)
+                        .suppress_basename(),
+                );
+            #[cfg(debug_assertions)]
+            {
+                logger = logger.log_to_stderr();
+            }
+            logger.start()?;
             log::info!("日志开始记录");
             Ok(())
         })

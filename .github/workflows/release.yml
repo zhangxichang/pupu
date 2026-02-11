@@ -85,7 +85,7 @@ jobs:
       - name: 构建
         run: |
           echo ${{needs.check-release.outputs.version}} > public/version
-          bun tauri build
+          bun run native:build
       - name: 处理构建产物
         run: |
           Move-Item -Path target/release/native.exe -Destination ${{ env.TARGET_PATH }}

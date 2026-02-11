@@ -2,6 +2,7 @@ use std::sync::Arc;
 
 use endpoint::Endpoint;
 use sharded_slab::Slab;
+use tauri::{Manager, Runtime, Window};
 use utils::option_ext::OptionGet;
 
 use crate::error::MapStringError;
@@ -12,8 +13,11 @@ pub trait EndpointApi {
     async fn get_secret_key_id(secret_key: Vec<u8>) -> Result<String, String>;
     async fn generate_group_id() -> String;
     async fn generate_ticket(group_id: String, bootstrap: Vec<String>) -> Result<String, String>;
-    async fn open_endpoint(secret_key: Vec<u8>, person: serde_json::Value)
-    -> Result<usize, String>;
+    async fn open_endpoint<R: Runtime>(
+        window: Window<R>,
+        secret_key: Vec<u8>,
+        person: serde_json::Value,
+    ) -> Result<usize, String>;
     async fn close_endpoint(handle: usize) -> Result<(), String>;
     async fn id(handle: usize) -> Result<String, String>;
     async fn person_protocol_next_event(handle: usize) -> Result<String, String>;
@@ -49,15 +53,23 @@ impl EndpointApi for EndpointApiImpl {
     ) -> Result<String, String> {
         endpoint::generate_ticket(group_id, bootstrap).mse()
     }
-    async fn open_endpoint(
+    async fn open_endpoint<R: Runtime>(
         self,
+        window: Window<R>,
         secret_key: Vec<u8>,
         person: serde_json::Value,
     ) -> Result<usize, String> {
         async {
             eyre::Ok(
                 self.endpoint_pool
-                    .insert(Endpoint::new(secret_key, serde_json::from_value(person)?).await?)
+                    .insert(
+                        Endpoint::new(
+                            secret_key,
+                            serde_json::from_value(person)?,
+                            window.path().app_local_data_dir()?.join("store"),
+                        )
+                        .await?,
+                    )
                     .get()?,
             )
         }
