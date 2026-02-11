@@ -3,15 +3,14 @@ use std::{path::Path, sync::Arc};
 use base64::{Engine, prelude::BASE64_STANDARD};
 use eyre::Result;
 use iroh::{
-    EndpointId, RelayConfig, RelayMode, SecretKey, address_lookup::PkarrPublisher,
-    endpoint::Connection, protocol::Router,
+    EndpointId, RelayMode, SecretKey, address_lookup::PkarrPublisher, endpoint::Connection,
+    protocol::Router,
 };
 use iroh_blobs::{BlobsProtocol, api::Store};
 use iroh_gossip::{
     Gossip, TopicId,
     api::{GossipReceiver, GossipSender},
 };
-use iroh_relay::RelayQuicConfig;
 use parking_lot::Mutex;
 use person_protocol::{Person, PersonProtocol};
 use serde::{Deserialize, Serialize};
@@ -41,14 +40,6 @@ impl Endpoint {
         store_path: impl AsRef<Path>,
     ) -> Result<Self> {
         let relay_map = RelayMode::Default.relay_map();
-        relay_map.insert(
-            "https://dev.zhangxichang.com:10281".parse()?,
-            RelayConfig {
-                url: "https://dev.zhangxichang.com:10281".parse()?,
-                quic: Some(RelayQuicConfig { port: 10282 }),
-            }
-            .into(),
-        );
         #[allow(unused_mut)]
         let mut endpoint_builder = iroh::Endpoint::empty_builder(RelayMode::Custom(relay_map))
             .address_lookup(PkarrPublisher::n0_dns());
