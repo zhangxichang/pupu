@@ -26,7 +26,7 @@
 - [wasm32-unknown-unknown](): 执行`rustup target install wasm32-unknown-unknown`安装
 - [wasm-pack](https://drager.github.io/wasm-pack/installer): Rust WebAssembly 构建工具
 
-  _如果你要进行安卓开发_
+_如果你要进行安卓开发_
 
 - [AndroidSDK](https://developer.android.com/studio): 通过AndroidStudio安装AndroidSDK
 
@@ -62,6 +62,10 @@ bun run android:build
 #原生
 bun run native:build
 ```
+
+## 开发规范
+
+- 函数与变量命名遵循 `snake_case` 风格
 
 ## Commit 指南
 
