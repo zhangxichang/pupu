@@ -41,6 +41,7 @@ jobs:
     if: ${{needs.check-release.outputs.release=='true'}}
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v6
       - uses: ./.github/actions/initialize-project
       - name: 应用测试
         run: bun run test
@@ -63,6 +64,7 @@ jobs:
     env:
       TARGET_PATH: target/release/pupu-windows.exe
     steps:
+      - uses: actions/checkout@v6
       - uses: ./.github/actions/initialize-project
       - name: 构建
         run: |
@@ -82,6 +84,7 @@ jobs:
     env:
       TARGET_PATH: target/release/pupu-android.apk
     steps:
+      - uses: actions/checkout@v6
       - uses: ./.github/actions/initialize-project
       - name: 初始化安卓构建
         run: |
