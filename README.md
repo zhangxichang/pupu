@@ -12,7 +12,7 @@
     <a href="https://github.com/zhangxichang/pupu/releases"><img alt="Web" src="https://img.shields.io/badge/Web-4285F4?style=flat-square&logo=globe&logoColor=white" /></a>
   </div>
   <div>
-    <a href="./LICENSE"><img src="https://img.shields.io/github/license/zhangxichang/pupu?style=flat-square" /></a>
+    <a href="LICENSE"><img src="https://img.shields.io/github/license/zhangxichang/pupu?style=flat-square" /></a>
     <a href="https://github.com/zhangxichang/pupu/releases/latest"><img src="https://img.shields.io/github/v/release/zhangxichang/pupu?style=flat-square" /></a>
     <a href="https://github.com/zhangxichang/pupu/releases"><img src="https://img.shields.io/github/downloads/zhangxichang/pupu/total?style=flat-square" /></a>
   </div>
@@ -40,3 +40,13 @@
 
 - **[GitHub Release](https://github.com/zhangxichang/pupu/releases/latest)**
 - **[Gitee Release](https://gitee.com/zhangxichang/pupu-release-latest/releases)**
+
+## 🏗️ 项目架构
+
+![Pupu Banner](assets/images/project_arch.png)
+
+## 🤝 贡献指南
+
+欢迎提交 Issue、PR 或文档改进，共同完善项目！
+
+[![贡献指南](https://img.shields.io/badge/贡献-指南-0052CC?logo=github)](docs/CONTRIBUTING.md)
