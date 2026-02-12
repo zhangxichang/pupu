@@ -1,8 +1,7 @@
 name: 发布
 on:
   push:
-    branches:
-      - release
+    branches: [release, beta, alpha]
 permissions:
   contents: read
 jobs:
@@ -45,23 +44,6 @@ jobs:
       - uses: ./.github/actions/initialize-project
       - name: 应用测试
         run: bun run test
-  build-release-web:
-    name: 构建发布到 Web
-    needs: [app-test, check-release]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: ./.github/actions/initialize-project
-      - name: 构建
-        run: |
-          echo ${{needs.check-release.outputs.version}} > public/version
-          bun run build
-      - name: 发布
-        uses: cloudflare/wrangler-action@v3
-        with:
-          wranglerVersion: latest
-          packageManager: bun
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
   build-relay:
     name: 构建中继服务程序
     needs: app-test

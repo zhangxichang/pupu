@@ -9,10 +9,12 @@ import { UserIcon } from "lucide-solid";
 
 export default function AboutModal() {
   const version = createAsync(async () => {
-    const version = await fetch("/version");
-    const content_type = version.headers.get("Content-Type");
-    if (content_type !== "text/html") {
-      return await version.text();
+    if (import.meta.env.TAURI_ENV_PLATFORM !== undefined) {
+      const version = await fetch("/version");
+      const content_type = version.headers.get("Content-Type");
+      if (content_type !== "text/html") {
+        return await version.text();
+      }
     }
   });
   const contributors = createAsync(async () => {
@@ -69,9 +71,11 @@ export default function AboutModal() {
           >
             源码仓库
           </span>
-          <span class="text-sm text-base-content/60">
-            版本号：{version() ?? "开发版本"}
-          </span>
+          <Show when={import.meta.env.TAURI_ENV_PLATFORM !== undefined}>
+            <span class="text-sm text-base-content/60">
+              版本号：{version() ?? "开发版本"}
+            </span>
+          </Show>
         </div>
       </div>
     </div>
