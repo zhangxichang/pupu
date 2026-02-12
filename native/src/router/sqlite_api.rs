@@ -7,7 +7,7 @@ use std::sync::Arc;
 use ::utils::option_ext::OptionGet;
 use eyre::eyre;
 use sharded_slab::Slab;
-use tauri::{Manager, Runtime, Window, ipc::Channel};
+use tauri::{Runtime, Window, ipc::Channel};
 use tokio_rusqlite::{hooks::Action, params_from_iter};
 
 use crate::{
@@ -39,16 +39,35 @@ pub struct SQLiteApiImpl {
 }
 #[taurpc::resolvers]
 impl SQLiteApi for SQLiteApiImpl {
-    async fn open_db<R: Runtime>(self, window: Window<R>, path: String) -> Result<usize, String> {
+    async fn open_db<R: Runtime>(
+        self,
+        #[allow(unused_variables)] window: Window<R>,
+        path: String,
+    ) -> Result<usize, String> {
         async {
+            let db_path;
+            #[cfg(not(debug_assertions))]
+            {
+                use tauri::Manager;
+
+                db_path = window.path().app_local_data_dir()?.join(path)
+            }
+            #[cfg(debug_assertions)]
+            {
+                #[cfg(target_os = "android")]
+                {
+                    use tauri::Manager;
+
+                    db_path = window.path().app_local_data_dir()?.join(path)
+                }
+                #[cfg(not(target_os = "android"))]
+                {
+                    db_path = path;
+                }
+            }
             eyre::Ok(
                 self.connection_pool
-                    .insert(
-                        tokio_rusqlite::Connection::open(
-                            window.path().app_local_data_dir()?.join(path),
-                        )
-                        .await?,
-                    )
+                    .insert(tokio_rusqlite::Connection::open(db_path).await?)
                     .get()?,
             )
         }

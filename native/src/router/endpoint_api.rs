@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use endpoint::Endpoint;
 use sharded_slab::Slab;
-use tauri::{Manager, Runtime, Window};
+use tauri::{Runtime, Window};
 use utils::option_ext::OptionGet;
 
 use crate::error::MapStringError;
@@ -55,20 +55,36 @@ impl EndpointApi for EndpointApiImpl {
     }
     async fn open_endpoint<R: Runtime>(
         self,
-        window: Window<R>,
+        #[allow(unused_variables)] window: Window<R>,
         secret_key: Vec<u8>,
         person: serde_json::Value,
     ) -> Result<usize, String> {
         async {
+            let store_path;
+            #[cfg(not(debug_assertions))]
+            {
+                use tauri::Manager;
+
+                store_path = window.path().app_local_data_dir()?.join("store");
+            }
+            #[cfg(debug_assertions)]
+            {
+                #[cfg(target_os = "android")]
+                {
+                    use tauri::Manager;
+
+                    store_path = window.path().app_local_data_dir()?.join("store");
+                }
+                #[cfg(not(target_os = "android"))]
+                {
+                    store_path = "store";
+                }
+            }
             eyre::Ok(
                 self.endpoint_pool
                     .insert(
-                        Endpoint::new(
-                            secret_key,
-                            serde_json::from_value(person)?,
-                            window.path().app_local_data_dir()?.join("store"),
-                        )
-                        .await?,
+                        Endpoint::new(secret_key, serde_json::from_value(person)?, store_path)
+                            .await?,
                     )
                     .get()?,
             )
