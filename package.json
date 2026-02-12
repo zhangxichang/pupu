@@ -2,9 +2,10 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "wasm:build": "wasm-pack build wasm/endpoint --target web --release",
     "generate:db-schema": "prisma generate && prisma db push && uv run scripts/db_into_schema.py temp.db",
     "generate:icon": "tauri icon public/icon.svg",
-    "install:pre": "wasm-pack build wasm/endpoint --target web --release",
+    "install:pre": "bun run wasm:build",
     "install:post": "bun run generate:icon && cargo run --bin generate_ipc_bindings && bun run generate:db-schema && playwright install --with-deps",
     "check": "tsc && eslint src",
     "dev": "vinxi dev",

@@ -1,8 +1,6 @@
 mod error;
 mod router;
 
-use tauri::Manager;
-
 pub use crate::router::router;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -42,18 +40,31 @@ async fn main() {
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_notification::init())
         .invoke_handler(router().into_handler())
-        .setup(|app| {
+        .setup(|#[allow(unused_variables)] app| {
             let log_spec;
+            let log_dir;
             #[cfg(not(debug_assertions))]
             {
-                log_spec = flexi_logger::LogSpecification::info()
+                use tauri::Manager;
+
+                log_spec = flexi_logger::LogSpecification::warn();
+                log_dir = app.path().app_log_dir()?;
             }
             #[cfg(debug_assertions)]
             {
-                log_spec = flexi_logger::LogSpecification::debug()
+                log_spec = flexi_logger::LogSpecification::debug();
+                #[cfg(target_os = "android")]
+                {
+                    use tauri::Manager;
+
+                    log_dir = app.path().app_log_dir()?;
+                }
+                #[cfg(not(target_os = "android"))]
+                {
+                    log_dir = "logs";
+                }
             }
-            #[allow(unused_mut)]
-            let mut logger = flexi_logger::Logger::with(log_spec)
+            flexi_logger::Logger::with(log_spec)
                 .format(flexi_logger::json_format)
                 .rotate(
                     flexi_logger::Criterion::Size(1024 * 1024),
@@ -62,14 +73,10 @@ async fn main() {
                 )
                 .log_to_file(
                     flexi_logger::FileSpec::default()
-                        .directory(app.path().app_log_dir()?)
+                        .directory(log_dir)
                         .suppress_basename(),
-                );
-            #[cfg(debug_assertions)]
-            {
-                logger = logger.log_to_stderr();
-            }
-            logger.start()?;
+                )
+                .start()?;
             log::info!("日志开始记录");
             Ok(())
         })
