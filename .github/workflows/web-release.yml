@@ -1,0 +1,30 @@
+name: Web发布
+on:
+  push:
+    branches:
+      - web
+permissions:
+  contents: read
+jobs:
+  app-test:
+    name: 应用测试
+    runs-on: ubuntu-latest
+    steps:
+      - uses: ./.github/actions/initialize-project
+      - name: 应用测试
+        run: bun run test
+  release:
+    name: 发布
+    needs: app-test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: ./.github/actions/initialize-project
+      - name: 构建
+        run: bun run build
+      - name: 发布
+        uses: cloudflare/wrangler-action@v3
+        with:
+          wranglerVersion: latest
+          packageManager: bun
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
