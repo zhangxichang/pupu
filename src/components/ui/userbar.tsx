@@ -67,6 +67,7 @@ export default function Userbar() {
         class="btn btn-square btn-ghost"
         onClick={() => {
           if (!userbar_ref) throw new Error("用户栏不存在");
+          set_is_open_user_info_window(false);
           if (is_expand()) {
             animate(userbar_ref, { x: collapse_transform_x });
             set_is_expand(false);
