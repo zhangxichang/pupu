@@ -10,6 +10,7 @@ jobs:
     name: 应用测试
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v6
       - uses: ./.github/actions/initialize-project
       - name: 应用测试
         run: bun run test
@@ -18,6 +19,7 @@ jobs:
     needs: app-test
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v6
       - uses: ./.github/actions/initialize-project
       - name: 构建
         run: bun run build
