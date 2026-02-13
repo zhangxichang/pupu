@@ -149,7 +149,6 @@ jobs:
           PRERELEASE: ${{ inputs.channel }}
           GITHUB_TOKEN: ${{ steps.app_token.outputs.token }}
         run: |
-          git remote set-url origin https://x-access-token:${{env.GITHUB_TOKEN}}@github.com/${{github.repository}}
           npx \
             --package conventional-changelog-conventionalcommits \
             --package @semantic-release/exec \
