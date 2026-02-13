@@ -149,10 +149,10 @@ jobs:
             --package @semantic-release/exec \
             --package semantic-release \
             semantic-release
-      - name: 从 GitHub Release 发布内容到 Gitee Release
+      - name: 从 GitHub Release 同步到 Gitee Release
         uses: trustedinster/sync-release-gitee@v1.3
         with:
-          github_owner: ZhangXiChang
+          github_owner: zhangxichang
           github_repo: pupu
           gitee_owner: zhangxichang
           gitee_repo: pupu-release-latest
