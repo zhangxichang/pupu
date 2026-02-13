@@ -1,12 +1,15 @@
 name: 发布
+concurrency:
+  group: release
+  cancel-in-progress: true
 on:
   workflow_dispatch:
     inputs:
       channel:
         description: "发布通道"
         type: choice
-        options: [stable, beta]
-        default: stable
+        options: [stable, beta, alpha]
+        default: alpha
 permissions:
   contents: read
 jobs:
@@ -67,12 +70,15 @@ jobs:
         include:
           - target: relay
             runs-on: ubuntu-latest
+            name: pupu-relay-linux
             path: pupu-relay-linux
           - target: windows
             runs-on: windows-latest
+            name: pupu-windows
             path: pupu-windows.exe
           - target: android
             runs-on: ubuntu-latest
+            name: pupu-android
             path: pupu-android.apk
     runs-on: ${{ matrix.runs-on }}
     steps:
@@ -115,7 +121,7 @@ jobs:
       - name: 上传构建产物
         uses: actions/upload-artifact@v6
         with:
-          name: ${{ matrix.path }}
+          name: ${{ matrix.name }}
           path: ${{ matrix.path }}
   release:
     name: 发布
@@ -133,7 +139,7 @@ jobs:
         with:
           path: artifacts
           merge-multiple: true
-          pattern: "pupu-*"
+          pattern: "*"
       - uses: actions/create-github-app-token@v2
         id: app_token
         with:
@@ -144,6 +150,7 @@ jobs:
           PRERELEASE: ${{ inputs.channel }}
           GITHUB_TOKEN: ${{ steps.app_token.outputs.token }}
         run: |
+          git remote set-url origin https://x-access-token:${{env.GITHUB_TOKEN}}@github.com/${{github.repository}}
           npx \
             --package conventional-changelog-conventionalcommits \
             --package @semantic-release/exec \

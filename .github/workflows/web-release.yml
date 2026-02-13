@@ -1,4 +1,7 @@
 name: Web发布
+concurrency:
+  group: web-release
+  cancel-in-progress: true
 on: workflow_dispatch
 permissions:
   contents: read
