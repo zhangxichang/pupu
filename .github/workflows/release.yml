@@ -1,12 +1,17 @@
 name: 发布
 on:
-  push:
-    branches: [release, beta, alpha]
+  workflow_dispatch:
+    inputs:
+      SetPreRelease:
+        description: "设置为预发布版本"
+        type: boolean
+        default: false
 permissions:
   contents: read
 jobs:
   check-release:
     name: 检查是否需要发布
+    environment: release
     outputs:
       release: ${{ steps.check.outputs.release }}
       version: ${{ steps.check.outputs.version }}
@@ -22,6 +27,7 @@ jobs:
       - name: 检查是否需要发布
         id: check
         env:
+          PRERELEASE: ${inputs.SetPreRelease}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           npx \
@@ -122,6 +128,7 @@ jobs:
           private-key: ${{ secrets.BOT_PRIVATE_KEY }}
       - name: 发布到 GitHub Release
         env:
+          PRERELEASE: ${inputs.SetPreRelease}
           GITHUB_TOKEN: ${{ steps.app_token.outputs.token }}
         run: |
           npx \

@@ -5,6 +5,7 @@ permissions:
 jobs:
   app-test:
     name: 应用测试
+    environment: release
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
