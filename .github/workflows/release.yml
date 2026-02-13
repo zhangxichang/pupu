@@ -27,14 +27,18 @@ jobs:
       - name: 检查是否需要发布
         id: check
         env:
-          PRERELEASE: ${{ inputs.set_prerelease }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          if [ ${{ inputs.set_prerelease }} = "true" ]; then
+            BRANCH_CONFIG='{"name":"main","prerelease":"alpha"}'
+          else
+            BRANCH_CONFIG="main"
+          fi
           npx \
             --package conventional-changelog-conventionalcommits \
             --package @semantic-release/exec \
             --package semantic-release \
-            semantic-release --dry-run
+            semantic-release --branches "$BRANCH_CONFIG" --dry-run
           if [ -f "version" ]; then
             echo "release=true" >> $GITHUB_OUTPUT
             echo "version=$(cat version)" >> $GITHUB_OUTPUT
@@ -137,14 +141,18 @@ jobs:
           private-key: ${{ secrets.BOT_PRIVATE_KEY }}
       - name: 发布到 GitHub Release
         env:
-          PRERELEASE: ${{ inputs.set_prerelease }}
           GITHUB_TOKEN: ${{ steps.app_token.outputs.token }}
         run: |
+          if [ ${{ inputs.set_prerelease }} = "true" ]; then
+            BRANCH_CONFIG='{"name":"main","prerelease":"alpha"}'
+          else
+            BRANCH_CONFIG="main"
+          fi
           npx \
             --package conventional-changelog-conventionalcommits \
             --package @semantic-release/exec \
             --package semantic-release \
-            semantic-release
+            semantic-release --branches "$BRANCH_CONFIG"
       - name: 从 GitHub Release 发布内容到 Gitee Release
         uses: trustedinster/sync-release-gitee@v1.3
         with:
