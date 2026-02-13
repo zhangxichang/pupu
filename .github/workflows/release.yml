@@ -131,19 +131,19 @@ jobs:
       issues: write
       pull-requests: write
     steps:
-      - uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-      - uses: actions/download-artifact@v7
-        with:
-          path: artifacts
-          merge-multiple: true
-          pattern: "*"
       - uses: actions/create-github-app-token@v2
         id: app_token
         with:
           app-id: ${{ vars.BOT_ID }}
           private-key: ${{ secrets.BOT_PRIVATE_KEY }}
+      - uses: actions/checkout@v6
+        with:
+          token: ${{ steps.app_token.outputs.token }}
+          fetch-depth: 0
+      - uses: actions/download-artifact@v7
+        with:
+          path: artifacts
+          merge-multiple: true
       - name: 发布到 GitHub Release
         env:
           PRERELEASE: ${{ inputs.channel }}
