@@ -145,6 +145,7 @@ jobs:
         with:
           path: artifacts
           merge-multiple: true
+          pattern: pupu*
       - name: 发布到 GitHub Release
         env:
           PRERELEASE: ${{ inputs.channel }}
