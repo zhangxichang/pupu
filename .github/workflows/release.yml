@@ -100,7 +100,8 @@ jobs:
       - uses: ./.github/actions/initialize-project
       - name: 初始化安卓构建
         run: |
-          echo "storeFile=${{secrets.ANDROID_KEYSTORE_FILE}}" >> keystore.properties
+          echo "${{ secrets.ANDROID_KEYSTORE_FILE }}" | base64 -d > native/gen/android/app/keystore.jks
+          echo "storeFile=keystore.jks" >> keystore.properties
           echo "keyAlias=${{secrets.ANDROID_KEYSTORE_KEYALIAS}}" >> keystore.properties
           echo "password=${{secrets.ANDROID_KEYSTORE_PASSWORD}}" >> keystore.properties
           bun run android:init

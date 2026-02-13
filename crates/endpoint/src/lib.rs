@@ -37,7 +37,7 @@ impl Endpoint {
     pub async fn new(
         secret_key: Vec<u8>,
         person: Person,
-        store_path: impl AsRef<Path>,
+        #[allow(unused_variables)] store_path: impl AsRef<Path>,
     ) -> Result<Self> {
         let relay_map = RelayMode::Default.relay_map();
         #[allow(unused_mut)]
