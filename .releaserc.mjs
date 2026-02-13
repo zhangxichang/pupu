@@ -1,5 +1,5 @@
 export default {
-  branches: ["master", { name: "main", prerelease: process.env.PRERELEASE }],
+  branches: ["main"],
   plugins: [
     ["@semantic-release/commit-analyzer", { preset: "conventionalcommits" }],
     [
