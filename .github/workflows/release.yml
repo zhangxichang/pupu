@@ -24,10 +24,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          npx
-            --package conventional-changelog-conventionalcommits
-            --package @semantic-release/exec
-            --package semantic-release
+          npx \
+            --package conventional-changelog-conventionalcommits \
+            --package @semantic-release/exec \
+            --package semantic-release \
             semantic-release --dry-run
           if [ -f "version" ]; then
             echo "release=true" >> $GITHUB_OUTPUT
@@ -124,10 +124,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ steps.app_token.outputs.token }}
         run: |
-          npx
-            --package conventional-changelog-conventionalcommits
-            --package @semantic-release/exec
-            --package semantic-release
+          npx \
+            --package conventional-changelog-conventionalcommits \
+            --package @semantic-release/exec \
+            --package semantic-release \
             semantic-release
       - name: 从 GitHub Release 发布内容到 Gitee Release
         uses: trustedinster/sync-release-gitee@v1.3
