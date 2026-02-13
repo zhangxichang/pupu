@@ -10,6 +10,6 @@ export default {
       "@semantic-release/exec",
       { verifyReleaseCmd: "echo '${nextRelease.version}' > version" },
     ],
-    ["@semantic-release/github", { assets: "artifact/*" }],
+    ["@semantic-release/github", { assets: "artifacts/*" }],
   ],
 };
