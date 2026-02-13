@@ -1,4 +1,7 @@
 name: 发布
+concurrency:
+  group: release
+  cancel-in-progress: true
 on:
   workflow_dispatch:
     inputs:
