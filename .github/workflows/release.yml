@@ -8,8 +8,8 @@ on:
       channel:
         description: "发布通道"
         type: choice
-        options: [stable, beta]
-        default: stable
+        options: [stable, beta, alpha]
+        default: alpha
 permissions:
   contents: read
 jobs:
