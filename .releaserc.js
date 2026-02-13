@@ -1,5 +1,4 @@
 export default {
-  repositoryUrl: "https://github.com/zhangxichang/pupu",
   branches: [
     "placeholder",
     {
