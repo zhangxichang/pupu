@@ -19,7 +19,7 @@ export default function AboutModal() {
   });
   const contributors = createAsync(async () => {
     const contributors = await new Octokit().rest.repos.listContributors({
-      owner: "ZhangXiChang",
+      owner: "zhangxichang",
       repo: "pupu",
     });
     return contributors.data;
@@ -34,7 +34,7 @@ export default function AboutModal() {
             class="link link-hover font-bold text-accent"
             onClick={() =>
               open_url(
-                "https://github.com/ZhangXiChang/pupu/graphs/contributors",
+                "https://github.com/zhangxichang/pupu/graphs/contributors",
               )
             }
           >
@@ -67,7 +67,7 @@ export default function AboutModal() {
         <div class="flex flex-col items-start">
           <span
             class="link link-hover text-sm font-bold text-info"
-            onClick={() => open_url("https://github.com/ZhangXiChang/pupu")}
+            onClick={() => open_url("https://github.com/zhangxichang/pupu")}
           >
             源码仓库
           </span>
