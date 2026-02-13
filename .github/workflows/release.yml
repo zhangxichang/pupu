@@ -13,118 +13,119 @@ on:
 permissions:
   contents: read
 jobs:
-  # check-release:
-  #   name: 检查是否需要发布
-  #   environment: release
-  #   outputs:
-  #     release: ${{ steps.check.outputs.release }}
-  #     version: ${{ steps.check.outputs.version }}
-  #   runs-on: ubuntu-latest
-  #   permissions:
-  #     contents: write
-  #     issues: write
-  #     pull-requests: write
-  #   steps:
-  #     - uses: actions/checkout@v6
-  #       with:
-  #         fetch-depth: 0
-  #     - name: 检查是否需要发布
-  #       id: check
-  #       env:
-  #         PRERELEASE: ${{ inputs.channel }}
-  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  #       run: |
-  #         npx \
-  #           --package conventional-changelog-conventionalcommits \
-  #           --package @semantic-release/exec \
-  #           --package semantic-release \
-  #           semantic-release --dry-run
-  #         if [ -f "version" ]; then
-  #           echo "release=true" >> $GITHUB_OUTPUT
-  #           echo "version=$(cat version)" >> $GITHUB_OUTPUT
-  #         else
-  #           echo "release=false" >> $GITHUB_OUTPUT
-  #         fi
-  # app-test:
-  #   name: 应用测试
-  #   needs: check-release
-  #   if: ${{needs.check-release.outputs.release=='true'}}
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@v6
-  #     - uses: ./.github/actions/initialize-project
-  #     - name: 应用测试
-  #       run: |
-  #         bun run build
-  #         bun run test
-  #     - name: 上传测试结果
-  #       uses: actions/upload-artifact@v6
-  #       with:
-  #         name: playwright-report
-  #         path: playwright-report
-  # build:
-  #   name: 构建
-  #   needs: [app-test, check-release]
-  #   strategy:
-  #     matrix:
-  #       include:
-  #         - target: relay
-  #           runs-on: ubuntu-latest
-  #           name: pupu-relay-linux
-  #           path: pupu-relay-linux
-  #         - target: windows
-  #           runs-on: windows-latest
-  #           name: pupu-windows
-  #           path: pupu-windows.exe
-  #         - target: android
-  #           runs-on: ubuntu-latest
-  #           name: pupu-android
-  #           path: pupu-android.apk
-  #   runs-on: ${{ matrix.runs-on }}
-  #   steps:
-  #     - uses: actions/checkout@v6
-  #     - name: 初始化项目
-  #       if: matrix.target != 'relay'
-  #       uses: ./.github/actions/initialize-project
-  #     - name: 设置版本号
-  #       if: matrix.target != 'relay'
-  #       run: |
-  #         echo "${{ needs.check-release.outputs.version }}" > public/version
-  #     - name: 构建中继服务程序
-  #       if: matrix.target == 'relay'
-  #       run: cargo build -p pupu-relay --release
-  #     - name: 构建 Windows 版本
-  #       if: matrix.target == 'windows'
-  #       run: bun run native:build
-  #     - name: 初始化安卓构建
-  #       if: matrix.target == 'android'
-  #       run: |
-  #         echo "storeFile=keystore.jks" >> keystore.properties
-  #         echo "keyAlias=${{ secrets.ANDROID_KEYSTORE_KEYALIAS }}" >> keystore.properties
-  #         echo "password=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" >> keystore.properties
-  #         bun run android:init
-  #         bun run generate:icon
-  #         echo "${{ secrets.ANDROID_KEYSTORE_FILE }}" | base64 -d >> native/gen/android/app/keystore.jks
-  #     - name: 构建 Android 版本
-  #       if: matrix.target == 'android'
-  #       run: bun run android:build
-  #     - name: 处理中继服务程序构建产物
-  #       if: matrix.target == 'relay'
-  #       run: mv target/release/pupu-relay ${{ matrix.path }}
-  #     - name: 处理 Windows 构建产物
-  #       if: matrix.target == 'windows'
-  #       run: |
-  #         Move-Item -Path target/release/native.exe -Destination ${{ matrix.path }}
-  #     - name: 处理 Android 构建产物
-  #       if: matrix.target == 'android'
-  #       run: mv native/gen/android/app/build/outputs/apk/arm64/release/app-arm64-release.apk ${{ matrix.path }}
-  #     - name: 上传构建产物
-  #       uses: actions/upload-artifact@v6
-  #       with:
-  #         name: ${{ matrix.name }}
-  #         path: ${{ matrix.path }}
+  check-release:
+    name: 检查是否需要发布
+    environment: release
+    outputs:
+      release: ${{ steps.check.outputs.release }}
+      version: ${{ steps.check.outputs.version }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: 检查是否需要发布
+        id: check
+        env:
+          PRERELEASE: ${{ inputs.channel }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          npx \
+            --package conventional-changelog-conventionalcommits \
+            --package @semantic-release/exec \
+            --package semantic-release \
+            semantic-release --dry-run
+          if [ -f "version" ]; then
+            echo "release=true" >> $GITHUB_OUTPUT
+            echo "version=$(cat version)" >> $GITHUB_OUTPUT
+          else
+            echo "release=false" >> $GITHUB_OUTPUT
+          fi
+  app-test:
+    name: 应用测试
+    needs: check-release
+    if: ${{needs.check-release.outputs.release=='true'}}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/initialize-project
+      - name: 应用测试
+        run: |
+          bun run build
+          bun run test
+      - name: 上传测试结果
+        uses: actions/upload-artifact@v6
+        with:
+          name: playwright-report
+          path: playwright-report
+  build:
+    name: 构建
+    needs: [app-test, check-release]
+    strategy:
+      matrix:
+        include:
+          - target: relay
+            runs-on: ubuntu-latest
+            name: pupu-relay-linux
+            path: pupu-relay-linux
+          - target: windows
+            runs-on: windows-latest
+            name: pupu-windows
+            path: pupu-windows.exe
+          - target: android
+            runs-on: ubuntu-latest
+            name: pupu-android
+            path: pupu-android.apk
+    runs-on: ${{ matrix.runs-on }}
+    steps:
+      - uses: actions/checkout@v6
+      - name: 初始化项目
+        if: matrix.target != 'relay'
+        uses: ./.github/actions/initialize-project
+      - name: 设置版本号
+        if: matrix.target != 'relay'
+        run: |
+          echo "${{ needs.check-release.outputs.version }}" > public/version
+      - name: 构建中继服务程序
+        if: matrix.target == 'relay'
+        run: cargo build -p pupu-relay --release
+      - name: 构建 Windows 版本
+        if: matrix.target == 'windows'
+        run: bun run native:build
+      - name: 初始化安卓构建
+        if: matrix.target == 'android'
+        run: |
+          echo "storeFile=keystore.jks" >> keystore.properties
+          echo "keyAlias=${{ secrets.ANDROID_KEYSTORE_KEYALIAS }}" >> keystore.properties
+          echo "password=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" >> keystore.properties
+          bun run android:init
+          bun run generate:icon
+          echo "${{ secrets.ANDROID_KEYSTORE_FILE }}" | base64 -d >> native/gen/android/app/keystore.jks
+      - name: 构建 Android 版本
+        if: matrix.target == 'android'
+        run: bun run android:build
+      - name: 处理中继服务程序构建产物
+        if: matrix.target == 'relay'
+        run: mv target/release/pupu-relay ${{ matrix.path }}
+      - name: 处理 Windows 构建产物
+        if: matrix.target == 'windows'
+        run: |
+          Move-Item -Path target/release/native.exe -Destination ${{ matrix.path }}
+      - name: 处理 Android 构建产物
+        if: matrix.target == 'android'
+        run: mv native/gen/android/app/build/outputs/apk/arm64/release/app-arm64-release.apk ${{ matrix.path }}
+      - name: 上传构建产物
+        uses: actions/upload-artifact@v6
+        with:
+          name: ${{ matrix.name }}
+          path: ${{ matrix.path }}
   release:
     name: 发布
+    needs: build
     runs-on: ubuntu-latest
     permissions:
       contents: write
