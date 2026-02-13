@@ -2,10 +2,11 @@ name: 发布
 on:
   workflow_dispatch:
     inputs:
-      set_prerelease:
-        description: "设置为预发布版本"
-        type: boolean
-        default: false
+      channel:
+        description: "发布通道"
+        type: choice
+        options: [stable, beta]
+        default: stable
 permissions:
   contents: read
 jobs:
@@ -27,7 +28,7 @@ jobs:
       - name: 检查是否需要发布
         id: check
         env:
-          PRERELEASE: ${{ inputs.set_prerelease }}
+          PRERELEASE: ${{ inputs.channel }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           npx \
@@ -137,7 +138,7 @@ jobs:
           private-key: ${{ secrets.BOT_PRIVATE_KEY }}
       - name: 发布到 GitHub Release
         env:
-          PRERELEASE: ${{ inputs.set_prerelease }}
+          PRERELEASE: ${{ inputs.channel }}
           GITHUB_TOKEN: ${{ steps.app_token.outputs.token }}
         run: |
           npx \
