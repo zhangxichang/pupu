@@ -1,15 +1,18 @@
+import { createSignal } from "solid-js";
 import { HomeContext, use_context } from "../context";
+import type { Person } from "~/lib/types";
 
 export default function AddFriend() {
   const home_store = use_context(HomeContext);
   let search_user_id_input_ref: HTMLInputElement | undefined;
+  const [search_user_result, set_search_user_result] = createSignal<Person>();
   const on_search_user = async () => {
     if (
       search_user_id_input_ref !== undefined &&
       search_user_id_input_ref.value != ""
     ) {
       //TODO 在浏览器端会报错
-      console.info(
+      set_search_user_result(
         await home_store.endpoint.request_person(
           search_user_id_input_ref.value,
         ),
@@ -39,6 +42,7 @@ export default function AddFriend() {
             </button>
           </div>
         </div>
+        <div>{search_user_result()?.name}</div>
       </div>
     </div>
   );
