@@ -1,7 +1,5 @@
-console.info(process.env.PRERELEASE);
-
 export default {
-  branches: [{ name: "main", prerelease: "beta" }],
+  branches: ["master", { name: "main", prerelease: "beta" }],
   plugins: [
     ["@semantic-release/commit-analyzer", { preset: "conventionalcommits" }],
     [
