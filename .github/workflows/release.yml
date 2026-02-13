@@ -92,12 +92,12 @@ jobs:
       - name: 初始化安卓构建
         if: matrix.target == 'android'
         run: |
-          echo "${{ secrets.ANDROID_KEYSTORE_FILE }}" | base64 -d >> native/gen/android/app/keystore.jks
           echo "storeFile=keystore.jks" >> keystore.properties
           echo "keyAlias=${{ secrets.ANDROID_KEYSTORE_KEYALIAS }}" >> keystore.properties
           echo "password=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" >> keystore.properties
           bun run android:init
           bun run generate:icon
+          echo "${{ secrets.ANDROID_KEYSTORE_FILE }}" | base64 -d >> native/gen/android/app/keystore.jks
       - name: 构建 Android 版本
         if: matrix.target == 'android'
         run: bun run android:build
