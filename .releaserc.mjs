@@ -1,5 +1,8 @@
 export default {
-  branches: [{ name: "main", prerelease: process.env.PRERELEASE === "true" }],
+  branches:
+    process.env.PRERELEASE === "true"
+      ? [{ name: "main", prerelease: true }]
+      : ["main"],
   plugins: [
     ["@semantic-release/commit-analyzer", { preset: "conventionalcommits" }],
     [
