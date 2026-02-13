@@ -6,6 +6,17 @@ runs:
     - uses: cargo-bins/cargo-binstall@main
     - uses: oven-sh/setup-bun@v2
     - uses: astral-sh/setup-uv@v7
+    - name: 安装Tauri所需的Linux系统依赖
+      if: runner.os == 'Linux'
+      shell: bash
+      run: |
+        sudo apt update
+        sudo apt install \
+        libwebkit2gtk-4.1-dev \
+        libxdo-dev \
+        libssl-dev \
+        libayatana-appindicator3-dev \
+        librsvg2-dev
     - name: 初始化项目
       shell: bash
       run: |
