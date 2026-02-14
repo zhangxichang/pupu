@@ -11,7 +11,6 @@ export default function AddFriend() {
       search_user_id_input_ref !== undefined &&
       search_user_id_input_ref.value != ""
     ) {
-      //TODO 在浏览器端会报错
       set_search_user_result(
         await home_store.endpoint.request_person(
           search_user_id_input_ref.value,

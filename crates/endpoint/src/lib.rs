@@ -3,7 +3,9 @@ use std::{path::Path, sync::Arc};
 use base64::{Engine, prelude::BASE64_STANDARD};
 use eyre::Result;
 use iroh::{
-    EndpointId, RelayMode, SecretKey, address_lookup::PkarrPublisher, endpoint::Connection,
+    EndpointId, RelayMode, SecretKey,
+    address_lookup::{PkarrPublisher, PkarrResolver},
+    endpoint::Connection,
     protocol::Router,
 };
 use iroh_blobs::{BlobsProtocol, api::Store};
@@ -42,14 +44,15 @@ impl Endpoint {
         let relay_map = RelayMode::Default.relay_map();
         #[allow(unused_mut)]
         let mut endpoint_builder = iroh::Endpoint::empty_builder(RelayMode::Custom(relay_map))
-            .address_lookup(PkarrPublisher::n0_dns());
+            .address_lookup(PkarrPublisher::n0_dns())
+            .address_lookup(PkarrResolver::n0_dns());
         #[cfg(not(target_family = "wasm"))]
         {
             use iroh::address_lookup::{DhtAddressLookup, DnsAddressLookup, MdnsAddressLookup};
 
             endpoint_builder = endpoint_builder
-                .address_lookup(DnsAddressLookup::n0_dns())
                 .address_lookup(MdnsAddressLookup::builder())
+                .address_lookup(DnsAddressLookup::n0_dns())
                 .address_lookup(DhtAddressLookup::builder());
         }
         let endpoint = endpoint_builder
