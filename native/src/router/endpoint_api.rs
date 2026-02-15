@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use endpoint::Endpoint;
+use endpoint::{Endpoint, RelayConfig};
 use sharded_slab::Slab;
 use tauri::{Runtime, Window};
 use utils::option_ext::OptionGet;
@@ -17,6 +17,7 @@ pub trait EndpointApi {
         window: Window<R>,
         secret_key: Vec<u8>,
         person: serde_json::Value,
+        relay_configs: Vec<serde_json::Value>,
     ) -> Result<usize, String>;
     async fn close_endpoint(handle: usize) -> Result<(), String>;
     async fn id(handle: usize) -> Result<String, String>;
@@ -58,6 +59,7 @@ impl EndpointApi for EndpointApiImpl {
         #[allow(unused_variables)] window: Window<R>,
         secret_key: Vec<u8>,
         person: serde_json::Value,
+        relay_configs: Vec<serde_json::Value>,
     ) -> Result<usize, String> {
         async {
             let store_path;
@@ -83,8 +85,16 @@ impl EndpointApi for EndpointApiImpl {
             eyre::Ok(
                 self.endpoint_pool
                     .insert(
-                        Endpoint::new(secret_key, serde_json::from_value(person)?, store_path)
-                            .await?,
+                        Endpoint::new(
+                            secret_key,
+                            serde_json::from_value(person)?,
+                            store_path,
+                            relay_configs
+                                .into_iter()
+                                .map(|v| serde_json::from_value::<RelayConfig>(v))
+                                .collect::<Result<_, _>>()?,
+                        )
+                        .await?,
                     )
                     .get()?,
             )

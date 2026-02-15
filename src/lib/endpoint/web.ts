@@ -4,7 +4,7 @@ import wasm_init, {
   Endpoint as WasmEndpoint,
 } from "@pupu/endpoint";
 import wasm_url from "@pupu/endpoint/endpoint_wasm_bg.wasm?url";
-import type { Person } from "~/lib/types";
+import type { Person, RelayConfig } from "~/lib/endpoint/types";
 import type { Endpoint, EndpointModule } from "./interface";
 import type { PersonProtocolEvent } from "./types";
 
@@ -12,8 +12,12 @@ export class EndpointModuleImpl implements EndpointModule {
   async init() {
     await wasm_init({ module_or_path: wasm_url });
   }
-  async create_endpoint(secret_key: Uint8Array, person: Person) {
-    return await EndpointImpl.new(secret_key, person);
+  async create_endpoint(
+    secret_key: Uint8Array,
+    person: Person,
+    relay_configs: RelayConfig[],
+  ) {
+    return await EndpointImpl.new(secret_key, person, relay_configs);
   }
   generate_secret_key() {
     return wasm_generate_secret_key();
@@ -29,8 +33,14 @@ export class EndpointImpl implements Endpoint {
   private constructor(endpoint: WasmEndpoint) {
     this.endpoint = endpoint;
   }
-  static async new(secret_key: Uint8Array, person: Person) {
-    return new EndpointImpl(await WasmEndpoint.new(secret_key, person));
+  static async new(
+    secret_key: Uint8Array,
+    person: Person,
+    relay_configs: RelayConfig[],
+  ) {
+    return new EndpointImpl(
+      await WasmEndpoint.new(secret_key, person, relay_configs),
+    );
   }
   async close() {
     await this.endpoint.close();

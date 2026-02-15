@@ -1,6 +1,6 @@
 import { createSignal } from "solid-js";
 import { HomeContext, use_context } from "../context";
-import type { Person } from "~/lib/types";
+import type { Person } from "~/lib/endpoint/types";
 
 export default function AddFriend() {
   const home_store = use_context(HomeContext);

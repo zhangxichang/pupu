@@ -2,7 +2,7 @@ import type { Endpoint } from "~/lib/endpoint/interface";
 import type { MainStore } from "./main";
 import type { Store } from "./interface";
 import { QueryBuilder } from "~/lib/query_builder";
-import type { Person } from "~/lib/types";
+import type { Person } from "~/lib/endpoint/types";
 
 export class HomeStore implements Store {
   endpoint: Endpoint;
@@ -22,11 +22,15 @@ export class HomeStore implements Store {
     ).at(0);
     if (!user) throw new Error("没有找到相关用户信息");
     return new HomeStore(
-      await main_store.endpoint_module.create_endpoint(user.key, {
-        name: user.name,
-        avatar: user.avatar,
-        bio: user.bio,
-      }),
+      await main_store.endpoint_module.create_endpoint(
+        user.key,
+        {
+          name: user.name,
+          avatar: user.avatar,
+          bio: user.bio,
+        },
+        [],
+      ),
     );
   }
   async cleanup() {

@@ -1,7 +1,7 @@
 import { createAsync, useParams } from "@solidjs/router";
 import { QueryBuilder } from "~/lib/query_builder";
 import { MainContext, use_context } from "../context";
-import type { Person } from "~/lib/types";
+import type { Person } from "~/lib/endpoint/types";
 import { createSignal, onMount, Show } from "solid-js";
 import { ChevronsLeftRightIcon, UserIcon } from "lucide-solid";
 import Image from "../widgets/image";
