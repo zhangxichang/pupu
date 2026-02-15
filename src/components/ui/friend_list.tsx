@@ -2,7 +2,7 @@ import { MessagesSquareIcon, UserIcon, UserPlusIcon } from "lucide-solid";
 import { createSignal, For, lazy, Show, Suspense } from "solid-js";
 import { createAsync, useParams } from "@solidjs/router";
 import { QueryBuilder } from "~/lib/query_builder";
-import type { Person } from "~/lib/types";
+import type { Person } from "~/lib/endpoint/types";
 import { MainContext, use_context } from "../context";
 import { createVirtualizer } from "@tanstack/solid-virtual";
 import Image from "../widgets/image";

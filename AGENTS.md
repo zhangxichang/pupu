@@ -5,6 +5,7 @@ This document provides guidelines for AI agents working on the Pupu codebase. It
 ## Build Commands
 
 ### Prerequisites
+
 - [Bun](https://bun.sh) (JavaScript runtime)
 - [Rust](https://rust-lang.org) (with `wasm32-unknown-unknown` target)
 - [wasm-pack](https://rustwasm.github.io/wasm-pack/)
@@ -13,6 +14,7 @@ This document provides guidelines for AI agents working on the Pupu codebase. It
 - [Android SDK](https://developer.android.com/studio) (for Android builds)
 
 ### Initialization
+
 ```bash
 bun run install:pre   # Build WASM endpoint
 bun install           # Install npm dependencies
@@ -20,6 +22,7 @@ bun run install:post  # Generate icons, IPC bindings, database schema, install P
 ```
 
 ### Development
+
 ```bash
 # Web development
 bun run dev
@@ -32,6 +35,7 @@ bun run android:dev
 ```
 
 ### Production Builds
+
 ```bash
 # Web
 bun run build
@@ -44,11 +48,13 @@ bun run android:build
 ```
 
 ### Web Preview
+
 ```bash
 bun run preview   # Runs wrangler dev on Cloudflare Workers
 ```
 
 ### WASM Build
+
 ```bash
 bun run wasm:build
 ```
@@ -56,6 +62,7 @@ bun run wasm:build
 ## Linting and Testing
 
 ### TypeScript/JavaScript
+
 ```bash
 # Type checking and ESLint
 bun run check
@@ -71,6 +78,7 @@ bun run test -- --grep "登录表单验证"
 ```
 
 ### Rust
+
 ```bash
 # Format check
 cargo fmt --check
@@ -91,6 +99,7 @@ cargo build --release
 ## Code Style Guidelines
 
 ### Naming Conventions
+
 - **Functions and variables**: `snake_case` (applies to both Rust and TypeScript)
 - **Class names**: `PascalCase`
 - **Interface/trait names**: `PascalCase`
@@ -99,11 +108,12 @@ cargo build --release
 - **Type parameters**: `T`, `U`, `V` or descriptive camelCase (`TResult`)
 
 ### TypeScript / SolidJS
+
 - Use strict TypeScript (`strict: true` in tsconfig.json)
 - No unused locals or parameters (`noUnusedLocals`, `noUnusedParameters`)
 - Use `type` imports for type‑only imports:
   ```ts
-  import type { Person } from "~/lib/types";
+  import type { Person } from "~/lib/endpoint/types";
   import { createSignal } from "solid‑js";
   ```
 - Prefer `async`/`await` over raw promises
@@ -114,6 +124,7 @@ cargo build --release
 - Use SolidJS reactive primitives (`createSignal`, `createEffect`, `createMemo`)
 
 ### Rust
+
 - Edition 2024
 - Use `eyre::Result` for internal error handling
 - Convert to `Result<T, String>` for IPC via the `.mse()` extension
@@ -125,12 +136,14 @@ cargo build --release
 - Use `tokio` for async runtime
 
 ### Imports Organization
+
 1. Standard library / external crates
 2. Internal modules
 3. Type‑only imports
 4. Relative imports
 
 Example:
+
 ```rust
 use std::sync::Arc;
 use eyre::eyre;
@@ -139,11 +152,13 @@ use crate::error::MapStringError;
 ```
 
 ### Error Handling
+
 - **Rust**: Use `eyre::Result` and `eyre!` macro for internal errors. Convert to `String` with `.mse()` when returning over IPC.
 - **TypeScript**: Use `try`/`catch` with `async` functions. Throw `Error` objects.
 - **Playwright tests**: Use `expect` assertions; failures are reported as test failures.
 
 ### Project Structure
+
 ```
 pupu/
 ├── Cargo.toml (workspace)
@@ -160,32 +175,35 @@ pupu/
 ```
 
 ### Commit Messages
+
 Follow [Conventional Commits](https://www.conventionalcommits.org/):
+
 - `fix:` for bug fixes
 - `feat:` for new features
 - `docs:` for documentation changes
 - `chore:` for maintenance tasks
 
 ### Key Technologies
+
 - **Database**: Prisma for schema definition, Kysely for type‑safe SQL queries, SQLite via `tokio‑rusqlite`
 - **IPC**: Tauri‑RPC with `#[taurpc::procedures]` traits, `#[taurpc::resolvers]` implementations, TypeScript bindings via `export_config`
 - **WebAssembly**: Built with `wasm‑pack`, imported as `@pupu/endpoint`, functions exposed via `#[wasm_bindgen]`
 - **Android**: Keystore in `keystore.properties`, build with `tauri android build`, icons from `public/icon.svg`
 
-
-
 ### Editor / Tooling
+
 - No Cursor rules (`.cursorrules`) or Copilot instructions (`.github/copilot-instructions.md`) are present.
 
 ## Quick Reference
-| Task | Command |
-|------|---------|
-| Type check | `bun run check` |
-| Run all tests | `bun run test` & `cargo test --workspace` |
-| Lint Rust | `cargo clippy --workspace` |
-| Format Rust | `cargo fmt` |
-| Start web dev | `bun run dev` |
-| Start native dev | `bun run native:dev` |
-| Build web | `bun run build` |
-| Build native | `bun run native:build` |
-| Build Android | `bun run android:build` |
+
+| Task             | Command                                   |
+| ---------------- | ----------------------------------------- |
+| Type check       | `bun run check`                           |
+| Run all tests    | `bun run test` & `cargo test --workspace` |
+| Lint Rust        | `cargo clippy --workspace`                |
+| Format Rust      | `cargo fmt`                               |
+| Start web dev    | `bun run dev`                             |
+| Start native dev | `bun run native:dev`                      |
+| Build web        | `bun run build`                           |
+| Build native     | `bun run native:build`                    |
+| Build Android    | `bun run android:build`                   |

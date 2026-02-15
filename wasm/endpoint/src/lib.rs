@@ -1,5 +1,6 @@
 mod error;
 
+use endpoint::RelayConfig;
 use eyre::Result;
 use wasm_bindgen::{JsError, JsValue, prelude::wasm_bindgen};
 
@@ -15,11 +16,23 @@ fn start() {
 pub struct Endpoint(endpoint::Endpoint);
 #[wasm_bindgen]
 impl Endpoint {
-    pub async fn new(secret_key: Vec<u8>, person: JsValue) -> Result<Self, JsError> {
+    pub async fn new(
+        secret_key: Vec<u8>,
+        person: JsValue,
+        relay_configs: Vec<JsValue>,
+    ) -> Result<Self, JsError> {
         Ok(Self(
-            endpoint::Endpoint::new(secret_key, serde_wasm_bindgen::from_value(person)?, "")
-                .await
-                .mje()?,
+            endpoint::Endpoint::new(
+                secret_key,
+                serde_wasm_bindgen::from_value(person)?,
+                "",
+                relay_configs
+                    .into_iter()
+                    .map(|v| serde_wasm_bindgen::from_value::<RelayConfig>(v))
+                    .collect::<Result<_, _>>()?,
+            )
+            .await
+            .mje()?,
         ))
     }
     pub async fn close(self) -> Result<(), JsError> {

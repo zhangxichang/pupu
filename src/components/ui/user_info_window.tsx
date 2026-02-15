@@ -1,7 +1,7 @@
 import { autoUpdate, computePosition, offset, shift } from "@floating-ui/dom";
 import { UserIcon } from "lucide-solid";
 import { onCleanup, onMount, Show } from "solid-js";
-import type { Person } from "~/lib/types";
+import type { Person } from "~/lib/endpoint/types";
 import Image from "../widgets/image";
 
 export default function UserInfoWindow(props: {

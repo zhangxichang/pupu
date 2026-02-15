@@ -13,6 +13,7 @@ use iroh_gossip::{
     Gossip, TopicId,
     api::{GossipReceiver, GossipSender},
 };
+use iroh_relay::RelayQuicConfig;
 use parking_lot::Mutex;
 use person_protocol::{Person, PersonProtocol};
 use serde::{Deserialize, Serialize};
@@ -23,6 +24,12 @@ use utils::option_ext::OptionGet;
 pub struct Ticket {
     pub id: TopicId,
     pub bootstrap: Vec<EndpointId>,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct RelayConfig {
+    url: String,
+    quic_port: u16,
 }
 
 #[derive(Clone)]
@@ -40,8 +47,21 @@ impl Endpoint {
         secret_key: Vec<u8>,
         person: Person,
         #[allow(unused_variables)] store_path: impl AsRef<Path>,
+        relay_configs: Vec<RelayConfig>,
     ) -> Result<Self> {
         let relay_map = RelayMode::Default.relay_map();
+        for config in relay_configs {
+            relay_map.insert(
+                config.url.parse()?,
+                iroh::RelayConfig {
+                    url: config.url.parse()?,
+                    quic: Some(RelayQuicConfig {
+                        port: config.quic_port,
+                    }),
+                }
+                .into(),
+            );
+        }
         #[allow(unused_mut)]
         let mut endpoint_builder = iroh::Endpoint::empty_builder(RelayMode::Custom(relay_map))
             .address_lookup(PkarrPublisher::n0_dns())
