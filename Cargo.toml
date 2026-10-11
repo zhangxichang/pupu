@@ -1,3 +1,23 @@
 [workspace]
-resolver = "3"
-members = ["native", "wasm/*", "cli/*", "crates/*"]
+members = ["app", "android", "worker/*"]
+
+[package]
+name = "pupu"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+app = { path = "app" }
+
+eyre = "0.6.14"
+
+[target.'cfg(any(target_os = "windows", target_os = "linux"))'.dependencies]
+tokio = { version = "1.53.2", default-features = false, features = [
+    "macros",
+    "rt-multi-thread",
+    "fs",
+] }
+directories = "6.0.0"
+
+[target.'cfg(all(target_family = "wasm", target_os = "unknown"))'.dependencies]
+wasm-bindgen-futures = "0.4.79"

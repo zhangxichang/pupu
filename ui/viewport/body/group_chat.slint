@@ -1,0 +1,162 @@
+import { ListView } from "std-widgets.slint";
+import { Input } from "../../components/input.slint";
+import { HoverScrollBar } from "../../components/hover_scroll_bar.slint";
+import {
+    ConversationItemData,
+    ConversationListItem,
+} from "../../components/conversation_list_item.slint";
+
+export component GroupChat inherits HorizontalLayout {
+    in property <[ConversationItemData]> conversations: [
+        {
+            name: "产品研发一群",
+            avatar_text: "产",
+            latest_message: "张伟：新版原型图我发上来了，大家看看",
+            time: "10:24",
+            unread_count: 12
+        },
+        {
+            name: "周末篮球局",
+            avatar_text: "篮",
+            latest_message: "王强：周六下午三点老地方，带水来",
+            time: "09:58",
+            unread_count: 3
+        },
+        {
+            name: "相亲相爱一家人",
+            avatar_text: "家",
+            latest_message: "妈妈：[图片]",
+            time: "09:12",
+            unread_count: 0
+        },
+        {
+            name: "前端技术交流群",
+            avatar_text: "前",
+            latest_message: "李娜：有人用过 Slint 吗？体验怎么样",
+            time: "昨天",
+            unread_count: 46
+        },
+        {
+            name: "公司公告通知群",
+            avatar_text: "公",
+            latest_message: "行政-小陈：本周五下午全员大会，请勿缺席",
+            time: "昨天",
+            unread_count: 1
+        },
+        {
+            name: "深夜食堂吃货群",
+            avatar_text: "吃",
+            latest_message: "刘洋：这家烧烤真的绝了，下次组队",
+            time: "昨天",
+            unread_count: 8
+        },
+        {
+            name: "大学室友四年群",
+            avatar_text: "室",
+            latest_message: "赵磊：哈哈哈这个表情包我要收藏了",
+            time: "星期三",
+            unread_count: 0
+        },
+        {
+            name: "项目组-凤凰计划",
+            avatar_text: "凤",
+            latest_message: "陈静：明天的评审会材料已同步到群文件",
+            time: "星期三",
+            unread_count: 5
+        },
+        {
+            name: "王者荣耀开黑群",
+            avatar_text: "王",
+            latest_message: "杨帆：晚上八点上号，五排差一个辅助",
+            time: "星期二",
+            unread_count: 21
+        },
+        {
+            name: "小区业主交流群",
+            avatar_text: "业",
+            latest_message: "物业管家：3号楼电梯检修通知请查收",
+            time: "7月28日",
+            unread_count: 0
+        },
+    ];
+    in-out property <int> current_conversation:-1;
+
+    VerticalLayout {
+        width: 250px;
+        padding: 8px;
+        spacing: 4px;
+
+        Input {
+            height: 28px;
+            border_radius: 4px;
+            normal_background: #eeeeee;
+            hover_background: #e0e0e0;
+            focus_border_width: 1px;
+            focus_border_color: #007aff;
+            placeholder: "搜索群聊会话";
+        }
+
+        touch := TouchArea {
+            fs := FocusScope {
+                focus-on-click: false;
+                focus-on-tab-navigation: false;
+            }
+
+            pointer-event(event) => {
+                if (event.button == PointerEventButton.left && event.kind == PointerEventKind.down) {
+                    fs.focus();
+                }
+            }
+
+            list := ListView {
+                vertical-scrollbar-policy: ScrollBarPolicy.always-off;
+
+                for conversation[index] in root.conversations: VerticalLayout {
+                    padding-top: 2px;
+                    padding-bottom: 2px;
+
+                    states [
+                        spacing_begin when index == 0: {
+                            padding-top: 0px;
+                            padding-bottom: 2px;
+                        }
+                        spacing_end when index == root.conversations.length - 1: {
+                            padding-top: 2px;
+                            padding-bottom: 0px;
+                        }
+                    ]
+
+                    ConversationListItem {
+                        conversation: conversation;
+                        active: root.current_conversation == index;
+
+                        clicked => { root.current_conversation = index; }
+                    }
+                }
+            }
+
+            HoverScrollBar {
+                content_y <=> list.content-y;
+                content_height: list.content-height;
+                visible_height: list.visible-height;
+                hovered: touch.has-hover;
+            }
+        }
+    }
+
+    Rectangle {
+        width: 1px;
+        background: #eeeeee;
+    }
+
+    Rectangle { }
+
+    Rectangle {
+        width: 1px;
+        background: #eeeeee;
+    }
+
+    Rectangle {
+        width: 200px;
+    }
+}

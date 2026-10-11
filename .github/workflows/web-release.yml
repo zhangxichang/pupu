@@ -6,35 +6,40 @@ on: workflow_dispatch
 permissions:
   contents: read
 jobs:
-  app-test:
-    name: 应用测试
-    environment: release
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-      - uses: ./.github/actions/initialize-project
-      - name: 应用测试
-        run: |
-          bun run build
-          bun run test
-      - name: 上传测试结果
-        uses: actions/upload-artifact@v6
-        with:
-          name: playwright-report
-          path: playwright-report
   build-release:
     name: 构建并发布
-    needs: app-test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
-      - uses: ./.github/actions/initialize-project
-      - name: 构建
-        run: bun run build
-      - name: 发布
-        uses: cloudflare/wrangler-action@v3
+      - name: 检出
+        uses: actions/checkout@v7
+      - name: 安装bun
+        uses: oven-sh/setup-bun@v2
+      - name: 安装rust
+        uses: dtolnay/rust-toolchain@stable
         with:
-          wranglerVersion: latest
-          packageManager: bun
+          targets: wasm32-unknown-unknown
+      - name: 安装cargo-binstall
+        uses: cargo-bins/cargo-binstall@main
+      - name: 安装trunk
+        run: cargo binstall trunk@0.22.0 --no-confirm
+      - name: 构建
+        run: trunk build --release
+      - name: 查找要上传R2的文件
+        run: |
+          set -euo pipefail
+          WASM=$(find dist -maxdepth 1 -name 'pupu-*_bg.wasm' -print -quit)
+          test -n "$WASM"
+          echo "R2_OBJECT_KEY=$(basename "$WASM")" >> "$GITHUB_ENV"
+          echo 'pupu-*_bg.wasm' > dist/.assetsignore
+      - name: 发布
+        uses: cloudflare/wrangler-action@v4
+        with:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          packageManager: bun
+          preCommands: |
+            wrangler r2 object put "pupu/$R2_OBJECT_KEY" \
+              --file "dist/$R2_OBJECT_KEY" \
+              --content-type application/wasm \
+              --cache-control "public, max-age=31536000, immutable" \
+              --remote

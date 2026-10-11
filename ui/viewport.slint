@@ -1,0 +1,171 @@
+import "./fonts/MiSans VF.ttf";
+
+import { Header } from "./viewport/header.slint";
+import { Body } from "./viewport/body.slint";
+
+export enum WindowResizeDirection {
+    NorthWest,
+    North,
+    NorthEast,
+    East,
+    SouthEast,
+    South,
+    SouthWest,
+    West,
+}
+
+export component Viewport inherits Window {
+    in property <bool> enabled_window_chrome:false;
+    in property <bool> enabled_update_notification:false;
+
+    property <bool> show_window_chrome: root.enabled_window_chrome && !root.maximized;
+    property <length> window_chrome_margin: root.show_window_chrome ? 16px : 0px;
+    property <length> resize_hit_width: 8px;
+
+    callback drag_window <=> header.drag_window;
+    callback resize_window(direction: WindowResizeDirection);
+
+    function handle_resize_event(event: PointerEvent, direction: WindowResizeDirection) {
+        if (event.button == PointerEventButton.left && event.kind == PointerEventKind.down) {
+            root.resize_window(direction);
+        }
+    }
+
+    no-frame: true;
+    background: root.show_window_chrome ? transparent : #ffffff;
+    default-font-family: "MiSans VF";
+    title: "Pupu";
+    preferred-width: 1250px;
+    preferred-height: 825px;
+
+    Rectangle {
+        x: root.window_chrome_margin;
+        y: root.window_chrome_margin;
+        width: root.width - 2 * root.window_chrome_margin;
+        height: root.height - 2 * root.window_chrome_margin;
+
+        background: #ffffff;
+        clip: root.show_window_chrome;
+        border-radius: root.show_window_chrome ? 8px : 0px;
+        border-width: root.show_window_chrome ? 1px : 0px;
+        border-color: #00000033;
+
+        drop-shadow-color: root.show_window_chrome ? #00000033 : transparent;
+        drop-shadow-blur: 12px;
+        drop-shadow-offset-x: 0px;
+        drop-shadow-offset-y: 2px;
+
+        FocusScope {
+            focus-on-tab-navigation: false;
+
+            VerticalLayout {
+                x: root.safe-area-insets.left;
+                y: root.safe-area-insets.top;
+                width: parent.width - root.safe-area-insets.left - root.safe-area-insets.right;
+                height: parent.height - root.safe-area-insets.top - root.safe-area-insets.bottom;
+
+                header := Header {
+                    enabled_window_chrome: root.enabled_window_chrome;
+                    enabled_update_notification: root.enabled_update_notification;
+                    maximized: root.maximized;
+
+                    minimize_window => { root.minimized = true }
+                    toggle_maximized => { root.maximized = !root.maximized }
+                    close_window => { root.close() }
+                }
+
+                Rectangle {
+                    height: 1px;
+                    background: #eeeeee;
+                }
+
+                Body { }
+            }
+        }
+
+        if root.show_window_chrome: Rectangle {
+            width: parent.width;
+            height: parent.height;
+
+            TouchArea {
+                x: 0;
+                y: 0;
+                width: root.resize_hit_width;
+                height: root.resize_hit_width;
+                mouse-cursor: nw-resize;
+
+                pointer-event(event) => { root.handle_resize_event(event, WindowResizeDirection.NorthWest) }
+            }
+
+            TouchArea {
+                x: root.resize_hit_width;
+                y: 0;
+                width: parent.width - 2 * root.resize_hit_width;
+                height: root.resize_hit_width;
+                mouse-cursor: n-resize;
+
+                pointer-event(event) => { root.handle_resize_event(event, WindowResizeDirection.North) }
+            }
+
+            TouchArea {
+                x: parent.width - root.resize_hit_width;
+                y: 0;
+                width: root.resize_hit_width;
+                height: root.resize_hit_width;
+                mouse-cursor: ne-resize;
+
+                pointer-event(event) => { root.handle_resize_event(event, WindowResizeDirection.NorthEast) }
+            }
+
+            TouchArea {
+                x: parent.width - root.resize_hit_width;
+                y: root.resize_hit_width;
+                width: root.resize_hit_width;
+                height: parent.height - 2 * root.resize_hit_width;
+                mouse-cursor: e-resize;
+
+                pointer-event(event) => { root.handle_resize_event(event, WindowResizeDirection.East) }
+            }
+
+            TouchArea {
+                x: parent.width - root.resize_hit_width;
+                y: parent.height - root.resize_hit_width;
+                width: root.resize_hit_width;
+                height: root.resize_hit_width;
+                mouse-cursor: se-resize;
+
+                pointer-event(event) => { root.handle_resize_event(event, WindowResizeDirection.SouthEast) }
+            }
+
+            TouchArea {
+                x: root.resize_hit_width;
+                y: parent.height - root.resize_hit_width;
+                width: parent.width - 2 * root.resize_hit_width;
+                height: root.resize_hit_width;
+                mouse-cursor: s-resize;
+
+                pointer-event(event) => { root.handle_resize_event(event, WindowResizeDirection.South) }
+            }
+
+            TouchArea {
+                x: 0;
+                y: parent.height - root.resize_hit_width;
+                width: root.resize_hit_width;
+                height: root.resize_hit_width;
+                mouse-cursor: sw-resize;
+
+                pointer-event(event) => { root.handle_resize_event(event, WindowResizeDirection.SouthWest) }
+            }
+
+            TouchArea {
+                x: 0;
+                y: root.resize_hit_width;
+                width: root.resize_hit_width;
+                height: parent.height - 2 * root.resize_hit_width;
+                mouse-cursor: w-resize;
+
+                pointer-event(event) => { root.handle_resize_event(event, WindowResizeDirection.West) }
+            }
+        }
+    }
+}
