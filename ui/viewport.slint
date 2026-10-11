@@ -1,0 +1,63 @@
+import "./fonts/MiSans VF.ttf";
+
+import {
+    ResizeHandles,
+    WindowResizeDirection,
+} from "./components/resize_handles.slint";
+import { Header } from "./viewport/header.slint";
+import { Body } from "./viewport/body.slint";
+
+export struct Insets {
+    top: length,
+    bottom: length,
+    left: length,
+    right: length,
+}
+
+export component Viewport inherits Window {
+    in property <bool> enabled_window_chrome:false;
+    in property <bool> enabled_resize_handles:false;
+    in property <bool> enabled_update_notification:false;
+    in property <Insets> chrome_insets;
+
+    callback drag_window <=> header.drag_window;
+    callback resize_window(direction: WindowResizeDirection);
+
+    default-font-family: "MiSans VF";
+    no-frame: true;
+    title: "Pupu";
+    preferred-width: 1050px;
+    preferred-height: 750px;
+    background: #ffffff;
+
+    VerticalLayout {
+        x: root.safe-area-insets.left + root.chrome_insets.left;
+        y: root.safe-area-insets.top + root.chrome_insets.top;
+        width: root.width - root.safe-area-insets.right - root.safe-area-insets.left - root.chrome_insets.right - root.chrome_insets.left;
+        height: root.height - root.safe-area-insets.bottom - root.safe-area-insets.top - root.chrome_insets.bottom - root.chrome_insets.top;
+
+        header := Header {
+            enabled_window_chrome: root.enabled_window_chrome;
+            enabled_update_notification: root.enabled_update_notification;
+            maximized: root.maximized;
+
+            minimize_window => { root.minimized = true }
+            toggle_maximized => { root.maximized = !root.maximized }
+            close_window => { root.close() }
+        }
+
+        Rectangle {
+            height: 1px;
+            background: #eeeeee;
+        }
+
+        Body { }
+    }
+
+    if root.enabled_resize_handles && !root.maximized: ResizeHandles {
+        width: root.width;
+        height: root.height;
+
+        resize_window(direction) => { root.resize_window(direction) }
+    }
+}

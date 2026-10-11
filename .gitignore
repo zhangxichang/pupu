@@ -1,15 +1,3 @@
-/node_modules/
 /target/
-/artifacts/
-/.output/
-/.vinxi/
-/.wrangler/
-/.venv/
-/.virtual_documents/
-/test-results/
-/playwright-report/
-/.playwright-mcp/
-
-/public/db_schema.sql
-/keystore.properties
-/temp.db
+/dist/
+/.superpowers/

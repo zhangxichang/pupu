@@ -1,0 +1,136 @@
+import { Button } from "../components/button.slint";
+import { IconSet, IconDisplay } from "../lib/lucide.slint";
+
+export component Header inherits TouchArea {
+    in property <bool> enabled_window_chrome:false;
+    in property <bool> enabled_update_notification:false;
+    in property <bool> maximized:false;
+
+    callback drag_window();
+    callback minimize_window();
+    callback toggle_maximized();
+    callback close_window();
+
+    enabled: root.enabled_window_chrome;
+
+    property <bool> drag_ready: false;
+
+    pointer-event(event) => {
+        if (event.button == PointerEventButton.left && event.kind == PointerEventKind.down) {
+            self.drag_ready = true;
+        } else if (event.kind == PointerEventKind.up || event.kind == PointerEventKind.cancel) {
+            self.drag_ready = false;
+        }
+    }
+    moved => {
+        if (self.pressed && self.drag_ready && (
+            abs(self.mouse-x - self.pressed-x) >= 4px
+            || abs(self.mouse-y - self.pressed-y) >= 4px)) {
+            self.drag_ready = false;
+            root.drag_window();
+        }
+    }
+    double-clicked => { root.toggle_maximized() }
+
+    HorizontalLayout {
+        cross-axis-alignment: center;
+        spacing: 12px;
+
+        HorizontalLayout {
+            cross-axis-alignment: center;
+
+            Image {
+                source: @image-url("../../icon.svg");
+                width: 32px;
+                height: 32px;
+            }
+
+            Text {
+                text: "Pupu";
+                font-weight: FontWeight.semi-bold;
+                color: #333333;
+            }
+        }
+
+        Rectangle {
+            width: 24px;
+            height: 24px;
+            border-radius: self.width / 2;
+            background: #eeeeee;
+
+            Text {
+                text: "张";
+                font-weight: FontWeight.medium;
+            }
+        }
+
+        if root.enabled_update_notification:Rectangle {
+            horizontal-stretch: 0;
+            border-width: 1px;
+            border-color: #333333;
+            border-radius: self.height / 2;
+
+            HorizontalLayout {
+                padding-top: 2px;
+                padding-bottom: 2px;
+                padding-left: 8px;
+                padding-right: 8px;
+                spacing: 4px;
+                cross-axis-alignment: center;
+
+                Rectangle {
+                    width: 5px;
+                    height: 5px;
+                    border-radius: self.width / 2;
+                    background: #333333;
+                }
+
+                Text {
+                    text: "有新版本，点击更新";
+                }
+            }
+        }
+
+        Rectangle { }
+
+        if root.enabled_window_chrome: HorizontalLayout {
+            minimize_button := Button {
+                content-padding: 8px;
+
+                IconDisplay {
+                    icon: IconSet.Minus;
+                    size: 16px;
+                    stroke: #333333;
+                }
+
+                clicked => { root.minimize_window() }
+            }
+
+            Button {
+                content-padding: 8px;
+
+                IconDisplay {
+                    icon: root.maximized ? IconSet.Minimize : IconSet.Maximize;
+                    size: 16px;
+                    stroke: #333333;
+                }
+
+                clicked => { root.toggle_maximized() }
+            }
+
+            close_button := Button {
+                content-padding: 8px;
+                pressed_background: #bb0000;
+                hover_background: #dd0000;
+
+                IconDisplay {
+                    icon: IconSet.X;
+                    size: 16px;
+                    stroke: #333333;
+                }
+
+                clicked => { root.close_window() }
+            }
+        }
+    }
+}

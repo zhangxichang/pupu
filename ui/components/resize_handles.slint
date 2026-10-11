@@ -1,0 +1,103 @@
+export enum WindowResizeDirection {
+    NorthWest,
+    North,
+    NorthEast,
+    East,
+    SouthEast,
+    South,
+    SouthWest,
+    West,
+}
+
+export component ResizeHandles {
+    in property <length> hit_width: 8px;
+
+    callback resize_window(direction: WindowResizeDirection);
+
+    function handle_resize_event(event: PointerEvent, direction: WindowResizeDirection) {
+        if (event.button == PointerEventButton.left
+            && event.kind == PointerEventKind.down) {
+            root.resize_window(direction);
+        }
+    }
+
+    TouchArea {
+        x: 0;
+        y: 0;
+        width: root.hit_width;
+        height: root.hit_width;
+        mouse-cursor: nw-resize;
+
+        pointer-event(event) => { root.handle_resize_event(event, WindowResizeDirection.NorthWest) }
+    }
+
+    TouchArea {
+        x: root.hit_width;
+        y: 0;
+        width: root.width - 2 * root.hit_width;
+        height: root.hit_width;
+        mouse-cursor: n-resize;
+
+        pointer-event(event) => { root.handle_resize_event(event, WindowResizeDirection.North) }
+    }
+
+    TouchArea {
+        x: root.width - root.hit_width;
+        y: 0;
+        width: root.hit_width;
+        height: root.hit_width;
+        mouse-cursor: ne-resize;
+
+        pointer-event(event) => { root.handle_resize_event(event, WindowResizeDirection.NorthEast) }
+    }
+
+    TouchArea {
+        x: root.width - root.hit_width;
+        y: root.hit_width;
+        width: root.hit_width;
+        height: root.height - 2 * root.hit_width;
+        mouse-cursor: e-resize;
+
+        pointer-event(event) => { root.handle_resize_event(event, WindowResizeDirection.East) }
+    }
+
+    TouchArea {
+        x: root.width - root.hit_width;
+        y: root.height - root.hit_width;
+        width: root.hit_width;
+        height: root.hit_width;
+        mouse-cursor: se-resize;
+
+        pointer-event(event) => { root.handle_resize_event(event, WindowResizeDirection.SouthEast) }
+    }
+
+    TouchArea {
+        x: root.hit_width;
+        y: root.height - root.hit_width;
+        width: root.width - 2 * root.hit_width;
+        height: root.hit_width;
+        mouse-cursor: s-resize;
+
+        pointer-event(event) => { root.handle_resize_event(event, WindowResizeDirection.South) }
+    }
+
+    TouchArea {
+        x: 0;
+        y: root.height - root.hit_width;
+        width: root.hit_width;
+        height: root.hit_width;
+        mouse-cursor: sw-resize;
+
+        pointer-event(event) => { root.handle_resize_event(event, WindowResizeDirection.SouthWest) }
+    }
+
+    TouchArea {
+        x: 0;
+        y: root.hit_width;
+        width: root.hit_width;
+        height: root.height - 2 * root.hit_width;
+        mouse-cursor: w-resize;
+
+        pointer-event(event) => { root.handle_resize_event(event, WindowResizeDirection.West) }
+    }
+}

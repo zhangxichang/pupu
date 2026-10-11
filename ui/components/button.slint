@@ -1,0 +1,48 @@
+export component Button inherits Rectangle {
+    in property <brush> normal_background;
+    in property <brush> pressed_background: #bbbbbb;
+    in property <brush> hover_background: #dddddd;
+    in property <bool> active: false;
+    in property <brush> active_background: #333333;
+    in property <length> content-padding: 0px;
+    in property <length> content-padding-left: root.content-padding;
+    in property <length> content-padding-right: root.content-padding;
+    in property <length> content-padding-top: root.content-padding;
+    in property <length> content-padding-bottom: root.content-padding;
+    in property <length> content-spacing;
+
+    vertical-stretch: 0;
+    horizontal-stretch: 0;
+
+    callback clicked <=> touch.clicked;
+
+    background: root.normal_background;
+    animate background { duration: 120ms; }
+
+    states [
+        active when root.active: {
+            background: root.active_background;
+        }
+        pressed when touch.pressed: {
+            background: root.pressed_background;
+        }
+        hovered when touch.has-hover: {
+            background: root.hover_background;
+        }
+    ]
+
+    HorizontalLayout {
+        padding-left: root.content-padding-left;
+        padding-right: root.content-padding-right;
+        padding-top: root.content-padding-top;
+        padding-bottom: root.content-padding-bottom;
+        spacing: root.content-spacing;
+        cross-axis-alignment: center;
+
+        @children
+    }
+
+    touch := TouchArea {
+        mouse-cursor: pointer;
+    }
+}
