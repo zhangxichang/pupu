@@ -21,6 +21,9 @@ pub async fn main(_data_path: Option<PathBuf>) -> Result<()> {
             attributes.with_undecorated_shadow(true)
         })
     };
+    #[cfg(target_os = "linux")]
+    let backend =
+        backend.with_winit_window_attributes_hook(|attributes| attributes.with_transparent(true));
     #[cfg(target_os = "android")]
     let backend = {
         use slint::wgpu_29::{WGPUConfiguration, WGPUSettings, wgpu::InstanceFlags};
@@ -37,6 +40,7 @@ pub async fn main(_data_path: Option<PathBuf>) -> Result<()> {
         target_os = "macos"
     )));
     viewport.set_enabled_resize_handles(cfg!(any(target_os = "windows", target_os = "linux")));
+    viewport.set_enabled_linux_window_shadow(cfg!(target_os = "linux"));
     viewport.set_enabled_update_notification(cfg!(not(target_family = "wasm")));
     #[cfg(target_os = "windows")]
     viewport.set_chrome_insets(Insets {
@@ -74,6 +78,11 @@ pub async fn main(_data_path: Option<PathBuf>) -> Result<()> {
                     .window()
                     .with_winit_window(|window| window.drag_resize_window(direction.into()));
             }
+            _ = viewport_weak.upgrade_in_event_loop(|viewport| {
+                _ = viewport
+                    .window()
+                    .dispatch_event_with_result(slint::platform::WindowEvent::PointerExited);
+            });
         });
     }
     viewport.run()?;
