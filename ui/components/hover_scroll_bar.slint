@@ -1,0 +1,47 @@
+export component HoverScrollBar inherits Rectangle {
+    in-out property <length> content_y;
+    in property <length> content_height;
+    in property <length> visible_height;
+    in property <bool> hovered;
+
+    property <bool> overflow: root.content_height > root.visible_height;
+    property <length> thumb_height: max(24px, root.height * root.visible_height / max(1px, root.content_height));
+    property <length> max_scroll: max(0px, root.content_height - root.visible_height);
+
+    visible: root.overflow;
+    opacity: root.hovered || drag.pressed ? 1 : 0;
+
+    animate opacity { duration: 120ms; }
+
+    thumb := Rectangle {
+        x: root.width - self.width;
+        width: 6px;
+        height: root.thumb_height;
+        y: (root.height - root.thumb_height) * (-root.content_y) / max(1px, root.max_scroll);
+        border-radius: self.width / 3;
+        background: drag.pressed ? #00000044 : #00000022;
+    }
+
+    drag := TouchArea {
+        width: 12px;
+        x: thumb.x - (self.width - thumb.width) / 2;
+        enabled: root.overflow && (root.hovered || self.pressed);
+
+        property <length> start_scroll;
+        property <length> start_y;
+
+        pointer-event(event) => {
+            if (event.button == PointerEventButton.left && event.kind == PointerEventKind.down) {
+                self.start_scroll = -root.content_y;
+                self.start_y = self.mouse-y;
+            }
+        }
+        moved => {
+            if (self.pressed) {
+                root.content_y = -min(root.max_scroll, max(0px,
+                    self.start_scroll + (self.mouse-y - self.start_y)
+                    * root.max_scroll / max(1px, root.height - root.thumb_height)));
+            }
+        }
+    }
+}

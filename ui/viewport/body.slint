@@ -1,0 +1,86 @@
+import { Button } from "../components/button.slint";
+import { IconSet, IconDisplay } from "../lib/lucide.slint";
+import { PrivateChat } from "./body/private_chat.slint";
+import { GroupChat } from "./body/group_chat.slint";
+import { Contact } from "./body/contact.slint";
+import { Settings } from "./body/settings.slint";
+
+enum ViewType { PrivateChat, GroupChat, Contact, Settings }
+
+export component Body inherits HorizontalLayout {
+    in-out property <ViewType> current_view: ViewType.PrivateChat;
+
+    VerticalLayout {
+        padding: 6px;
+        cross-axis-alignment: center;
+        spacing: 4px;
+
+        Button {
+            content-padding: 4px;
+            border-radius: 10px;
+            active: current_view == ViewType.PrivateChat;
+
+            IconDisplay {
+                icon: IconSet.MessageCircle;
+                size: 30px;
+                stroke: current_view == ViewType.PrivateChat ? #ffffff : #888888;
+            }
+
+            clicked => { current_view = ViewType.PrivateChat; }
+        }
+
+        Button {
+            content-padding: 4px;
+            border-radius: 10px;
+            active: current_view == ViewType.GroupChat;
+
+            IconDisplay {
+                icon: IconSet.Users;
+                size: 30px;
+                stroke: current_view == ViewType.GroupChat ? #ffffff : #888888;
+            }
+
+            clicked => { current_view = ViewType.GroupChat; }
+        }
+
+        Button {
+            content-padding: 4px;
+            border-radius: 10px;
+            active: current_view == ViewType.Contact;
+
+            IconDisplay {
+                icon: IconSet.Contact;
+                size: 30px;
+                stroke: current_view == ViewType.Contact ? #ffffff : #888888;
+            }
+
+            clicked => { current_view = ViewType.Contact; }
+        }
+
+        Rectangle { }
+
+        Button {
+            content-padding: 4px;
+            border-radius: 10px;
+            active: current_view == ViewType.Settings;
+
+            IconDisplay {
+                icon: IconSet.Settings;
+                size: 30px;
+                stroke: current_view == ViewType.Settings ? #ffffff : #888888;
+            }
+
+            clicked => { current_view = ViewType.Settings; }
+        }
+    }
+
+    Rectangle {
+        width: 1px;
+        background: #eeeeee;
+    }
+
+    if root.current_view == ViewType.PrivateChat:PrivateChat { }
+    if root.current_view == ViewType.GroupChat:GroupChat { }
+    if root.current_view == ViewType.Contact:Contact { }
+    if root.current_view == ViewType.Settings:Settings { }
+}

@@ -1,0 +1,210 @@
+import { ListView } from "std-widgets.slint";
+import { Button } from "../../components/button.slint";
+import { Input } from "../../components/input.slint";
+import { HoverScrollBar } from "../../components/hover_scroll_bar.slint";
+import {
+    ConversationItemData,
+    ConversationListItem,
+} from "../../components/conversation_list_item.slint";
+
+export component PrivateChat inherits HorizontalLayout {
+    in property <[ConversationItemData]> conversations: [
+        {
+            name: "张伟",
+            avatar_text: "张",
+            latest_message: "晚上一起吃饭吗？我订了那家新开的店",
+            time: "10:24",
+            unread_count: 2
+        },
+        {
+            name: "李娜",
+            avatar_text: "李",
+            latest_message: "文件我已经发你邮箱了，注意查收",
+            time: "09:58",
+            unread_count: 0
+        },
+        {
+            name: "王强",
+            avatar_text: "王",
+            latest_message: "好的，那就这么定了",
+            time: "09:12",
+            unread_count: 0
+        },
+        {
+            name: "刘洋",
+            avatar_text: "刘",
+            latest_message: "[图片]",
+            time: "昨天",
+            unread_count: 5
+        },
+        {
+            name: "陈静",
+            avatar_text: "陈",
+            latest_message: "下周的会议改到周三下午了",
+            time: "昨天",
+            unread_count: 1
+        },
+        {
+            name: "杨帆",
+            avatar_text: "杨",
+            latest_message: "哈哈哈，这个太搞笑了",
+            time: "昨天",
+            unread_count: 0
+        },
+        {
+            name: "赵磊",
+            avatar_text: "赵",
+            latest_message: "代码我已经 review 完了，没问题",
+            time: "星期三",
+            unread_count: 0
+        },
+        {
+            name: "孙丽",
+            avatar_text: "孙",
+            latest_message: "生日快乐！🎂",
+            time: "星期二",
+            unread_count: 0
+        },
+        {
+            name: "周杰",
+            avatar_text: "周",
+            latest_message: "在吗？有个问题想请教你",
+            time: "7月28日",
+            unread_count: 3
+        },
+        {
+            name: "吴敏",
+            avatar_text: "吴",
+            latest_message: "收到，我明天给你答复",
+            time: "7月25日",
+            unread_count: 0
+        },
+    ];
+    in-out property <int> current_conversation:-1;
+
+    VerticalLayout {
+        width: 250px;
+        padding: 8px;
+        spacing: 4px;
+
+        Input {
+            height: 28px;
+            border_radius: 4px;
+            normal_background: #eeeeee;
+            hover_background: #e0e0e0;
+            focus_border_width: 1px;
+            focus_border_color: #007aff;
+            placeholder: "搜索私聊会话";
+        }
+
+        touch := TouchArea {
+            list := ListView {
+                vertical-scrollbar-policy: ScrollBarPolicy.always-off;
+
+                for conversation[index] in root.conversations: VerticalLayout {
+                    padding-top: 2px;
+                    padding-bottom: 2px;
+
+                    states [
+                        spacing_begin when index == 0: {
+                            padding-top: 0px;
+                            padding-bottom: 2px;
+                        }
+                        spacing_end when index == root.conversations.length - 1: {
+                            padding-top: 2px;
+                            padding-bottom: 0px;
+                        }
+                    ]
+
+                    ConversationListItem {
+                        conversation: conversation;
+                        active: root.current_conversation == index;
+
+                        clicked => { root.current_conversation = index; }
+                    }
+                }
+            }
+
+            HoverScrollBar {
+                content_y <=> list.content-y;
+                content_height: list.content-height;
+                visible_height: list.visible-height;
+                hovered: touch.has-hover;
+            }
+        }
+    }
+
+    Rectangle {
+        width: 1px;
+        background: #eeeeee;
+    }
+
+    VerticalLayout {
+        Rectangle {
+            height: 48px;
+        }
+
+        Rectangle {
+            height: 1px;
+            background: #eeeeee;
+        }
+
+        Rectangle { }
+
+        Rectangle {
+            height: 1px;
+            background: #eeeeee;
+        }
+
+        Rectangle {
+            // 聊天栏功能
+            height: 24px;
+        }
+
+        Input {
+            multiline: true;
+            placeholder: "输入消息";
+            min_content_height: 120px;
+            inner_padding_top: 0px;
+            inner_padding_bottom: 0px;
+        }
+
+        HorizontalLayout {
+            padding-right: 16px;
+            padding-bottom: 8px;
+
+            Rectangle { }
+
+            Button {
+                content-padding: 6px;
+                content-padding-left: 14px;
+                content-padding-right: 14px;
+                border-radius: 4px;
+                normal_background: #333333;
+                pressed_background: #666666;
+                hover_background: #555555;
+
+                Text {
+                    text: "发送";
+                    color: #ffffff;
+                    font-weight: FontWeight.bold;
+                    vertical-alignment: center;
+                }
+
+                Rectangle {
+                    width: hint.width;
+                    height: hint.height;
+
+                    hint := Text {
+                        text: " Ctrl + Enter";
+                        color: #ffffff;
+                        font-weight: FontWeight.bold;
+                        font-size: 8px;
+                        vertical-alignment: center;
+                        y: 0.8px;
+                    }
+                }
+            }
+        }
+    }
+}

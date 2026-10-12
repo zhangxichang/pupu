@@ -1,0 +1,100 @@
+export struct ConversationItemData {
+    name: string,
+    avatar: image,
+    avatar_text: string,
+    latest_message: string,
+    time: string,
+    unread_count: int,
+}
+
+export component ConversationListItem inherits Rectangle {
+    in property <ConversationItemData> conversation;
+    in property <bool> active;
+
+    callback clicked;
+
+    height: 48px;
+    border-radius: 8px;
+
+    states [
+        active when root.active: {
+            background: #e0e0e0;
+        }
+        hover when touch.has-hover: {
+            background: #f4f4f4;
+        }
+    ]
+
+    fs := FocusScope {
+        focus-on-tab-navigation: false;
+    }
+
+    touch := TouchArea {
+        mouse-cursor: pointer;
+
+        clicked => {
+            fs.focus();
+            root.clicked();
+        }
+    }
+
+    HorizontalLayout {
+        cross-axis-alignment: center;
+        padding: 8px;
+        spacing: 8px;
+
+        Rectangle {
+            width: 32px;
+            height: 32px;
+            border-radius: self.width / 2;
+            background: root.active ? #c0c0c0 : #e0e0e0;
+
+            Text {
+                text: root.conversation.avatar_text;
+                font-weight: FontWeight.medium;
+                font-size: 16px;
+            }
+        }
+
+        VerticalLayout {
+            spacing: 4px;
+
+            Text {
+                text: root.conversation.name;
+                font-size: 14px;
+                font-weight: FontWeight.medium;
+            }
+
+            Text {
+                text: root.conversation.latest_message;
+                overflow: elide;
+                color: #777777;
+            }
+        }
+
+        VerticalLayout {
+            cross-axis-alignment: end;
+            spacing: 4px;
+
+            Text {
+                text: root.conversation.time;
+                font-size: 10px;
+                color: #777777;
+            }
+
+            Rectangle {
+                visible: root.conversation.unread_count != 0;
+                width: 16px;
+                height: 16px;
+                border-radius: self.width / 2;
+                background: #aaaaaa;
+
+                Text {
+                    text: root.conversation.unread_count;
+                    color: #ffffff;
+                    font-weight: FontWeight.medium;
+                }
+            }
+        }
+    }
+}

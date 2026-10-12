@@ -1,5 +1,5 @@
 {
-  "$schema": "node_modules/wrangler/config-schema.json",
+  "$schema": "https://unpkg.com/wrangler/config-schema.json",
   "workers_dev": false,
   "preview_urls": false,
   "observability": {
@@ -7,7 +7,9 @@
   },
   "name": "pupu",
   "compatibility_date": "2024-12-01",
-  "compatibility_flags": ["nodejs_compat"],
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
   "main": ".output/server/index.mjs",
   "assets": {
     "directory": ".output/public"
