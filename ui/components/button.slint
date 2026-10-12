@@ -14,7 +14,7 @@ export component Button inherits Rectangle {
     vertical-stretch: 0;
     horizontal-stretch: 0;
 
-    callback clicked <=> touch.clicked;
+    callback clicked;
 
     background: root.normal_background;
     animate background { duration: 120ms; }
@@ -42,7 +42,16 @@ export component Button inherits Rectangle {
         @children
     }
 
+    fs := FocusScope {
+        focus-on-tab-navigation: false;
+    }
+
     touch := TouchArea {
         mouse-cursor: pointer;
+
+        clicked => {
+            fs.focus();
+            root.clicked();
+        }
     }
 }

@@ -23,7 +23,6 @@ export component Viewport inherits Window {
 
     property <length> shadow_margin: root.enabled_linux_window_shadow && !root.maximized ? 12px : 0px;
     property <length> window_corner_radius: root.enabled_linux_window_shadow && !root.maximized ? 8px : 0px;
-    property <length> window_border_width: root.enabled_linux_window_shadow ? 1px : 0px;
 
     callback drag_window <=> header.drag_window;
     callback resize_window(direction: WindowResizeDirection);
@@ -31,8 +30,8 @@ export component Viewport inherits Window {
     default-font-family: "MiSans VF";
     no-frame: true;
     title: "Pupu";
-    preferred-width: 1050px;
-    preferred-height: 750px;
+    preferred-width: 1250px;
+    preferred-height: 825px;
     background: root.enabled_linux_window_shadow ? transparent : #ffffff;
 
     Rectangle {
@@ -42,54 +41,47 @@ export component Viewport inherits Window {
         height: root.height - 2 * root.shadow_margin;
 
         background: #ffffff;
-        border-width: root.window_border_width;
+        border-width: root.enabled_linux_window_shadow ? 1px : 0px;
         border-color: #00000044;
         border-radius: root.window_corner_radius;
+        clip: root.enabled_linux_window_shadow;
         drop-shadow-color: root.enabled_linux_window_shadow ? #00000033 : transparent;
         drop-shadow-blur: 10px;
         drop-shadow-offset-y: 2px;
-    }
 
-    Rectangle {
-        x: root.shadow_margin + root.window_border_width;
-        y: root.shadow_margin + root.window_border_width;
-        width: root.width - 2 * root.shadow_margin - 2 * root.window_border_width;
-        height: root.height - 2 * root.shadow_margin - 2 * root.window_border_width;
+        FocusScope {
+            focus-on-tab-navigation: false;
 
-        border-radius: max(0px, root.window_corner_radius - root.window_border_width);
-        clip: root.enabled_linux_window_shadow;
+            VerticalLayout {
+                x: root.safe-area-insets.left + root.chrome_insets.left;
+                y: root.safe-area-insets.top + root.chrome_insets.top;
+                width: parent.width - root.safe-area-insets.right - root.safe-area-insets.left - root.chrome_insets.right - root.chrome_insets.left;
+                height: parent.height - root.safe-area-insets.bottom - root.safe-area-insets.top - root.chrome_insets.bottom - root.chrome_insets.top;
 
-        VerticalLayout {
-            x: root.safe-area-insets.left + root.chrome_insets.left;
-            y: root.safe-area-insets.top + root.chrome_insets.top;
-            width: parent.width - root.safe-area-insets.right - root.safe-area-insets.left - root.chrome_insets.right - root.chrome_insets.left;
-            height: parent.height - root.safe-area-insets.bottom - root.safe-area-insets.top - root.chrome_insets.bottom - root.chrome_insets.top;
+                header := Header {
+                    enabled_window_chrome: root.enabled_window_chrome;
+                    enabled_update_notification: root.enabled_update_notification;
+                    maximized: root.maximized;
 
-            header := Header {
-                enabled_window_chrome: root.enabled_window_chrome;
-                enabled_update_notification: root.enabled_update_notification;
-                maximized: root.maximized;
+                    minimize_window => { root.minimized = true }
+                    toggle_maximized => { root.maximized = !root.maximized }
+                    close_window => { root.close() }
+                }
 
-                minimize_window => { root.minimized = true }
-                toggle_maximized => { root.maximized = !root.maximized }
-                close_window => { root.close() }
+                Rectangle {
+                    height: 1px;
+                    background: #eeeeee;
+                }
+
+                Body { }
             }
-
-            Rectangle {
-                height: 1px;
-                background: #eeeeee;
-            }
-
-            Body { }
         }
-    }
 
-    if root.enabled_resize_handles && !root.maximized: ResizeHandles {
-        x: root.shadow_margin;
-        y: root.shadow_margin;
-        width: root.width - 2 * root.shadow_margin;
-        height: root.height - 2 * root.shadow_margin;
+        if root.enabled_resize_handles && !root.maximized: ResizeHandles {
+            width: parent.width;
+            height: parent.height;
 
-        resize_window(direction) => { root.resize_window(direction) }
+            resize_window(direction) => { root.resize_window(direction) }
+        }
     }
 }

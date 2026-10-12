@@ -22,8 +22,6 @@ export component ResizeHandles {
     }
 
     TouchArea {
-        x: 0;
-        y: 0;
         width: root.hit_width;
         height: root.hit_width;
         mouse-cursor: nw-resize;
@@ -33,7 +31,6 @@ export component ResizeHandles {
 
     TouchArea {
         x: root.hit_width;
-        y: 0;
         width: root.width - 2 * root.hit_width;
         height: root.hit_width;
         mouse-cursor: n-resize;
@@ -43,7 +40,6 @@ export component ResizeHandles {
 
     TouchArea {
         x: root.width - root.hit_width;
-        y: 0;
         width: root.hit_width;
         height: root.hit_width;
         mouse-cursor: ne-resize;
@@ -82,7 +78,6 @@ export component ResizeHandles {
     }
 
     TouchArea {
-        x: 0;
         y: root.height - root.hit_width;
         width: root.hit_width;
         height: root.hit_width;
@@ -92,7 +87,6 @@ export component ResizeHandles {
     }
 
     TouchArea {
-        x: 0;
         y: root.hit_width;
         width: root.hit_width;
         height: root.height - 2 * root.hit_width;

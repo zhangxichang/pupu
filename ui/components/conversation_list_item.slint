@@ -25,10 +25,17 @@ export component ConversationListItem inherits Rectangle {
         }
     ]
 
+    fs := FocusScope {
+        focus-on-tab-navigation: false;
+    }
+
     touch := TouchArea {
         mouse-cursor: pointer;
 
-        clicked => { root.clicked(); }
+        clicked => {
+            fs.focus();
+            root.clicked();
+        }
     }
 
     HorizontalLayout {
