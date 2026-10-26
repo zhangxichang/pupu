@@ -1,0 +1,17 @@
+[package]
+name = "android"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+app = { path = "../app" }
+tokio = { version = "1.53.2", default-features = false, features = [
+    "rt-multi-thread",
+] }
+slint = { version = "1.18.1", default-features = false, features = [
+    "compat-1-2",
+    "backend-android-activity-06",
+] }

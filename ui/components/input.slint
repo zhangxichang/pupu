@@ -1,0 +1,126 @@
+import { HoverScrollBar } from "./hover_scroll_bar.slint";
+
+export component Input {
+    in-out property <string> text <=> input.text;
+    in property <string> placeholder;
+    in property <length> font_size;
+
+    callback accepted <=> input.accepted;
+    callback edited <=> input.edited;
+    callback key_pressed <=> input.key-pressed;
+    callback key_released <=> input.key-released;
+
+    in property <brush> text_color: #333333;
+    in property <brush> placeholder_color: #888888;
+
+    in property <brush> normal_background;
+    in property <brush> hover_background;
+    in property <brush> focused_background;
+
+    in property <length> normal_border_width;
+    in property <brush> normal_border_color;
+    in property <length> focus_border_width;
+    in property <brush> focus_border_color;
+    in property <length> border_radius;
+
+    in property <bool> multiline: false;
+    in property <length> inner_padding: 8px;
+    in property <length> inner_padding_left: root.inner_padding;
+    in property <length> inner_padding_top: root.inner_padding;
+    in property <length> inner_padding_right: root.inner_padding;
+    in property <length> inner_padding_bottom: root.inner_padding;
+
+    in property <length> min_content_height;
+    in property <length> max_content_height: 480px;
+    out property <length> content_height: input.preferred-height + root.inner_padding_top + root.inner_padding_bottom;
+    property <length> line_height: max(root.font_size, 14px) * 1.4;
+
+    height: clamp(root.content_height, min(root.min_content_height, root.max_content_height), root.max_content_height);
+    forward-focus: input;
+
+    touch := TouchArea {
+        mouse-cursor: MouseCursor.text;
+
+        clicked => { input.focus(); }
+
+        scroll-event(event) => {
+            if root.multiline && input.height > clip_rect.height {
+                input.computed_y = min(0px, max(clip_rect.height - input.height,
+                        input.computed_y + event.delta-y));
+                return EventResult.accept;
+            }
+            return EventResult.reject;
+        }
+
+        bg := Rectangle {
+            animate background, border-color, border-width { duration: 120ms; }
+
+            background: input.has-focus && root.focused_background != transparent
+                ? root.focused_background
+                : touch.has-hover ? root.hover_background : root.normal_background;
+            border-width: input.has-focus ? root.focus_border_width : root.normal_border_width;
+            border-color: input.has-focus ? root.focus_border_color : root.normal_border_color;
+            border-radius: root.border_radius;
+
+            clip_rect := Rectangle {
+                x: root.inner_padding_left;
+                y: root.inner_padding_top;
+                width: parent.width - root.inner_padding_left - root.inner_padding_right;
+                height: parent.height - root.inner_padding_top - root.inner_padding_bottom;
+                clip: true;
+
+                Text {
+                    width: 100%;
+                    height: 100%;
+                    vertical-alignment: root.multiline ? TextVerticalAlignment.top : TextVerticalAlignment.center;
+                    color: root.placeholder_color;
+                    font-size: input.font-size;
+                    text: input.text == "" && input.preedit-text == "" ? root.placeholder : "";
+                }
+
+                input := TextInput {
+                    property <length> computed_x;
+                    property <length> computed_y;
+
+                    single-line: !root.multiline;
+                    wrap: root.multiline ? TextWrap.word-wrap : TextWrap.no-wrap;
+                    vertical-alignment: root.multiline ? TextVerticalAlignment.top : TextVerticalAlignment.center;
+                    color: root.text_color;
+                    font-size: root.font_size;
+                    page-height: parent.height;
+
+                    x: min(0px, max(parent.width - self.width - self.text-cursor-width, self.computed_x));
+                    y: root.multiline ? min(0px, max(parent.height - self.height, self.computed_y)) : 0px;
+                    width: root.multiline ? parent.width : max(parent.width - self.text-cursor-width, self.preferred-width);
+                    height: root.multiline ? max(parent.height, self.preferred-height) : parent.height;
+
+                    changed height => {
+                        self.computed_y = min(0px, max(parent.height - self.height, self.computed_y));
+                    }
+
+                    cursor-position-changed(position) => {
+                        if position.x + self.computed_x < 0px {
+                            self.computed_x = -position.x;
+                        } else if position.x + self.computed_x > parent.width - self.text-cursor-width {
+                            self.computed_x = parent.width - position.x - self.text-cursor-width;
+                        }
+                        if root.multiline {
+                            if position.y + self.computed_y < 0px {
+                                self.computed_y = -position.y;
+                            } else if position.y + self.computed_y > parent.height - root.line_height {
+                                self.computed_y = parent.height - position.y - root.line_height;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        HoverScrollBar {
+            content_y <=> input.computed_y;
+            content_height: input.height;
+            visible_height: clip_rect.height;
+            hovered: touch.has-hover;
+        }
+    }
+}

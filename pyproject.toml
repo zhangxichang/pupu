@@ -1,8 +1,0 @@
-[project]
-name = "scripts"
-version = "0.1.0"
-requires-python = ">=3.14"
-dependencies = ["basedpyright>=1.39.9", "kopyt>=0.0.2"]
-
-[tool.pyright]
-typeCheckingMode = "standard"

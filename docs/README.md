@@ -1,5 +1,5 @@
 > _项目现在还在积极重构用户界面中_
-> ![Pupu Banner](images/banner.svg)
+> ![Pupu Banner](/assets/images/svg/banner.svg)
 
 <div align="center">
   <div>
@@ -21,9 +21,9 @@
 
 ## 📸 截图
 
-| Windows                                     | Android                                     | Web                               |
-| ------------------------------------------- | ------------------------------------------- | --------------------------------- |
-| ![Windows 客户端](images/shots/windows.png) | ![Android 客户端](images/shots/android.jpg) | ![Web 界面](images/shots/web.png) |
+| Windows                                             | Android                                             | Web                                       |
+| --------------------------------------------------- | --------------------------------------------------- | ----------------------------------------- |
+| ![Windows 客户端](/assets/images/shots/windows.png) | ![Android 客户端](/assets/images/shots/android.jpg) | ![Web 界面](/assets/images/shots/web.png) |
 
 ## 💬 开发者的话
 
@@ -45,7 +45,7 @@
 
 ## 🏗️ 项目架构
 
-![Pupu Banner](images/project_arch.png)
+![Pupu Banner](/assets/images/project_arch.png)
 
 ## 🤝 贡献指南
 
