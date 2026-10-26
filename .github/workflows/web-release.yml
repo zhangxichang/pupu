@@ -38,8 +38,4 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           packageManager: bun
           preCommands: |
-            wrangler r2 object put "pupu/$R2_OBJECT_KEY" \
-              --file "dist/$R2_OBJECT_KEY" \
-              --content-type application/wasm \
-              --cache-control "public, max-age=31536000, immutable" \
-              --remote
+            wrangler r2 object put "pupu/$R2_OBJECT_KEY" --file "dist/$R2_OBJECT_KEY" --content-type application/wasm --cache-control "public, max-age=31536000, immutable" --remote
