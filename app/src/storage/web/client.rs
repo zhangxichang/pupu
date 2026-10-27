@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use gloo_worker::{Spawnable, oneshot::OneshotBridge};
 
 use crate::storage::{
@@ -10,7 +12,7 @@ pub struct WebStorage {
 }
 
 impl WebStorage {
-    pub fn new() -> Self {
+    pub fn open(_data_path: PathBuf) -> Self {
         Self {
             bridge: StorageWorker::spawner().spawn("/storage.js"),
         }

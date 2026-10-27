@@ -9,15 +9,16 @@ edition = "2024"
 [dependencies]
 app = { path = "app" }
 
-eyre = "0.6.14"
+log = "0.4.34"
+env_logger = "0.11.11"
 
 [target.'cfg(any(target_os = "windows", target_os = "linux"))'.dependencies]
 tokio = { version = "1.53.2", default-features = false, features = [
-    "macros",
     "rt-multi-thread",
-    "fs",
 ] }
 directories = "6.0.0"
 
 [target.'cfg(all(target_family = "wasm", target_os = "unknown"))'.dependencies]
+console_log = "1.1.0"
+console_error_panic_hook = "0.1.7"
 wasm-bindgen-futures = "0.4.79"

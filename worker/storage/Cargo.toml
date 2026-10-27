@@ -5,4 +5,5 @@ edition = "2024"
 
 [dependencies]
 app = { path = "../../app" }
+
 gloo-worker = { version = "0.6.0", features = ["futures"] }
