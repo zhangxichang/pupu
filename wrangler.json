@@ -23,8 +23,8 @@
   ],
   "r2_buckets": [
     {
-      "bucket_name": "pupu",
-      "binding": "pupu"
+      "bucket_name": "pupu-apac",
+      "binding": "r2"
     }
   ]
 }

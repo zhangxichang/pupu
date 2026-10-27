@@ -1,5 +1,5 @@
 interface Env {
-    pupu: R2Bucket;
+    r2: R2Bucket;
     ASSETS: Fetcher;
 }
 
@@ -13,7 +13,7 @@ export default {
             key.startsWith("pupu-") &&
             key.endsWith("_bg.wasm")
         ) {
-            const object = await env.pupu.get(key);
+            const object = await env.r2.get(key);
 
             if (!object) {
                 return new Response("WASM not found", { status: 404 });
