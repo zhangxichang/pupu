@@ -4,17 +4,19 @@ use gloo_worker::{Spawnable, oneshot::OneshotBridge};
 
 use crate::storage::{
     Storage,
-    web::{QueryResult, StoragePayload, StorageRequest, worker::StorageWorker},
+    web::{QueryResult, StorageCommand, StoragePayload, StorageRequest, worker::StorageWorker},
 };
 
 pub struct WebStorage {
     bridge: OneshotBridge<StorageWorker>,
+    data_dir: String,
 }
 
 impl WebStorage {
-    pub fn open(_data_path: PathBuf) -> Self {
+    pub fn open(data_dir: PathBuf) -> Self {
         Self {
             bridge: StorageWorker::spawner().spawn("/storage.js"),
+            data_dir: data_dir.to_string_lossy().into_owned(),
         }
     }
 
@@ -25,10 +27,11 @@ impl WebStorage {
     ) -> eyre::Result<()> {
         match self
             .bridge
-            .run(StorageRequest::Execute {
+            .run(StorageRequest::Execute(StorageCommand {
+                data_dir: self.data_dir.clone(),
                 sql: sql.into(),
                 params,
-            })
+            }))
             .await
         {
             StoragePayload::Ok => Ok(()),
@@ -44,10 +47,11 @@ impl WebStorage {
     ) -> eyre::Result<QueryResult> {
         match self
             .bridge
-            .run(StorageRequest::Query {
+            .run(StorageRequest::Query(StorageCommand {
+                data_dir: self.data_dir.clone(),
                 sql: sql.into(),
                 params,
-            })
+            }))
             .await
         {
             StoragePayload::Rows(result) => Ok(result),

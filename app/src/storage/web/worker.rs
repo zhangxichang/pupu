@@ -6,23 +6,32 @@ use rusqlite::Connection;
 use rusqlite::types::{Value as SqlValue, ValueRef};
 use serde_json::Value;
 use sqlite_wasm_rs as ffi;
-use sqlite_wasm_vfs::sahpool::{OpfsSAHPoolCfg, install};
+use sqlite_wasm_vfs::sahpool::{OpfsSAHPoolCfgBuilder, install};
 
 use crate::storage::{
     migration::MIGRATIONS,
     web::{QueryResult, StoragePayload, StorageRequest},
 };
 
-thread_local! {
-    static DB: RefCell<Option<Connection>> = const { RefCell::new(None) };
+struct Db {
+    connection: Connection,
+    data_dir: String,
 }
 
-async fn ensure_db() -> Result<()> {
-    if DB.with(|db| db.borrow().is_some()) {
+thread_local! {
+    static DB: RefCell<Option<Db>> = const { RefCell::new(None) };
+}
+
+async fn ensure_db(data_dir: &str) -> Result<()> {
+    if let Some(current) = DB.with(|db| db.borrow().as_ref().map(|db| db.data_dir.clone())) {
+        if current != data_dir {
+            return Err(eyre!("database already open at a different directory"));
+        }
         return Ok(());
     }
 
-    install::<ffi::WasmOsCallback>(&OpfsSAHPoolCfg::default(), true).await?;
+    let cfg = OpfsSAHPoolCfgBuilder::new().directory(data_dir).build();
+    install::<ffi::WasmOsCallback>(&cfg, true).await?;
 
     let mut connection = Connection::open("pupu.db")?;
     connection.pragma_update(None, "foreign_keys", "ON")?;
@@ -30,7 +39,12 @@ async fn ensure_db() -> Result<()> {
     connection.pragma_update(None, "busy_timeout", 5000)?;
     MIGRATIONS.to_latest(&mut connection)?;
 
-    DB.with(|cell| *cell.borrow_mut() = Some(connection));
+    DB.with(|cell| {
+        *cell.borrow_mut() = Some(Db {
+            connection,
+            data_dir: data_dir.to_string(),
+        });
+    });
     Ok(())
 }
 
@@ -120,30 +134,30 @@ fn query(connection: &Connection, sql: &str, params: &[Value]) -> Result<QueryRe
 }
 
 async fn handle(request: StorageRequest) -> Result<StoragePayload> {
-    ensure_db().await?;
+    let data_dir = match &request {
+        StorageRequest::Execute(command) | StorageRequest::Query(command) => &command.data_dir,
+    };
 
-    match request {
-        StorageRequest::Execute { sql, params } => {
-            DB.with(|cell| {
-                let db = cell.borrow();
-                let db = db
-                    .as_ref()
-                    .ok_or_else(|| eyre!("database not initialized"))?;
-                execute(db, &sql, &params)
-            })?;
-            Ok(StoragePayload::Ok)
+    ensure_db(data_dir).await?;
+
+    DB.with(|cell| {
+        let db = cell.borrow();
+        let db = db
+            .as_ref()
+            .ok_or_else(|| eyre!("database not initialized"))?;
+
+        match request {
+            StorageRequest::Execute(command) => {
+                execute(&db.connection, &command.sql, &command.params)?;
+                Ok(StoragePayload::Ok)
+            }
+            StorageRequest::Query(command) => Ok(StoragePayload::Rows(query(
+                &db.connection,
+                &command.sql,
+                &command.params,
+            )?)),
         }
-        StorageRequest::Query { sql, params } => {
-            let result = DB.with(|cell| {
-                let db = cell.borrow();
-                let db = db
-                    .as_ref()
-                    .ok_or_else(|| eyre!("database not initialized"))?;
-                query(db, &sql, &params)
-            })?;
-            Ok(StoragePayload::Rows(result))
-        }
-    }
+    })
 }
 
 #[oneshot]

@@ -10,17 +10,17 @@ use eyre::Result;
 
 pub trait Storage {}
 
-pub fn open(data_path: PathBuf) -> Result<impl Storage> {
+pub fn open(data_dir: PathBuf) -> Result<impl Storage> {
     #[cfg(not(target_family = "wasm"))]
     {
         use crate::storage::native::NativeStorage;
 
-        NativeStorage::open(data_path)
+        NativeStorage::open(data_dir)
     }
     #[cfg(all(target_family = "wasm", target_os = "unknown"))]
     {
         use crate::storage::web::client::WebStorage;
 
-        Ok(WebStorage::open(data_path))
+        Ok(WebStorage::open(data_dir))
     }
 }

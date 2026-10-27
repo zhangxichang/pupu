@@ -10,15 +10,16 @@ pub struct QueryResult {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct StorageCommand {
+    pub data_dir: String,
+    pub sql: String,
+    pub params: Vec<serde_json::Value>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum StorageRequest {
-    Execute {
-        sql: String,
-        params: Vec<serde_json::Value>,
-    },
-    Query {
-        sql: String,
-        params: Vec<serde_json::Value>,
-    },
+    Execute(StorageCommand),
+    Query(StorageCommand),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

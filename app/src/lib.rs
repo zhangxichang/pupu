@@ -70,7 +70,7 @@ pub async fn main(paths: AppPaths) -> Result<()> {
             }
         });
     }
-    let storage = storage::open(paths.data_path)?;
+    let storage = storage::open(paths.data_dir)?;
     viewport.run()?;
     drop(storage);
     Ok(())

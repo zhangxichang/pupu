@@ -8,9 +8,8 @@ pub struct NativeStorage {
     connection: rusqlite::Connection,
 }
 impl NativeStorage {
-    pub fn open(data_path: PathBuf) -> Result<Self> {
-        std::fs::create_dir_all(&data_path)?;
-        let mut connection = rusqlite::Connection::open(data_path.join("data.db"))?;
+    pub fn open(data_dir: PathBuf) -> Result<Self> {
+        let mut connection = rusqlite::Connection::open(data_dir.join("data.db"))?;
         connection.pragma_update(None, "foreign_keys", "ON")?;
         connection.pragma_update(None, "journal_mode", "WAL")?;
         connection.pragma_update(None, "synchronous", "NORMAL")?;
