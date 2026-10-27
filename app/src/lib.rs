@@ -8,19 +8,16 @@ compile_error!("Unsupported target platform");
 
 pub mod paths;
 pub mod storage;
-pub use paths::AppPaths;
 #[cfg(any(target_os = "windows", target_os = "linux"))]
 mod window_resize;
 
 use eyre::Result;
 
+use crate::paths::AppPaths;
+
 slint::include_modules!();
 
-pub async fn main(paths: Option<AppPaths>) -> Result<()> {
-    if let Some(paths) = &paths {
-        paths.ensure_dirs()?;
-    }
-
+pub async fn main(paths: AppPaths) -> Result<()> {
     let backend = slint::BackendSelector::new();
     #[cfg(any(target_os = "windows", target_os = "linux"))]
     let backend = backend
@@ -73,7 +70,7 @@ pub async fn main(paths: Option<AppPaths>) -> Result<()> {
             }
         });
     }
-    let storage = storage::open(paths.as_ref().map(|paths| paths.data_dir.clone()))?;
+    let storage = storage::open(paths.data_path)?;
     viewport.run()?;
     drop(storage);
     Ok(())

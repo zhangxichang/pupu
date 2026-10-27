@@ -7,6 +7,7 @@ edition = "2024"
 slint-build = "1.18.1"
 
 [dependencies]
+log = "0.4.34"
 eyre = "0.6.14"
 serde = { version = "1.0.229", features = ["derive"] }
 rusqlite = { version = "0.40.2", features = ["bundled"] }
@@ -16,7 +17,7 @@ rusqlite_migration = "2.6.0"
 # extism = "1.30.0"
 
 [target.'cfg(any(target_os = "windows", target_os = "linux", target_os = "android"))'.dependencies]
-tokio = { version = "1.53.2", default-features = false }
+tokio = { version = "1.53.2", default-features = false, features = ["fs"] }
 
 [target.'cfg(any(target_os = "windows", target_os = "linux"))'.dependencies]
 slint = { version = "1.18.1", default-features = false, features = [

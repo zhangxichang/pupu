@@ -1,17 +1,25 @@
 use std::path::PathBuf;
 
+use eyre::Result;
+
 #[derive(Debug, Clone)]
 pub struct AppPaths {
-    pub data_dir: PathBuf,
-    pub config_dir: PathBuf,
-    pub cache_dir: PathBuf,
+    pub data_path: PathBuf,
+    pub config_path: PathBuf,
+    pub cache_path: PathBuf,
 }
-
 impl AppPaths {
-    pub fn ensure_dirs(&self) -> std::io::Result<()> {
-        for dir in [&self.data_dir, &self.config_dir, &self.cache_dir] {
-            std::fs::create_dir_all(dir)?;
+    #[cfg(not(target_family = "wasm"))]
+    pub async fn build(&self) -> Result<()> {
+        use tokio::fs::create_dir_all;
+
+        for path in [&self.data_path, &self.config_path, &self.cache_path] {
+            create_dir_all(path).await?;
         }
         Ok(())
+    }
+    #[cfg(all(target_family = "wasm", target_os = "unknown"))]
+    pub async fn build(&self) -> Result<()> {
+        todo!()
     }
 }

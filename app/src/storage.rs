@@ -10,18 +10,17 @@ use eyre::Result;
 
 pub trait Storage {}
 
-#[cfg(not(target_family = "wasm"))]
-pub fn open(data_path: Option<PathBuf>) -> Result<impl Storage> {
-    use eyre::ContextCompat;
+pub fn open(data_path: PathBuf) -> Result<impl Storage> {
+    #[cfg(not(target_family = "wasm"))]
+    {
+        use crate::storage::native::NativeStorage;
 
-    use crate::storage::native::NativeStorage;
+        NativeStorage::open(data_path)
+    }
+    #[cfg(all(target_family = "wasm", target_os = "unknown"))]
+    {
+        use crate::storage::web::client::WebStorage;
 
-    NativeStorage::open(data_path.wrap_err("原生平台必须提供数据目录")?)
-}
-
-#[cfg(all(target_family = "wasm", target_os = "unknown"))]
-pub fn open(_: Option<PathBuf>) -> Result<impl Storage> {
-    use crate::storage::web::client::WebStorage;
-
-    Ok(WebStorage::new())
+        Ok(WebStorage::open(data_path))
+    }
 }
