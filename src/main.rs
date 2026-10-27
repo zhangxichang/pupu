@@ -20,9 +20,9 @@ fn main() {
                 return;
             };
             let paths = app::paths::AppPaths {
-                data_path: dirs.data_local_dir().to_path_buf(),
-                config_path: dirs.config_local_dir().to_path_buf(),
-                cache_path: dirs.cache_dir().to_path_buf(),
+                data_dir: dirs.data_local_dir().to_path_buf(),
+                config_dir: dirs.config_local_dir().to_path_buf(),
+                cache_dir: dirs.cache_dir().to_path_buf(),
             };
             if let Err(err) = paths.build().await {
                 log::error!("应用路径构建出错：{}", err);
@@ -44,9 +44,9 @@ fn main() {
 
     wasm_bindgen_futures::spawn_local(async {
         let paths = app::paths::AppPaths {
-            data_path: ".".into(),
-            config_path: ".".into(),
-            cache_path: "cache".into(),
+            data_dir: "data".into(),
+            config_dir: "config".into(),
+            cache_dir: "cache".into(),
         };
         if let Err(err) = paths.build().await {
             log::error!("应用路径构建出错：{}", err);
