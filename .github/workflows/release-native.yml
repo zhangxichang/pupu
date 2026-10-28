@@ -158,12 +158,12 @@ jobs:
       - name: 收集产物
         run: |
           mkdir -p artifacts
-          cp android/gradle/app/build/outputs/apk/release/app-release.apk artifacts/pupu-android.apk
+          cp android/gradle/app/build/outputs/apk/release/app-release.apk artifacts/pupu-android-arm64.apk
       - name: 上传产物
         uses: actions/upload-artifact@v7
         with:
-          name: pupu-android
-          path: artifacts/pupu-android.apk
+          name: pupu-android-arm64
+          path: artifacts/pupu-android-arm64.apk
           if-no-files-found: error
   release:
     name: 发布到 GitHub
