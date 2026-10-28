@@ -1,0 +1,42 @@
+name: Web发布
+concurrency:
+  group: release-web
+  cancel-in-progress: true
+on: workflow_dispatch
+permissions:
+  contents: read
+jobs:
+  build-release:
+    name: 构建并发布
+    runs-on: ubuntu-latest
+    environment: release
+    steps:
+      - name: 检出
+        uses: actions/checkout@v7
+      - name: 安装 bun
+        uses: oven-sh/setup-bun@v2
+      - name: 安装 rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+      - name: 恢复 Rust 缓存
+        uses: Swatinem/rust-cache@v2
+      - name: 安装 cargo-binstall
+        uses: cargo-bins/cargo-binstall@main
+      - name: 安装 trunk
+        run: cargo binstall trunk --no-confirm
+      - name: 构建
+        run: trunk build --release
+      - name: R2 发布
+        id: release_r2
+        uses: ./.github/actions/release-r2
+        with:
+          account_id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          r2_files: dist/pupu-*_bg.wasm
+      - name: 部署 Worker
+        uses: cloudflare/wrangler-action@v4
+        with:
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          command: deploy --tag ${{ steps.release_r2.outputs.build_id }}
