@@ -58,7 +58,7 @@ for path_pattern in "${FILE_PATTERNS[@]}"; do
 
     keys+=("$key")
     echo "上传: $key"
-    npx --yes wrangler r2 object put "$BUCKET/$key" \
+    npx --yes wrangler@4.35.0 r2 object put "$BUCKET/$key" \
         --file "$path" \
         --remote
 done
