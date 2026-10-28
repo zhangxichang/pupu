@@ -84,7 +84,7 @@ jq -n \
     "${keys[@]}" > "$MANIFEST"
 
 echo "写 manifest: _releases/$BUILD_ID.json"
-npx --yes wrangler r2 object put "$BUCKET/_releases/$BUILD_ID.json" \
+npx --yes wrangler@4.35.0 r2 object put "$BUCKET/_releases/$BUILD_ID.json" \
     --file "$MANIFEST" \
     --remote
 
@@ -95,7 +95,7 @@ jq -r '.files[]' "$MANIFEST" >> "$KEEP"
 
 # 读取线上 deployment 的 BUILD_ID tag
 LIVE_BUILD_ID=""
-if STATUS_OUTPUT=$(NO_COLOR=1 npx --yes wrangler deployments status 2>&1); then
+if STATUS_OUTPUT=$(NO_COLOR=1 npx --yes wrangler@4.35.0 deployments status 2>&1); then
     LIVE_BUILD_ID=$(printf '%s\n' "$STATUS_OUTPUT" \
         | sed -n 's/.*Tag:[[:space:]]*//p' \
         | head -n1 \
