@@ -1,0 +1,39 @@
+name: R2发布
+description: 上传文件、写 manifest 和 .assetsignore、只保留当前和线上的 manifest 及其文件
+
+inputs:
+  account_id:
+    description: Cloudflare Account ID
+    required: true
+  api_token:
+    description: Cloudflare API Token
+    required: true
+  r2_files:
+    description: 一行一个文件路径，支持 glob，每个 pattern 取第一个匹配；不能为空
+    required: true
+  bucket:
+    description: R2 bucket（需专用于发布，未保留对象会被清理）
+    required: false
+    default: pupu-apac
+
+outputs:
+  build_id:
+    description: 本次发布的 BUILD_ID，也是 Worker version tag
+    value: ${{ steps.release.outputs.build_id }}
+
+runs:
+  using: composite
+  steps:
+    - name: 安装 node
+      uses: actions/setup-node@v7
+      with:
+        node-version: latest
+    - name: 发布
+      id: release
+      shell: bash
+      env:
+        account_id: ${{ inputs.account_id }}
+        api_token: ${{ inputs.api_token }}
+        r2_files: ${{ inputs.r2_files }}
+        R2_BUCKET: ${{ inputs.bucket }}
+      run: bash "${{ github.action_path }}/release-r2.sh"

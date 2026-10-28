@@ -7,20 +7,20 @@
   "observability": {
     "enabled": true
   },
-  "main": "wrangler/main.ts",
-  "assets": {
-    "directory": "dist",
-    "binding": "ASSETS",
-    "run_worker_first": [
-      "/pupu-*_bg.wasm"
-    ]
-  },
   "routes": [
     {
       "pattern": "pupu.zhangxichang.com",
       "custom_domain": true
     }
   ],
+  "main": "wrangler/main.ts",
+  "assets": {
+    "directory": "dist",
+    "binding": "assets",
+    "run_worker_first": [
+      "/pupu-*_bg.wasm"
+    ]
+  },
   "r2_buckets": [
     {
       "bucket_name": "pupu-apac",

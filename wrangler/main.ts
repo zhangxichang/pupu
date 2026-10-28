@@ -1,6 +1,6 @@
 interface Env {
     r2: R2Bucket;
-    ASSETS: Fetcher;
+    assets: Fetcher;
 }
 
 export default {
@@ -32,6 +32,6 @@ export default {
             );
         }
 
-        return env.ASSETS.fetch(request);
+        return env.assets.fetch(request);
     },
 } satisfies ExportedHandler<Env>;

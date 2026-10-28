@@ -1,0 +1,223 @@
+name: 原生发布
+concurrency:
+  group: release-native
+  cancel-in-progress: true
+on:
+  workflow_dispatch:
+    inputs:
+      channel:
+        description: "发布通道"
+        type: choice
+        options: [stable, beta, alpha]
+        default: alpha
+permissions:
+  contents: read
+jobs:
+  check-release:
+    name: 检查是否需要发布
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+    outputs:
+      release: ${{ steps.check.outputs.release }}
+      version: ${{ steps.check.outputs.version }}
+    steps:
+      - name: 检出
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: 安装 bun
+        uses: oven-sh/setup-bun@v2
+      - name: 安装 node
+        uses: actions/setup-node@v7
+        with:
+          node-version: latest
+      - name: 安装依赖
+        run: bun install
+      - name: 计算下一个版本
+        id: check
+        env:
+          PRERELEASE: ${{ inputs.channel }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          npx semantic-release --dry-run
+          if [[ -f version ]]; then
+            version="$(cat version)"
+            echo "下一个版本：$version"
+            echo "release=true" >> "$GITHUB_OUTPUT"
+            echo "version=$version" >> "$GITHUB_OUTPUT"
+          else
+            echo "没有需要发布的变更"
+            echo "release=false" >> "$GITHUB_OUTPUT"
+          fi
+  build-windows:
+    name: 构建 Windows 平台
+    needs: check-release
+    if: needs.check-release.outputs.release == 'true'
+    runs-on: windows-latest
+    steps:
+      - name: 检出
+        uses: actions/checkout@v7
+      - name: 安装 rust
+        uses: dtolnay/rust-toolchain@stable
+      - name: 恢复 rust 缓存
+        uses: Swatinem/rust-cache@v2
+      - name: 构建
+        run: cargo build --release
+      - name: 收集产物
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path artifacts | Out-Null
+          Copy-Item target/release/pupu.exe artifacts/pupu-windows-x64.exe
+      - name: 上传产物
+        uses: actions/upload-artifact@v7
+        with:
+          name: pupu-windows-x64
+          path: artifacts/pupu-windows-x64.exe
+          if-no-files-found: error
+  build-linux:
+    name: 构建 Linux 平台
+    needs: check-release
+    if: needs.check-release.outputs.release == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出
+        uses: actions/checkout@v7
+      - name: 安装 rust
+        uses: dtolnay/rust-toolchain@stable
+      - name: 恢复 rust 缓存
+        uses: Swatinem/rust-cache@v2
+      - name: 安装系统依赖
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends libfontconfig1-dev
+      - name: 构建
+        run: cargo build --release
+      - name: 收集产物
+        run: |
+          mkdir -p artifacts
+          cp target/release/pupu artifacts/pupu-linux-x64
+      - name: 上传产物
+        uses: actions/upload-artifact@v7
+        with:
+          name: pupu-linux-x64
+          path: artifacts/pupu-linux-x64
+          if-no-files-found: error
+  build-android:
+    name: 构建 Android 平台
+    needs: check-release
+    if: needs.check-release.outputs.release == 'true'
+    runs-on: ubuntu-latest
+    environment: release
+    steps:
+      - name: 检出
+        uses: actions/checkout@v7
+      - name: 安装 rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android
+      - name: 恢复 rust 缓存
+        uses: Swatinem/rust-cache@v2
+      - name: 安装 jdk
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: latest
+      - name: 安装 android sdk
+        uses: android-actions/setup-android@v4
+        with:
+          packages: >-
+            platform-tools
+            platforms;android-34
+            build-tools;36.0.0
+            ndk;30.0.16248370
+      - name: 安装 cargo-binstall
+        uses: cargo-bins/cargo-binstall@main
+      - name: 安装 cargo-ndk
+        run: cargo binstall cargo-ndk --no-confirm
+      - name: 解码签名密钥
+        env:
+          ANDROID_KEYSTORE_FILE: ${{ secrets.ANDROID_KEYSTORE_FILE }}
+        run: |
+          set -euo pipefail
+          printf '%s' "$ANDROID_KEYSTORE_FILE" | base64 -d > "$RUNNER_TEMP/release.p12"
+          chmod 600 "$RUNNER_TEMP/release.p12"
+      - name: 构建
+        env:
+          ANDROID_KEYSTORE_PATH: ${{ runner.temp }}/release.p12
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEYSTORE_KEYALIAS: ${{ secrets.ANDROID_KEYSTORE_KEYALIAS }}
+          ANDROID_KEYSTORE_KEY_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_KEY_PASSWORD }}
+        run: |
+          cd android/gradle
+          ./gradlew --no-daemon assembleRelease \
+            -PversionName="${{ needs.check-release.outputs.version }}" \
+            -PversionCode="${{ github.run_number }}"
+      - name: 收集产物
+        run: |
+          mkdir -p artifacts
+          cp android/gradle/app/build/outputs/apk/release/app-release.apk artifacts/pupu-android.apk
+      - name: 上传产物
+        uses: actions/upload-artifact@v7
+        with:
+          name: pupu-android
+          path: artifacts/pupu-android.apk
+          if-no-files-found: error
+  release:
+    name: 发布到 GitHub
+    needs: [build-windows, build-linux, build-android]
+    runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+    steps:
+      - name: 生成 GitHub App Token
+        id: app_token
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ secrets.BOT_CLIENT_ID }}
+          private-key: ${{ secrets.BOT_PRIVATE_KEY }}
+          permission-contents: write
+          permission-issues: write
+          permission-pull-requests: write
+      - name: 检出
+        uses: actions/checkout@v7
+        with:
+          token: ${{ steps.app_token.outputs.token }}
+          fetch-depth: 0
+      - name: 安装 bun
+        uses: oven-sh/setup-bun@v2
+      - name: 安装 node
+        uses: actions/setup-node@v7
+        with:
+          node-version: latest
+      - name: 安装依赖
+        run: bun install
+      - name: 下载产物
+        uses: actions/download-artifact@v8
+        with:
+          path: artifacts
+          merge-multiple: true
+      - name: 发布到 GitHub Release
+        env:
+          PRERELEASE: ${{ inputs.channel }}
+          GITHUB_TOKEN: ${{ steps.app_token.outputs.token }}
+        run: npx semantic-release
+  gitee-sync:
+    name: 同步到 Gitee
+    needs: release
+    runs-on: ubuntu-latest
+    environment: release
+    continue-on-error: true
+    steps:
+      - uses: trustedinster/sync-release-gitee@v1.3
+        with:
+          github_owner: zhangxichang
+          github_repo: pupu
+          gitee_owner: zhangxichang
+          gitee_repo: pupu-release-latest
+          gitee_token: ${{ secrets.GITEE_TOKEN }}
