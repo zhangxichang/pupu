@@ -234,6 +234,7 @@ dependencies = [
  "sqlite-wasm-rs",
  "sqlite-wasm-vfs",
  "tokio",
+ "wasm-bindgen",
 ]
 
 [[package]]

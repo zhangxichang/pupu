@@ -40,6 +40,7 @@ slint = { version = "1.18.1", default-features = false, features = [
     "backend-winit",
     "renderer-femtovg",
 ] }
+wasm-bindgen = "0.2.129"
 gloo-worker = { version = "0.6.0", features = ["futures"] }
 opfs = "0.3.1"
 serde_json = "1.0.154"

@@ -2,3 +2,4 @@
 /dist/
 /.wrangler/
 /node_modules/
+/build-dist/

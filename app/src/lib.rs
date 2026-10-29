@@ -6,6 +6,8 @@
 )))]
 compile_error!("Unsupported target platform");
 
+#[cfg(all(target_family = "wasm", target_os = "unknown"))]
+mod js;
 pub mod paths;
 pub mod storage;
 #[cfg(any(target_os = "windows", target_os = "linux"))]
@@ -78,6 +80,20 @@ pub async fn main(paths: AppPaths) -> Result<()> {
                 });
             }
         });
+    }
+    #[cfg(all(target_family = "wasm", target_os = "unknown"))]
+    {
+        use slint::RenderingState;
+
+        let mut first_frame = true;
+
+        viewport.window().set_rendering_notifier(move |state, _| {
+            if !first_frame || !matches!(state, RenderingState::AfterRendering) {
+                return;
+            }
+            first_frame = false;
+            js::finish_first_screen();
+        })?;
     }
     let storage = storage::open(paths.data_dir)?;
     viewport.run()?;
