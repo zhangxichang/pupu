@@ -24,6 +24,15 @@ pub async fn main(paths: AppPaths) -> Result<()> {
         .backend_name("winit".to_string())
         .renderer_name("femtovg-wgpu".to_string())
         .with_winit_window_attributes_hook(|attributes| attributes.with_transparent(true));
+    #[cfg(target_os = "windows")]
+    let backend = {
+        use slint::wgpu_30::{WGPUConfiguration, WGPUSettings, wgpu};
+
+        let mut settings = WGPUSettings::default();
+        settings.backends = wgpu::Backends::DX12;
+        settings.backend_options.dx12.presentation_system = wgpu::Dx12SwapchainKind::DxgiFromVisual;
+        backend.require_wgpu_30(WGPUConfiguration::Automatic(settings))
+    };
     #[cfg(target_os = "android")]
     let backend = {
         use slint::wgpu_30::WGPUConfiguration;
@@ -37,7 +46,7 @@ pub async fn main(paths: AppPaths) -> Result<()> {
         .set_enabled_update_notification(cfg!(any(target_os = "windows", target_os = "linux",)));
     #[cfg(any(target_os = "windows", target_os = "linux"))]
     {
-        use slint::winit_030::WinitWindowAccessor;
+        use slint::{platform::WindowEvent, winit_030::WinitWindowAccessor};
 
         viewport.on_drag_window({
             let viewport = viewport.as_weak();
@@ -50,7 +59,7 @@ pub async fn main(paths: AppPaths) -> Result<()> {
                 _ = viewport.upgrade_in_event_loop(|viewport| {
                     _ = viewport
                         .window()
-                        .dispatch_event_with_result(slint::platform::WindowEvent::PointerExited);
+                        .dispatch_event_with_result(WindowEvent::PointerExited);
                 });
             }
         });
@@ -65,7 +74,7 @@ pub async fn main(paths: AppPaths) -> Result<()> {
                 _ = viewport.upgrade_in_event_loop(|viewport| {
                     _ = viewport
                         .window()
-                        .dispatch_event_with_result(slint::platform::WindowEvent::PointerExited);
+                        .dispatch_event_with_result(WindowEvent::PointerExited);
                 });
             }
         });
