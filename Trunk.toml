@@ -1,0 +1,12 @@
+[[hooks]]
+stage = "pre_build"
+command = "bun"
+command_arguments = ["svelte-check"]
+
+[[hooks]]
+stage = "pre_build"
+command = "bun"
+command_arguments = ["vite", "build"]
+
+[watch]
+ignore = ["build-dist", "build-dist/**"]

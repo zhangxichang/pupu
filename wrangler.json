@@ -13,7 +13,7 @@
       "custom_domain": true
     }
   ],
-  "main": "wrangler/main.ts",
+  "main": "wrangler.js",
   "assets": {
     "directory": "dist",
     "binding": "assets",
