@@ -1,4 +1,9 @@
-#[cfg(target_os = "android")]
+#![cfg(target_os = "android")]
+
+use std::borrow::Cow;
+
+use app::{AppConfig, paths::AppPaths};
+
 #[unsafe(no_mangle)]
 fn android_main(app: slint::android::AndroidApp) {
     android_logger::init_once(
@@ -17,7 +22,7 @@ fn android_main(app: slint::android::AndroidApp) {
                 log::error!("应用根路径不存在");
                 return;
             };
-            let paths = app::paths::AppPaths {
+            let paths = AppPaths {
                 config_dir: data_dir.clone(),
                 cache_dir: app_root_path.join("cache"),
                 data_dir,
@@ -30,7 +35,12 @@ fn android_main(app: slint::android::AndroidApp) {
                 log::error!("应用初始化出错：{}", err);
                 return;
             }
-            if let Err(err) = app::main(paths).await {
+            if let Err(err) = app::main(AppConfig {
+                paths,
+                font_data: Cow::Borrowed(include_bytes!("../../assets/fonts/MiSans VF.ttf")),
+            })
+            .await
+            {
                 log::error!("应用运行出错：{}", err);
                 return;
             }

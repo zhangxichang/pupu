@@ -1,17 +1,39 @@
 {
   "private": true,
   "type": "module",
+  "scripts": {
+    "dev": "bun run build:wasm && vite dev",
+    "build": "bun run build:wasm && svelte-check && eslint . && vite build",
+    "preview": "bun vite preview",
+    "build:wasm": "bun scripts/build_wasm.ts",
+    "format": "bun scripts/format.ts"
+  },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@semantic-release/commit-analyzer": "^13.0.1",
     "@semantic-release/exec": "^7.1.0",
     "@semantic-release/github": "^12.0.10",
     "@semantic-release/release-notes-generator": "^14.1.1",
     "@sveltejs/vite-plugin-svelte": "^7.3.1",
+    "@tailwindcss/vite": "^4.3.3",
+    "@types/bun": "^1.4.4",
     "conventional-changelog-conventionalcommits": "^9.3.1",
+    "eslint": "^10.14.0",
+    "eslint-config-flat-gitignore": "^2.4.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-svelte": "^3.23.1",
+    "execa": "^10.2.1",
+    "globals": "^17.13.0",
+    "globby": "^16.2.4",
+    "neverthrow": "^8.2.0",
+    "prettier": "^3.9.10",
+    "prettier-plugin-svelte": "^4.1.1",
     "semantic-release": "^25.0.9",
     "svelte": "^5.57.3",
     "svelte-check": "^4.7.7",
+    "tailwindcss": "^4.3.3",
     "typescript": "^6.0.3",
+    "typescript-eslint": "^8.72.1",
     "vite": "^8.3.5"
   }
 }

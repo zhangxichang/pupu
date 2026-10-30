@@ -7,17 +7,16 @@ edition = "2024"
 slint-build = "1.18.1"
 
 [dependencies]
+storage = { path = "../crates/storage" }
+
 log = "0.4.34"
 eyre = "0.6.14"
-serde = { version = "1.0.229", features = ["derive"] }
-rusqlite = { version = "0.40.2", features = ["bundled"] }
-rusqlite_migration = "2.6.0"
 
 # TODO 待未来实现插件功能
 # extism = "1.30.0"
 
 [target.'cfg(any(target_os = "windows", target_os = "linux", target_os = "android"))'.dependencies]
-tokio = { version = "1.53.2", default-features = false, features = ["fs"] }
+tokio = { version = "1.53.2", features = ["fs"] }
 
 [target.'cfg(any(target_os = "windows", target_os = "linux"))'.dependencies]
 slint = { version = "1.18.1", default-features = false, features = [
@@ -25,6 +24,7 @@ slint = { version = "1.18.1", default-features = false, features = [
     "unstable-winit-030",
     "unstable-wgpu-30",
     "renderer-femtovg-wgpu",
+    "unstable-fontique-011",
 ] }
 
 [target.'cfg(target_os = "android")'.dependencies]
@@ -32,17 +32,16 @@ slint = { version = "1.18.1", default-features = false, features = [
     "compat-1-2",
     "backend-android-activity-06",
     "unstable-wgpu-30",
+    "unstable-fontique-011",
 ] }
 
 [target.'cfg(all(target_family = "wasm", target_os = "unknown"))'.dependencies]
+lifecycle = { path = "../web/wasm/lifecycle" }
+
 slint = { version = "1.18.1", default-features = false, features = [
     "compat-1-2",
     "backend-winit",
     "renderer-femtovg",
+    "unstable-fontique-011",
 ] }
-wasm-bindgen = "0.2.129"
-gloo-worker = { version = "0.6.0", features = ["futures"] }
 opfs = "0.3.1"
-serde_json = "1.0.154"
-sqlite-wasm-rs = "0.5.5"
-sqlite-wasm-vfs = "0.2.0"

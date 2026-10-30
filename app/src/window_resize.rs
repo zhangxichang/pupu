@@ -1,3 +1,5 @@
+#![cfg(any(target_os = "windows", target_os = "linux"))]
+
 use slint::winit_030::winit::window::ResizeDirection;
 
 use crate::WindowResizeDirection;

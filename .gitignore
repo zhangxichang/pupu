@@ -2,4 +2,6 @@
 /dist/
 /.wrangler/
 /node_modules/
-/build-dist/
+/.playwright-cli/
+/.superpowers/
+/.ruff_cache/

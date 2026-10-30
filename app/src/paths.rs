@@ -9,7 +9,7 @@ pub struct AppPaths {
     pub cache_dir: PathBuf,
 }
 impl AppPaths {
-    #[cfg(not(target_family = "wasm"))]
+    #[cfg(any(target_os = "windows", target_os = "linux", target_os = "android"))]
     pub async fn build(&self) -> Result<()> {
         use tokio::fs::create_dir_all;
 
@@ -20,10 +20,10 @@ impl AppPaths {
     }
     #[cfg(all(target_family = "wasm", target_os = "unknown"))]
     pub async fn build(&self) -> Result<()> {
+        // TODO AI实现待审查
         use std::path::Component;
 
-        use opfs::persistent::app_specific_dir;
-        use opfs::{DirectoryHandle, GetDirectoryHandleOptions};
+        use opfs::{DirectoryHandle, GetDirectoryHandleOptions, persistent::app_specific_dir};
 
         for path in [&self.data_dir, &self.config_dir, &self.cache_dir] {
             let mut dir = app_specific_dir()

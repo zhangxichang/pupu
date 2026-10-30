@@ -1,29 +1,8 @@
-<html>
-
-<head>
-    <link data-trunk rel="rust" data-initializer="build-dist/wasm-initializer.js" />
-    <link data-trunk rel="css" href="build-dist/wasm-initializer.css" />
-
-    <link data-trunk rel="rust" href="worker/storage" data-type="worker" data-bindgen-target="web" />
-
-    <link data-trunk rel="icon" href="icon.svg" />
-
-    <title>Pupu</title>
-    <style>
-        body {
-            margin: 0;
-        }
-
-        #canvas {
-            outline: none;
-            width: 100vw !important;
-            height: 100vh !important;
-        }
-    </style>
-</head>
-
-<body>
-    <canvas id="canvas"></canvas>
-</body>
-
+<!doctype html>
+<html lang="zh">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script type="module" src="web/src/main.ts"></script>
+  </head>
 </html>

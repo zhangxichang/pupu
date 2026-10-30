@@ -19,24 +19,21 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
         with:
           targets: wasm32-unknown-unknown
-      - name: 恢复 Rust 缓存
+      - name: Rust 缓存
         uses: Swatinem/rust-cache@v2
       - name: 安装 cargo-binstall
         uses: cargo-bins/cargo-binstall@main
-      - name: 安装 trunk
-        run: cargo binstall trunk --no-confirm
+      - name: 安装 wasm-pack
+        run: cargo binstall wasm-pack --no-confirm
+      - name: 安装 binaryen
+        run: sudo apt-get update && sudo apt-get install -y binaryen
+      - name: 安装依赖
+        run: bun install
       - name: 构建
-        run: trunk build --release
-      - name: R2 发布
-        id: release_r2
-        uses: ./.github/actions/release-r2
-        with:
-          account_id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          r2_files: dist/pupu-*_bg.wasm
+        run: bun run build
       - name: 部署 Worker
         uses: cloudflare/wrangler-action@v4
         with:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          command: deploy --tag ${{ steps.release_r2.outputs.build_id }}
+          command: deploy
