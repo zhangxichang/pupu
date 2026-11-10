@@ -1,5 +1,5 @@
 [workspace]
-members = ["app", "android", "worker/*"]
+members = ["app", "android", "crates/*", "web/wasm/*"]
 
 [package]
 name = "pupu"
@@ -11,14 +11,5 @@ app = { path = "app" }
 
 log = "0.4.34"
 env_logger = "0.11.11"
-
-[target.'cfg(any(target_os = "windows", target_os = "linux"))'.dependencies]
-tokio = { version = "1.53.2", default-features = false, features = [
-    "rt-multi-thread",
-] }
+tokio = { version = "1.53.2", features = ["rt-multi-thread"] }
 directories = "6.0.0"
-
-[target.'cfg(all(target_family = "wasm", target_os = "unknown"))'.dependencies]
-console_log = "1.1.0"
-console_error_panic_hook = "0.1.7"
-wasm-bindgen-futures = "0.4.79"

@@ -1,0 +1,17 @@
+[package]
+name = "storage"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+eyre = "0.6.14"
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.154"
+
+[target.'cfg(any(target_os = "windows", target_os = "linux", target_os = "android"))'.dependencies]
+storage-migrations = { path = "../storage-migrations" }
+
+rusqlite = { version = "0.40.2", features = ["bundled"] }
+
+[target.'cfg(all(target_family = "wasm", target_os = "unknown"))'.dependencies]
+gloo-worker = { version = "0.6.0", features = ["futures"] }

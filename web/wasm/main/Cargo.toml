@@ -1,0 +1,17 @@
+[package]
+name = "main"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+app = { path = "../../../app" }
+lifecycle = { path = "../lifecycle" }
+
+wasm-bindgen = "0.2.129"
+console_error_panic_hook = "0.1.7"
+log = "0.4.34"
+console_log = "1.1.0"
+wasm-bindgen-futures = "0.4.79"

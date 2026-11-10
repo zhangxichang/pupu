@@ -6,20 +6,26 @@
 )))]
 compile_error!("Unsupported target platform");
 
-#[cfg(all(target_family = "wasm", target_os = "unknown"))]
-mod js;
 pub mod paths;
-pub mod storage;
-#[cfg(any(target_os = "windows", target_os = "linux"))]
 mod window_resize;
 
+use std::{borrow::Cow, sync::Arc};
+
 use eyre::Result;
+use slint::fontique_011;
 
 use crate::paths::AppPaths;
 
 slint::include_modules!();
 
-pub async fn main(paths: AppPaths) -> Result<()> {
+pub struct AppConfig {
+    pub paths: AppPaths,
+    pub font_data: Cow<'static, [u8]>,
+    #[cfg(all(target_family = "wasm", target_os = "unknown"))]
+    pub storage_worker_url: String,
+}
+
+pub async fn main(config: AppConfig) -> Result<()> {
     let backend = slint::BackendSelector::new();
     #[cfg(any(target_os = "windows", target_os = "linux"))]
     let backend = backend
@@ -42,6 +48,16 @@ pub async fn main(paths: AppPaths) -> Result<()> {
         backend.require_wgpu_30(WGPUConfiguration::default())
     };
     backend.select()?;
+    let blob = match config.font_data {
+        Cow::Borrowed(data) => fontique_011::fontique::Blob::new(Arc::new(data)),
+        Cow::Owned(data) => fontique_011::fontique::Blob::new(Arc::new(data)),
+    };
+    if fontique_011::shared_collection()
+        .register_fonts(blob, None)
+        .is_empty()
+    {
+        return Err(eyre::eyre!("字体注册失败"));
+    }
     let viewport = Viewport::new()?;
     viewport.set_enabled_window_chrome(cfg!(any(target_os = "windows", target_os = "linux")));
     viewport
@@ -86,16 +102,18 @@ pub async fn main(paths: AppPaths) -> Result<()> {
         use slint::RenderingState;
 
         let mut first_frame = true;
-
         viewport.window().set_rendering_notifier(move |state, _| {
             if !first_frame || !matches!(state, RenderingState::AfterRendering) {
                 return;
             }
             first_frame = false;
-            js::finish_first_screen();
+            lifecycle::notify_ready();
         })?;
     }
-    let storage = storage::open(paths.data_dir)?;
+    #[cfg(any(target_os = "windows", target_os = "linux", target_os = "android"))]
+    let storage = storage::open(config.paths.data_dir).await?;
+    #[cfg(all(target_family = "wasm", target_os = "unknown"))]
+    let storage = storage::open(config.paths.data_dir, &config.storage_worker_url).await?;
     viewport.run()?;
     drop(storage);
     Ok(())
