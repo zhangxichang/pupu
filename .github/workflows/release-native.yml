@@ -89,10 +89,6 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
       - name: rust 缓存
         uses: Swatinem/rust-cache@v2
-      - name: 安装系统依赖
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends libfontconfig1-dev
       - name: 构建
         run: cargo build --release
       - name: 收集产物
