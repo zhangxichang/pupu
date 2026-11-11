@@ -1,0 +1,45 @@
+@layer components {
+  .loading-spin {
+    animation: loading-spin 0.8s linear infinite;
+  }
+
+  .loading-badge-pop {
+    animation: loading-badge-pop 0.65s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .loading-mark-in {
+    animation: loading-mark-in 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+}
+
+@keyframes loading-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes loading-badge-pop {
+  0% {
+    transform: scale(1);
+  }
+
+  45% {
+    transform: scale(1.08);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes loading-mark-in {
+  from {
+    opacity: 0;
+    transform: scale(0.6) rotate(-24deg);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+}

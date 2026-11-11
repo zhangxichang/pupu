@@ -1,6 +1,6 @@
 // TODO AI实现待审查
-import type { AppResource, ResourceDependency, WasmInit } from "./resources";
-import { resourceDefinitions } from "./resources";
+import type { ResourceInfo, ResourceDependency, WasmInit } from "./types";
+import { resourceDefinitions } from "../resources";
 
 export type ResourceStatus =
   | "pending"
@@ -21,10 +21,6 @@ export type ResourceState = {
   error: Error | null;
 };
 
-export type ResourceLoadingState = {
-  resources: ResourceState[];
-};
-
 type PhaseDeferred = {
   promise: Promise<void>;
   readonly settled: boolean;
@@ -35,7 +31,7 @@ type PhaseDeferred = {
 };
 
 type ResourceRuntime = {
-  definition: AppResource;
+  definition: ResourceInfo;
   state: ResourceState;
   download: PhaseDeferred;
   execute: PhaseDeferred;
@@ -81,7 +77,7 @@ function createPhaseDeferred(): PhaseDeferred {
   };
 }
 
-export const resourceLoading = $state<ResourceLoadingState>({
+export const resourceLoading = $state<{ resources: ResourceState[] }>({
   resources: resourceDefinitions.map(({ id, label }): ResourceState => ({
     id,
     label,
@@ -155,9 +151,7 @@ async function runResource(
     if (!response.ok) {
       throw new Error(`HTTP ${response.status} ${response.statusText}`);
     }
-    const totalBytes = Number(response.headers.get("content-length"));
-    state.total =
-      Number.isFinite(totalBytes) && totalBytes > 0 ? totalBytes : 0;
+    state.total = definition.size;
 
     const bytes = await trackDownload(
       response,
@@ -179,7 +173,7 @@ async function runResource(
       return;
     }
 
-    if (definition.init) {
+    if (definition.kind === "wasm") {
       phase = "初始化";
       state.status = "initializing";
       await definition.init({
@@ -187,12 +181,10 @@ async function runResource(
           headers: { "Content-Type": "application/wasm" },
         }),
       });
-    }
 
-    if (definition.start) {
       phase = "执行";
       state.status = "running";
-      await definition.start();
+      await definition.onStart();
     }
 
     runtime.execute.resolve();
@@ -220,7 +212,8 @@ async function waitForDependencies(
   runtime: ResourceRuntime,
   runtimes: readonly ResourceRuntime[],
 ): Promise<boolean> {
-  const dependencies = runtime.definition.dependsOn ?? [];
+  const dependencies =
+    runtime.definition.kind === "wasm" ? runtime.definition.dependsOn : [];
   if (dependencies.length === 0) return false;
 
   if (
@@ -299,7 +292,8 @@ function refreshBlockedStatuses(runtimes: readonly ResourceRuntime[]) {
         continue;
       }
 
-      const dependencies = runtime.definition.dependsOn ?? [];
+      const dependencies =
+        runtime.definition.kind === "wasm" ? runtime.definition.dependsOn : [];
       const blocked = dependencies.some((dependency) =>
         dependencyFailed(dependency, runtimes),
       );
@@ -322,7 +316,7 @@ function refreshBlockedStatuses(runtimes: readonly ResourceRuntime[]) {
 }
 
 function validateResourceDefinitions(
-  definitions: readonly AppResource[],
+  definitions: readonly ResourceInfo[],
 ): ValidationFailure | null {
   const allIds = definitions.map((definition) => definition.id);
   const ids: string[] = [];
@@ -347,7 +341,7 @@ function validateResourceDefinitions(
     }
     urls.push(definition.url);
 
-    if (definition.init) {
+    if (definition.kind === "wasm") {
       if (inits.includes(definition.init)) {
         return {
           error: new Error(`重复的资源 init：${definition.id}`),
@@ -359,7 +353,7 @@ function validateResourceDefinitions(
   }
 
   for (const definition of definitions) {
-    const dependencies = definition.dependsOn ?? [];
+    const dependencies = definition.kind === "wasm" ? definition.dependsOn : [];
     for (const dependency of dependencies) {
       if (dependency.id === definition.id) {
         return {
@@ -391,7 +385,7 @@ function validateResourceDefinitions(
 }
 
 function findExecuteDependencyCycle(
-  definitions: readonly AppResource[],
+  definitions: readonly ResourceInfo[],
 ): string[] | null {
   const visiting: string[] = [];
   const visited: string[] = [];
@@ -408,7 +402,9 @@ function findExecuteDependencyCycle(
     stack.push(id);
 
     const definition = definitions.find((item) => item.id === id);
-    for (const dependency of definition?.dependsOn ?? []) {
+    const dependencies =
+      definition?.kind === "wasm" ? definition.dependsOn : [];
+    for (const dependency of dependencies) {
       if (dependency.phase !== "execute") continue;
       const cycle = visit(dependency.id);
       if (cycle) return cycle;

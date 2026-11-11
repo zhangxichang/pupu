@@ -5,6 +5,7 @@ import globals from "globals";
 import gitignore from "eslint-config-flat-gitignore";
 import prettier from "eslint-config-prettier";
 import svelte from "eslint-plugin-svelte";
+import betterTailwindcss from "eslint-plugin-better-tailwindcss";
 
 export default defineConfig(
   gitignore({ recursive: true }),
@@ -26,12 +27,6 @@ export default defineConfig(
     },
   },
   {
-    files: ["**/*.svelte", "**/*.svelte.ts"],
-    rules: {
-      "no-undef": "off",
-    },
-  },
-  {
     files: ["**/*.ts", "**/*.svelte"],
     languageOptions: {
       parserOptions: {
@@ -45,6 +40,22 @@ export default defineConfig(
         "error",
         { checkThenables: true, ignoreIIFE: true },
       ],
+    },
+  },
+  {
+    files: ["**/*.svelte", "**/*.svelte.ts"],
+    rules: {
+      "no-undef": "off",
+    },
+  },
+  {
+    files: ["**/*.svelte"],
+    extends: [betterTailwindcss.configs.recommended],
+    settings: {
+      "better-tailwindcss": {
+        entryPoint: "web/src/style.css",
+        detectComponentClasses: true,
+      },
     },
   },
 );
