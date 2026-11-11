@@ -8,5 +8,5 @@
   <title>Pupu</title>
 </svelte:head>
 
-<canvas id="canvas" class="fixed inset-0 w-dvw! h-dvh! outline-none"></canvas>
+<canvas id="canvas" class="fixed inset-0 h-dvh! w-dvw! outline-none"></canvas>
 <ResourceLoading />
