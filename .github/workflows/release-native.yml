@@ -25,13 +25,13 @@ jobs:
       version: ${{ steps.check.outputs.version }}
     steps:
       - name: 检出
-        uses: actions/checkout@v7
+        uses: actions/checkout@v7.0.1
         with:
           fetch-depth: 0
       - name: 安装 bun
-        uses: oven-sh/setup-bun@v2
+        uses: oven-sh/setup-bun@v2.2.0
       - name: 安装 node
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@v7.1.0
         with:
           node-version: latest
       - name: 安装依赖
@@ -59,11 +59,11 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: 检出
-        uses: actions/checkout@v7
+        uses: actions/checkout@v7.0.1
       - name: 安装 rust
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@v1
       - name: rust 缓存
-        uses: Swatinem/rust-cache@v2
+        uses: Swatinem/rust-cache@v2.9.3
       - name: 构建
         run: cargo build --release
       - name: 收集产物
@@ -72,7 +72,7 @@ jobs:
           New-Item -ItemType Directory -Force -Path artifacts | Out-Null
           Copy-Item target/release/pupu.exe artifacts/pupu-windows-x64.exe
       - name: 上传产物
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v7.0.2
         with:
           name: pupu-windows-x64
           path: artifacts/pupu-windows-x64.exe
@@ -84,11 +84,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: 检出
-        uses: actions/checkout@v7
+        uses: actions/checkout@v7.0.1
       - name: 安装 rust
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@v1
       - name: rust 缓存
-        uses: Swatinem/rust-cache@v2
+        uses: Swatinem/rust-cache@v2.9.3
       - name: 构建
         run: cargo build --release
       - name: 收集产物
@@ -96,7 +96,7 @@ jobs:
           mkdir -p artifacts
           cp target/release/pupu artifacts/pupu-linux-x64
       - name: 上传产物
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v7.0.2
         with:
           name: pupu-linux-x64
           path: artifacts/pupu-linux-x64
@@ -109,20 +109,20 @@ jobs:
     environment: release
     steps:
       - name: 检出
-        uses: actions/checkout@v7
+        uses: actions/checkout@v7.0.1
       - name: 安装 rust
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@v1
         with:
           targets: aarch64-linux-android
       - name: rust 缓存
-        uses: Swatinem/rust-cache@v2
+        uses: Swatinem/rust-cache@v2.9.3
       - name: 安装 jdk
-        uses: actions/setup-java@v6
+        uses: actions/setup-java@v6.1.0
         with:
           distribution: temurin
           java-version: latest
       - name: 安装 android sdk
-        uses: android-actions/setup-android@v4
+        uses: android-actions/setup-android@v4.0.4
         with:
           packages: >-
             platform-tools
@@ -130,9 +130,9 @@ jobs:
             build-tools;36.0.0
             ndk;30.0.16248370
       - name: 安装 cargo-binstall
-        uses: cargo-bins/cargo-binstall@main
+        uses: cargo-bins/cargo-binstall@v1.27.0
       - name: 安装 cargo-ndk
-        run: cargo binstall cargo-ndk --no-confirm
+        run: cargo binstall cargo-ndk@0.2.0 --no-confirm
       - name: 解码签名密钥
         env:
           ANDROID_KEYSTORE_FILE: ${{ secrets.ANDROID_KEYSTORE_FILE }}
@@ -156,7 +156,7 @@ jobs:
           mkdir -p artifacts
           cp android/gradle/app/build/outputs/apk/release/app-release.apk artifacts/pupu-android-arm64.apk
       - name: 上传产物
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v7.0.2
         with:
           name: pupu-android-arm64
           path: artifacts/pupu-android-arm64.apk
@@ -173,7 +173,7 @@ jobs:
     steps:
       - name: 生成 GitHub App Token
         id: app_token
-        uses: actions/create-github-app-token@v3
+        uses: actions/create-github-app-token@v3.3.0
         with:
           client-id: ${{ secrets.BOT_CLIENT_ID }}
           private-key: ${{ secrets.BOT_PRIVATE_KEY }}
@@ -181,20 +181,20 @@ jobs:
           permission-issues: write
           permission-pull-requests: write
       - name: 检出
-        uses: actions/checkout@v7
+        uses: actions/checkout@v7.0.1
         with:
           token: ${{ steps.app_token.outputs.token }}
           fetch-depth: 0
       - name: 安装 bun
-        uses: oven-sh/setup-bun@v2
+        uses: oven-sh/setup-bun@v2.2.0
       - name: 安装 node
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@v7.1.0
         with:
           node-version: latest
       - name: 安装依赖
         run: bun install
       - name: 下载产物
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@v8.0.2
         with:
           path: artifacts
           merge-multiple: true
