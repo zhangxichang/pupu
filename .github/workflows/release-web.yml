@@ -25,8 +25,6 @@ jobs:
         uses: cargo-bins/cargo-binstall@main
       - name: 安装 wasm-pack
         run: cargo binstall wasm-pack --no-confirm
-      - name: 安装 binaryen
-        run: sudo apt-get update && sudo apt-get install -y binaryen
       - name: 安装依赖
         run: bun install
       - name: 构建
