@@ -1,4 +1,4 @@
-name: Web发布
+name: Web 发布
 concurrency:
   group: release-web
   cancel-in-progress: true

@@ -1,0 +1,20 @@
+name: 验证 lock 文件
+on:
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  verify-lockfile:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出
+        uses: actions/checkout@v7.0.1
+      - name: 安装 gh actions-lock 扩展
+        run: gh extension install github/gh-actions-lock
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+      - name: 验证
+        run: gh actions-lock --verify
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
