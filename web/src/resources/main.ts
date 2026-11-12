@@ -1,4 +1,4 @@
-import type { ResourceInfo } from "../ResourceLoading/types";
+import type { ResourceInfo } from "../Root/ResourceLoading/types";
 import initMain, { main } from "../../wasm/main/pkg";
 import mainWasmUrl from "../../wasm/main/pkg/main_bg.wasm?url";
 import mainWasmSize from "../../wasm/main/pkg/main_bg.wasm?size";

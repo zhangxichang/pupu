@@ -1,4 +1,4 @@
-import type { ResourceInfo } from "../ResourceLoading/types";
+import type { ResourceInfo } from "../Root/ResourceLoading/types";
 import mainFontUrl from "../../../assets/fonts/MiSans VF.ttf?url";
 import mainFontSize from "../../../assets/fonts/MiSans VF.ttf?size";
 

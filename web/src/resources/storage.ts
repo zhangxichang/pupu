@@ -1,4 +1,4 @@
-import type { ResourceInfo } from "../ResourceLoading/types";
+import type { ResourceInfo } from "../Root/ResourceLoading/types";
 import storageWorkerWasmUrl from "../../wasm/storage-worker/pkg/storage_worker_bg.wasm?url";
 import storageWorkerWasmSize from "../../wasm/storage-worker/pkg/storage_worker_bg.wasm?size";
 import storageWorkerUrl from "./storage/worker.ts?worker&url";

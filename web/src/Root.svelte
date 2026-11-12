@@ -1,6 +1,6 @@
 <script lang="ts">
   import iconUrl from "../../icon.svg";
-  import ResourceLoading from "./ResourceLoading.svelte";
+  import ResourceLoading from "./Root/ResourceLoading.svelte";
 </script>
 
 <svelte:head>
