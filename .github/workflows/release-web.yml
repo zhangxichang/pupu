@@ -1,6 +1,6 @@
 name: Web 发布
 concurrency:
-  group: release-web
+  group: ${{ github.workflow }}
   cancel-in-progress: true
 on: workflow_dispatch
 permissions:

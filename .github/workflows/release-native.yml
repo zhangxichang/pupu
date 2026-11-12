@@ -1,6 +1,6 @@
 name: 原生发布
 concurrency:
-  group: release-native
+  group: ${{ github.workflow }}
   cancel-in-progress: true
 on:
   workflow_dispatch:

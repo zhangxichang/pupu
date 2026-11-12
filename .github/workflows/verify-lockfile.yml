@@ -1,7 +1,14 @@
 name: 验证 lock 文件
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: true
 on:
+  push:
+    branches: [main]
   pull_request:
     branches: [main]
+  schedule:
+    - cron: 26 17 * * 6
 permissions:
   contents: read
 jobs:
