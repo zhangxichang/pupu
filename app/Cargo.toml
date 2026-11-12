@@ -23,7 +23,7 @@ slint = { version = "1.18.1", default-features = false, features = [
     "compat-1-2",
     "unstable-winit-030",
     "unstable-wgpu-30",
-    "renderer-femtovg-wgpu",
+    "renderer-skia",
     "unstable-fontique-011",
 ] }
 
