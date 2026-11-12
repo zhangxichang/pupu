@@ -30,7 +30,7 @@ pub async fn main(config: AppConfig) -> Result<()> {
     #[cfg(any(target_os = "windows", target_os = "linux"))]
     let backend = backend
         .backend_name("winit".to_string())
-        .renderer_name("femtovg-wgpu".to_string())
+        .renderer_name("skia".to_string())
         .with_winit_window_attributes_hook(|attributes| attributes.with_transparent(true));
     #[cfg(target_os = "windows")]
     let backend = {
