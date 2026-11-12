@@ -1,6 +1,6 @@
 // TODO AI实现待审查
 import type { ResourceInfo, ResourceDependency, WasmInit } from "./types";
-import { resourceDefinitions } from "../resources";
+import { resourceDefinitions } from "../../resources";
 
 export type ResourceStatus =
   | "pending"
