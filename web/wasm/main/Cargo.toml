@@ -8,10 +8,11 @@ crate-type = ["cdylib"]
 
 [dependencies]
 app = { path = "../../../app" }
-lifecycle = { path = "../lifecycle" }
+ready-notify = { path = "../ready-notify" }
 
-wasm-bindgen = "0.2.129"
+wasm-bindgen = "0.2.130"
 console_error_panic_hook = "0.1.7"
-log = "0.4.34"
+log = "0.4.35"
 console_log = "1.1.0"
-wasm-bindgen-futures = "0.4.79"
+eyre = "0.6.14"
+wasm-bindgen-futures = "0.4.80"

@@ -1,0 +1,171 @@
+import { Button } from "./button.slint";
+
+export component UpdateDialog inherits Rectangle {
+    in property <string> app_version;
+    in property <string> latest_version;
+
+    callback dismissed;
+    callback update_requested;
+
+    width: 100%;
+    height: 100%;
+    background: #00000033;
+
+    TouchArea {
+
+        clicked => {
+            root.dismissed();
+        }
+    }
+
+    Rectangle {
+        x: (parent.width - self.width) / 2;
+        y: (parent.height - self.height) / 2;
+        width: 360px;
+        height: content.preferred-height;
+
+        background: #ffffff;
+        border-width: 1px;
+        border-color: #e5e5e5;
+        border-radius: 12px;
+        drop-shadow-color: #00000022;
+        drop-shadow-blur: 24px;
+        drop-shadow-offset-y: 8px;
+
+        TouchArea {
+        }
+
+        content := VerticalLayout {
+            width: 100%;
+            height: self.preferred-height;
+            padding: 24px;
+
+            Text {
+                text: "发现新版本";
+                font-size: 16px;
+                font-weight: FontWeight.semi-bold;
+                color: #222222;
+            }
+
+            Rectangle {
+                height: 6px;
+            }
+
+            Text {
+                text: "Pupu 有新版本可用，建议更新以获得更好的体验。";
+                width: 100%;
+                font-size: 12px;
+                color: #888888;
+                wrap: word-wrap;
+            }
+
+            Rectangle {
+                height: 18px;
+            }
+
+            Rectangle {
+                background: #f7f7f7;
+                border-radius: 8px;
+
+                VerticalLayout {
+                    padding: 12px;
+                    spacing: 8px;
+
+                    HorizontalLayout {
+                        Text {
+                            text: "当前版本";
+                            font-size: 11px;
+                            color: #999999;
+                            vertical-alignment: center;
+                        }
+
+                        Rectangle { }
+
+                        Text {
+                            text: root.app_version;
+                            font-size: 12px;
+                            color: #333333;
+                            vertical-alignment: center;
+                        }
+                    }
+
+                    Rectangle {
+                        height: 1px;
+                        background: #ececec;
+                    }
+
+                    HorizontalLayout {
+                        Text {
+                            text: "最新版本";
+                            font-size: 11px;
+                            color: #999999;
+                            vertical-alignment: center;
+                        }
+
+                        Rectangle { }
+
+                        Text {
+                            text: root.latest_version;
+                            font-size: 12px;
+                            font-weight: FontWeight.medium;
+                            color: #333333;
+                            vertical-alignment: center;
+                        }
+                    }
+                }
+            }
+
+            Rectangle {
+                height: 24px;
+            }
+
+            HorizontalLayout {
+                alignment: end;
+                spacing: 8px;
+
+                Button {
+                    height: 32px;
+                    border-radius: 6px;
+                    border-width: 1px;
+                    border-color: #e5e5e5;
+                    normal_background: #ffffff;
+                    hover_background: #f7f7f7;
+                    pressed_background: #eeeeee;
+                    content-padding-left: 14px;
+                    content-padding-right: 14px;
+
+                    Text {
+                        text: "稍后提醒";
+                        font-size: 12px;
+                        color: #333333;
+                    }
+
+                    clicked => {
+                        root.dismissed();
+                    }
+                }
+
+                Button {
+                    height: 32px;
+                    border-radius: 6px;
+                    normal_background: #333333;
+                    hover_background: #444444;
+                    pressed_background: #222222;
+                    content-padding-left: 14px;
+                    content-padding-right: 14px;
+
+                    Text {
+                        text: "立即更新";
+                        font-size: 12px;
+                        font-weight: FontWeight.medium;
+                        color: #ffffff;
+                    }
+
+                    clicked => {
+                        root.update_requested();
+                    }
+                }
+            }
+        }
+    }
+}

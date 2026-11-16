@@ -1,0 +1,68 @@
+import { Auth } from "./body/auth.slint";
+import { Home } from "./body/home.slint";
+import {
+    Contributor,
+    ContributorStatus,
+} from "../../models/contributor.slint";
+import { ConversationItemData } from "../../models/conversation.slint";
+import { MessageData } from "../../models/message.slint";
+import { GroupMemberData } from "../../models/group_member.slint";
+import { PickOptions } from "../../models/file_picker.slint";
+
+export component Body inherits Rectangle {
+    in-out property <bool> logged_in: false;
+    in-out property <[ConversationItemData]> private_conversations: [];
+    in-out property <[[MessageData]]> private_threads: [];
+    in-out property <[ConversationItemData]> group_conversations: [];
+    in-out property <[[MessageData]]> group_threads: [];
+    in-out property <[[GroupMemberData]]> group_members: [];
+    in-out property <image> register_avatar_image;
+    in-out property <bool> register_has_avatar: false;
+    in property <string> app_version;
+    in property <[Contributor]> contributors;
+    in property <ContributorStatus> contributor_status: ContributorStatus.Loading;
+    in property <bool> show_version: true;
+    in property <bool> enabled_update_check: false;
+
+    callback check_update_requested;
+    callback open_url(url: string);
+    callback pick_register_avatar(options: PickOptions);
+
+    if root.logged_in: Home {
+        width: 100%;
+        height: 100%;
+        private_conversations: root.private_conversations;
+        private_threads: root.private_threads;
+        group_conversations: root.group_conversations;
+        group_threads: root.group_threads;
+        group_members: root.group_members;
+        app_version: root.app_version;
+        contributors: root.contributors;
+        contributor_status: root.contributor_status;
+        show_version: root.show_version;
+        enabled_update_check: root.enabled_update_check;
+
+        check_update_requested => {
+            root.check_update_requested();
+        }
+
+        open_url(url) => {
+            root.open_url(url);
+        }
+    }
+
+    if !root.logged_in: Auth {
+        width: 100%;
+        height: 100%;
+        register_avatar_image <=> root.register_avatar_image;
+        register_has_avatar <=> root.register_has_avatar;
+
+        login_requested(account_id) => {
+            root.logged_in = true;
+        }
+
+        pick_register_avatar(options) => {
+            root.pick_register_avatar(options);
+        }
+    }
+}

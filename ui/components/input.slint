@@ -38,6 +38,10 @@ export component Input {
     height: clamp(root.content_height, min(root.min_content_height, root.max_content_height), root.max_content_height);
     forward-focus: input;
 
+    public function focus-input() {
+        input.focus();
+    }
+
     touch := TouchArea {
         mouse-cursor: MouseCursor.text;
 
@@ -117,6 +121,9 @@ export component Input {
         }
 
         HoverScrollBar {
+            x: parent.width - 18px;
+            width: 12px;
+            height: parent.height;
             content_y <=> input.computed_y;
             content_height: input.height;
             visible_height: clip_rect.height;

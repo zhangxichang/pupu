@@ -6,13 +6,18 @@ use eyre::Result;
 
 use storage_migrations::MIGRATIONS;
 
-use crate::Storage;
+use crate::StorageBackend;
 
-pub struct NativeStorage {
+pub struct Storage {
     connection: rusqlite::Connection,
 }
-impl NativeStorage {
-    pub fn open(data_dir: PathBuf) -> Result<Self> {
+impl Drop for Storage {
+    fn drop(&mut self) {
+        _ = self.connection.execute_batch("PRAGMA optimize;");
+    }
+}
+impl Storage {
+    pub async fn open(data_dir: PathBuf) -> Result<Self> {
         let mut connection = rusqlite::Connection::open(data_dir.join("data.db"))?;
         connection.pragma_update(None, "foreign_keys", "ON")?;
         connection.pragma_update(None, "journal_mode", "WAL")?;
@@ -24,9 +29,4 @@ impl NativeStorage {
         Ok(Self { connection })
     }
 }
-impl Drop for NativeStorage {
-    fn drop(&mut self) {
-        _ = self.connection.execute_batch("PRAGMA optimize;");
-    }
-}
-impl Storage for NativeStorage {}
+impl StorageBackend for Storage {}

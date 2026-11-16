@@ -7,6 +7,7 @@
 use std::borrow::Cow;
 
 use app::{AppConfig, paths::AppPaths};
+use eyre::{Result, eyre};
 
 fn main() {
     env_logger::builder()
@@ -18,29 +19,28 @@ fn main() {
         .build()
     {
         Ok(tokio_runtime) => tokio_runtime.block_on(async {
-            let Some(dirs) = directories::ProjectDirs::from("com", "zhangxichang", "pupu") else {
-                log::error!("应用路径初始化失败");
-                return;
-            };
-            let paths = AppPaths {
-                data_dir: dirs.data_local_dir().to_path_buf(),
-                config_dir: dirs.config_local_dir().to_path_buf(),
-                cache_dir: dirs.cache_dir().to_path_buf(),
-            };
-            if let Err(err) = paths.build().await {
-                log::error!("应用路径构建出错：{}", err);
-                return;
-            }
-            if let Err(err) = app::main(AppConfig {
-                paths,
-                font_data: Cow::Borrowed(include_bytes!("../assets/fonts/MiSans VF.ttf")),
-            })
-            .await
-            {
-                log::error!("应用运行出错：{}", err);
-                return;
+            if let Err(err) = async_main().await {
+                log::error!("程序运行出错：{}", err);
             }
         }),
         Err(err) => log::error!("tokio 运行时创建出错：{}", err),
     }
+}
+
+async fn async_main() -> Result<()> {
+    let Some(dirs) = directories::ProjectDirs::from("com", "zhangxichang", "pupu") else {
+        return Err(eyre!("应用路径初始化失败"));
+    };
+    let paths = AppPaths {
+        data_dir: dirs.data_local_dir().to_path_buf(),
+        config_dir: dirs.config_local_dir().to_path_buf(),
+        cache_dir: dirs.cache_dir().to_path_buf(),
+    };
+    paths.build().await?;
+    app::main(AppConfig {
+        paths,
+        font_data: Cow::Borrowed(include_bytes!("../assets/fonts/MiSans VF.ttf")),
+    })
+    .await?;
+    Ok(())
 }

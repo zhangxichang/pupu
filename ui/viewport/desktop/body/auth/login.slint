@@ -1,0 +1,265 @@
+import { Avatar } from "../../../../components/avatar.slint";
+import { Button } from "../../../../components/button.slint";
+import { IconSet, IconDisplay } from "../../../../lib/lucide.slint";
+import { LoginAccount } from "../../../../models/account.slint";
+
+export component Login inherits VerticalLayout {
+    in-out property <[LoginAccount]> accounts: [
+        { id: "zhangxichang", name: "张喜昌", avatar_text: "张" },
+        { id: "demo", name: "演示账户", avatar_text: "演" },
+    ];
+    in-out property <int> selected_account: 0;
+    in property <string> error_message: "";
+
+    callback login_requested(account_id: string);
+
+    property <bool> can_login:
+        root.accounts.length > 0
+        && root.selected_account >= 0
+        && root.selected_account < root.accounts.length;
+
+    width: 100%;
+
+    function submit() {
+        if root.can_login {
+            root.login_requested(root.accounts[root.selected_account].id);
+        }
+    }
+
+    Rectangle {
+        width: 100%;
+        height: self.preferred-height;
+        vertical-stretch: 0;
+        background: #ffffff;
+        border-width: 1px;
+        border-color: #e5e5e5;
+        border-radius: 12px;
+        drop-shadow-color: #00000014;
+        drop-shadow-blur: 12px;
+        drop-shadow-offset-y: 2px;
+
+        VerticalLayout {
+            width: 100%;
+            padding: 24px;
+            cross-axis-alignment: center;
+
+            Text {
+                width: 100%;
+                text: "登录账户";
+                font-size: 16px;
+                font-weight: FontWeight.semi-bold;
+                color: #222222;
+                horizontal-alignment: left;
+            }
+
+            Text {
+                width: 100%;
+                text: "选择你的账户登录";
+                font-size: 12px;
+                color: #888888;
+                horizontal-alignment: left;
+            }
+
+            Rectangle {
+                height: 20px;
+            }
+
+            if root.can_login: Avatar {
+                size: 56px;
+                font_size: 22px;
+                text: root.accounts[root.selected_account].avatar_text;
+            }
+
+            if !root.can_login: Rectangle {
+                width: 56px;
+                height: 56px;
+                border-radius: self.width / 2;
+                background: #e0e0e0;
+
+                IconDisplay {
+                    icon: IconSet.User;
+                    size: 28px;
+                    stroke: #888888;
+                }
+            }
+
+            Rectangle {
+                height: 18px;
+            }
+
+            Text {
+                width: 100%;
+                text: "账户";
+                font-size: 11px;
+                color: #666666;
+                horizontal-alignment: left;
+            }
+
+            Rectangle {
+                height: 6px;
+            }
+
+            select_field := Rectangle {
+                width: 100%;
+                height: 44px;
+                border-width: 1px;
+                border-color: #e5e5e5;
+                border-radius: 8px;
+                background: select_touch.has-hover ? #fafafa : #ffffff;
+
+                select_touch := TouchArea {
+                    mouse-cursor: pointer;
+                    enabled: root.accounts.length > 0;
+
+                    clicked => {
+                        popup.show();
+                    }
+                }
+
+                HorizontalLayout {
+                    width: 100%;
+                    height: 100%;
+                    padding-left: 10px;
+                    padding-right: 10px;
+                    spacing: 10px;
+                    cross-axis-alignment: center;
+
+                    if root.can_login: Avatar {
+                        size: 28px;
+                        font_size: 11px;
+                        text: root.accounts[root.selected_account].avatar_text;
+                    }
+
+                    Text {
+                        text: root.can_login
+                            ? root.accounts[root.selected_account].name
+                            : "暂无账户";
+                        font-size: 13px;
+                        color: root.can_login ? #333333 : #999999;
+                        vertical-alignment: center;
+                    }
+
+                    Rectangle { }
+
+                    IconDisplay {
+                        icon: IconSet.ChevronDown;
+                        size: 14px;
+                        stroke: #888888;
+                    }
+                }
+
+                popup := PopupWindow {
+                    x: 0;
+                    y: select_field.height + 4px;
+                    width: select_field.width;
+                    height: min(220px, max(44px, root.accounts.length * 44px + 8px));
+                    close-policy: close-on-click-outside;
+
+                    Rectangle {
+                        background: #ffffff;
+                        border-width: 1px;
+                        border-color: #e5e5e5;
+                        border-radius: 8px;
+                        clip: true;
+
+                        VerticalLayout {
+                            width: 100%;
+                            height: 100%;
+                            padding: 4px;
+
+                            for account[index] in root.accounts: Rectangle {
+                                width: 100%;
+                                height: 44px;
+                                border-radius: 6px;
+                                background: index == root.selected_account
+                                    ? #f0f0f0
+                                    : popup_row_touch.has-hover ? #f7f7f7 : transparent;
+
+                                popup_row_touch := TouchArea {
+                                    mouse-cursor: pointer;
+
+                                    clicked => {
+                                        root.selected_account = index;
+                                        popup.close();
+                                    }
+                                }
+
+                                HorizontalLayout {
+                                    width: 100%;
+                                    height: 100%;
+                                    padding-left: 8px;
+                                    padding-right: 8px;
+                                    spacing: 10px;
+                                    cross-axis-alignment: center;
+
+                                    Avatar {
+                                        size: 28px;
+                                        font_size: 11px;
+                                        text: account.avatar_text;
+                                    }
+
+                                    Text {
+                                        text: account.name;
+                                        font-size: 13px;
+                                        color: #333333;
+                                        vertical-alignment: center;
+                                    }
+
+                                    Rectangle { }
+
+                                    if index == root.selected_account: Text {
+                                        text: "✓";
+                                        font-size: 13px;
+                                        color: #333333;
+                                        vertical-alignment: center;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            if root.error_message != "": Rectangle {
+                width: 100%;
+                height: 28px;
+
+                Text {
+                    width: 100%;
+                    height: 100%;
+                    text: root.error_message;
+                    font-size: 11px;
+                    color: #d9534f;
+                    vertical-alignment: center;
+                }
+            }
+
+            Rectangle {
+                height: root.error_message == "" ? 18px : 8px;
+            }
+
+            Button {
+                width: 100%;
+                height: 40px;
+                border-radius: 8px;
+                enabled: root.can_login;
+                normal_background: root.can_login ? #333333 : #d5d5d5;
+                hover_background: root.can_login ? #444444 : #d5d5d5;
+                pressed_background: root.can_login ? #222222 : #d5d5d5;
+
+                Text {
+                    width: 100%;
+                    text: "登录";
+                    font-size: 13px;
+                    font-weight: FontWeight.medium;
+                    color: #ffffff;
+                    horizontal-alignment: center;
+                }
+
+                clicked => {
+                    root.submit();
+                }
+            }
+        }
+    }
+}

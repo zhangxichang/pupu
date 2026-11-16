@@ -1,0 +1,184 @@
+import { Button } from "../../../../components/button.slint";
+import { IconSet, IconDisplay } from "../../../../lib/lucide.slint";
+import { Input } from "../../../../components/input.slint";
+import { PickOptions } from "../../../../models/file_picker.slint";
+
+export component Register inherits VerticalLayout {
+    in-out property <string> username: "";
+    in property <string> error_message: "";
+    in property <image> register_avatar_image;
+    in property <bool> register_has_avatar: false;
+
+    callback register_requested(username: string);
+    callback pick_register_avatar(options: PickOptions);
+
+    property <bool> can_register: root.username != "";
+
+    width: 100%;
+
+    function submit() {
+        if root.can_register {
+            let username = root.username;
+            root.username = "";
+            root.register_requested(username);
+        }
+    }
+
+    Rectangle {
+        width: 100%;
+        height: self.preferred-height;
+        vertical-stretch: 0;
+        background: #ffffff;
+        border-width: 1px;
+        border-color: #e5e5e5;
+        border-radius: 12px;
+        drop-shadow-color: #00000014;
+        drop-shadow-blur: 12px;
+        drop-shadow-offset-y: 2px;
+
+        VerticalLayout {
+            width: 100%;
+            padding: 24px;
+            cross-axis-alignment: center;
+
+            Text {
+                width: 100%;
+                text: "注册账户";
+                font-size: 16px;
+                font-weight: FontWeight.semi-bold;
+                color: #222222;
+                horizontal-alignment: left;
+            }
+
+            Text {
+                width: 100%;
+                text: "输入用户名注册你的账户";
+                font-size: 12px;
+                color: #888888;
+                horizontal-alignment: left;
+            }
+
+            Rectangle {
+                height: 20px;
+            }
+
+            Rectangle {
+                width: 56px;
+                height: 56px;
+                border-radius: self.width / 2;
+                background: avatar_touch.has-hover ? #d7d7d7 : #e0e0e0;
+                clip: true;
+
+                if root.register_has_avatar: Image {
+                    width: 100%;
+                    height: 100%;
+                    source: root.register_avatar_image;
+                }
+
+                if !root.register_has_avatar: IconDisplay {
+                    icon: IconSet.User;
+                    size: 28px;
+                    stroke: #888888;
+                }
+
+                avatar_touch := TouchArea {
+                    mouse-cursor: pointer;
+
+                    clicked => {
+                        root.pick_register_avatar({
+                            title: "选择头像",
+                            filters: [
+                                { name: "图片", extensions: ["png", "jpg", "jpeg"] },
+                            ],
+                            mime_types: ["image/png", "image/jpeg"],
+                        });
+                    }
+                }
+            }
+
+            Rectangle {
+                height: 18px;
+            }
+
+            Text {
+                width: 100%;
+                text: "用户名";
+                font-size: 11px;
+                color: #666666;
+                horizontal-alignment: left;
+            }
+
+            Rectangle {
+                height: 6px;
+            }
+
+            username_input := Input {
+                width: 100%;
+                font_size: 13px;
+                min_content_height: 42px;
+                max_content_height: 42px;
+                inner_padding_left: 11px;
+                inner_padding_right: 11px;
+                normal_background: #f4f4f4;
+                hover_background: #eeeeee;
+                focused_background: #ffffff;
+                normal_border_width: 1px;
+                normal_border_color: #e8e8e8;
+                focus_border_width: 1px;
+                focus_border_color: #007aff;
+                border_radius: 8px;
+                placeholder: "输入用户名";
+                text <=> root.username;
+
+                accepted => {
+                    root.submit();
+                }
+            }
+
+            if root.error_message != "": Rectangle {
+                width: 100%;
+                height: 28px;
+
+                Text {
+                    width: 100%;
+                    height: 100%;
+                    text: root.error_message;
+                    font-size: 11px;
+                    color: #d9534f;
+                    vertical-alignment: center;
+                }
+            }
+
+            Rectangle {
+                height: root.error_message == "" ? 18px : 8px;
+            }
+
+            Button {
+                width: 100%;
+                height: 40px;
+                border-radius: 8px;
+                enabled: root.can_register;
+                normal_background: root.can_register ? #333333 : #d5d5d5;
+                hover_background: root.can_register ? #444444 : #d5d5d5;
+                pressed_background: root.can_register ? #222222 : #d5d5d5;
+
+                Text {
+                    width: 100%;
+                    text: "注册";
+                    font-size: 13px;
+                    font-weight: FontWeight.medium;
+                    color: #ffffff;
+                    horizontal-alignment: center;
+                }
+
+                clicked => {
+                    root.submit();
+                }
+            }
+        }
+    }
+
+    init => {
+        username_input.focus-input();
+    }
+}

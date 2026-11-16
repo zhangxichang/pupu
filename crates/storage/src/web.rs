@@ -1,7 +1,4 @@
-// TODO AI实现待审查
-
 #![cfg(all(target_family = "wasm", target_os = "unknown"))]
-
 use std::{
     future::Future,
     path::PathBuf,
@@ -14,7 +11,7 @@ use gloo_worker::oneshot::{Oneshot, OneshotBridge, OneshotSpawner};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use crate::Storage;
+use crate::StorageBackend;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct QueryResult {
@@ -43,12 +40,6 @@ pub enum StoragePayload {
     Error(String),
 }
 
-/// The client-side type parameter for `OneshotBridge`.
-///
-/// gloo-worker's wire format contains only `HandlerId`, `StorageRequest` and
-/// `StoragePayload`; the worker type itself is never serialized. The real
-/// `StorageWorker` lives in the `storage-worker` wasm crate, so the client
-/// uses this local marker with the same input/output types.
 struct ClientStorageWorker;
 
 impl Future for ClientStorageWorker {
@@ -67,15 +58,16 @@ impl Oneshot for ClientStorageWorker {
     }
 }
 
-pub struct WebStorage {
+pub struct Storage {
     bridge: OneshotBridge<ClientStorageWorker>,
     data_dir: String,
 }
-impl WebStorage {
-    pub async fn open(data_dir: PathBuf, worker_url: &str) -> Result<Self> {
+impl Storage {
+    pub async fn open(worker_url: impl Into<String>, data_dir: PathBuf) -> Result<Self> {
+        let worker_url = worker_url.into();
         let mut bridge = OneshotSpawner::<ClientStorageWorker>::new()
             .with_loader(true)
-            .spawn(worker_url);
+            .spawn(&worker_url);
 
         match bridge.run(StorageRequest::Ping).await {
             StoragePayload::Ok => {}
@@ -88,6 +80,11 @@ impl WebStorage {
             data_dir: data_dir.to_string_lossy().into_owned(),
         })
     }
+}
+
+impl StorageBackend for Storage {}
+
+impl Storage {
     pub async fn execute(
         &mut self,
         sql: impl Into<String>,
@@ -127,4 +124,3 @@ impl WebStorage {
         }
     }
 }
-impl Storage for WebStorage {}

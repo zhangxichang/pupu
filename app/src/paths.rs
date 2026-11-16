@@ -9,42 +9,12 @@ pub struct AppPaths {
     pub cache_dir: PathBuf,
 }
 impl AppPaths {
-    #[cfg(any(target_os = "windows", target_os = "linux", target_os = "android"))]
     pub async fn build(&self) -> Result<()> {
-        use tokio::fs::create_dir_all;
-
         for path in [&self.data_dir, &self.config_dir, &self.cache_dir] {
-            create_dir_all(path).await?;
-        }
-        Ok(())
-    }
-    #[cfg(all(target_family = "wasm", target_os = "unknown"))]
-    pub async fn build(&self) -> Result<()> {
-        // TODO AI实现待审查
-        use std::path::Component;
-
-        use opfs::{DirectoryHandle, GetDirectoryHandleOptions, persistent::app_specific_dir};
-
-        for path in [&self.data_dir, &self.config_dir, &self.cache_dir] {
-            let mut dir = app_specific_dir()
-                .await
-                .map_err(|err| eyre::eyre!("{:?}", err))?;
-
-            for component in path.components() {
-                let Component::Normal(name) = component else {
-                    continue;
-                };
-                let name = name
-                    .to_str()
-                    .ok_or_else(|| eyre::eyre!("invalid OPFS path component"))?;
-                dir = dir
-                    .get_directory_handle_with_options(
-                        name,
-                        &GetDirectoryHandleOptions { create: true },
-                    )
-                    .await
-                    .map_err(|err| eyre::eyre!("{:?}", err))?;
-            }
+            #[cfg(any(target_os = "windows", target_os = "linux", target_os = "android"))]
+            tokio::fs::create_dir_all(path).await?;
+            #[cfg(all(target_family = "wasm", target_os = "unknown"))]
+            tokio_fs_ext::create_dir_all(path).await?;
         }
         Ok(())
     }

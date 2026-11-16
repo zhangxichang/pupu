@@ -1,0 +1,183 @@
+import { Avatar } from "./avatar.slint";
+import { IconSet, IconDisplay } from "../lib/lucide.slint";
+import { MessageData, MessageKind } from "../models/message.slint";
+
+export component MessageItem inherits Rectangle {
+    in property <MessageData> message;
+    in property <bool> show_avatar: true;
+    in property <bool> show_sender: false;
+    in property <bool> show_time: true;
+
+    height: content.preferred-height;
+
+    content := HorizontalLayout {
+        width: 100%;
+        alignment: root.message.is_self ? end : start;
+        cross-axis-alignment: start;
+        spacing: 7px;
+
+        if !root.message.is_self && root.show_avatar: Avatar {
+            size: 26px;
+            font_size: 11px;
+            text: root.message.avatar_text;
+        }
+
+        if !root.message.is_self && !root.show_avatar: Rectangle {
+            width: 26px;
+            height: 1px;
+        }
+
+        VerticalLayout {
+            horizontal-stretch: 0;
+            spacing: 2px;
+            cross-axis-alignment: root.message.is_self ? end : start;
+
+            if root.show_sender && !root.message.is_self: Text {
+                text: root.message.sender_name;
+                font-size: 12px;
+                color: #777777;
+            }
+
+            if root.show_time: HorizontalLayout {
+                spacing: 5px;
+
+                Text {
+                    text: root.message.time;
+                    font-size: 10px;
+                    color: #aaaaaa;
+                }
+
+                if root.message.is_self && root.message.read: Text {
+                    text: "✓ 已读";
+                    font-size: 10px;
+                    color: #aaaaaa;
+                }
+            }
+
+            if root.message.kind == MessageKind.Text: Rectangle {
+                horizontal-stretch: 0;
+                width: min(bubble_measure.preferred-width + 20px, root.width * 0.72);
+                height: bubble_measure.preferred-height + 14px;
+                border-radius: 10px;
+                border-top-left-radius: root.message.is_self ? 10px : 3px;
+                border-top-right-radius: root.message.is_self ? 3px : 10px;
+                background: root.message.is_self ? #333333 : #f4f4f4;
+
+                bubble_measure := Text {
+                    x: 10px;
+                    y: 7px;
+                    width: parent.width - 20px;
+                    text: root.message.content;
+                    wrap: word-wrap;
+                    font-size: 13px;
+                    opacity: 0;
+                }
+
+                TextInput {
+                    x: 10px;
+                    y: 7px;
+                    width: parent.width - 20px;
+                    height: parent.height - 14px;
+                    text: root.message.content;
+                    single-line: false;
+                    read-only: true;
+                    text-cursor-width: 0px;
+                    wrap: word-wrap;
+                    font-size: 13px;
+                    color: root.message.is_self ? #ffffff : #2f2f2f;
+                }
+            }
+
+            if root.message.kind == MessageKind.File: Rectangle {
+                horizontal-stretch: 0;
+                width: min(file_content.preferred-width, root.width * 0.72);
+                height: file_content.preferred-height;
+                border-width: 1px;
+                border-color: #e7e7e7;
+                border-radius: 10px;
+                background: #fafafa;
+
+                file_content := HorizontalLayout {
+                    padding-top: 8px;
+                    padding-bottom: 8px;
+                    padding-left: 10px;
+                    padding-right: 10px;
+                    spacing: 8px;
+                    cross-axis-alignment: center;
+
+                    Rectangle {
+                        width: 30px;
+                        height: 30px;
+                        border-radius: 7px;
+                        background: #ececec;
+
+                        IconDisplay {
+                            icon: IconSet.File;
+                            size: 16px;
+                            stroke: #555555;
+                            x: (parent.width - self.width) / 2;
+                            y: (parent.height - self.height) / 2;
+                        }
+                    }
+
+                    VerticalLayout {
+                        spacing: 1px;
+
+                        Text {
+                            text: root.message.file_name;
+                            font-size: 12px;
+                            font-weight: FontWeight.medium;
+                            color: #2f2f2f;
+                            width: 120px;
+                            overflow: elide;
+                        }
+
+                        Text {
+                            text: root.message.file_size;
+                            font-size: 10px;
+                            color: #777777;
+                        }
+                    }
+                }
+            }
+
+            if root.message.kind == MessageKind.Image: Rectangle {
+                width: 160px;
+                height: 120px;
+                border-radius: 8px;
+                background: #eeeeee;
+
+                VerticalLayout {
+                    alignment: center;
+                    cross-axis-alignment: center;
+                    spacing: 4px;
+
+                    IconDisplay {
+                        icon: IconSet.Image;
+                        size: 28px;
+                        stroke: #aaaaaa;
+                    }
+
+                    Text {
+                        text: "图片";
+                        font-size: 10px;
+                        color: #888888;
+                        horizontal-alignment: center;
+                    }
+                }
+            }
+        }
+
+        if root.message.is_self && root.show_avatar: Avatar {
+            size: 26px;
+            font_size: 11px;
+            text: root.message.avatar_text;
+            fill: #cfcfcf;
+        }
+
+        if root.message.is_self && !root.show_avatar: Rectangle {
+            width: 26px;
+            height: 1px;
+        }
+    }
+}

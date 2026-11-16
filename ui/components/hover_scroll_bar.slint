@@ -3,44 +3,68 @@ export component HoverScrollBar inherits Rectangle {
     in property <length> content_height;
     in property <length> visible_height;
     in property <bool> hovered;
+    in property <length> track_inset: 6px;
+
+    callback interaction_started;
 
     property <bool> overflow: root.content_height > root.visible_height;
-    property <length> thumb_height: max(24px, root.height * root.visible_height / max(1px, root.content_height));
+    property <length> track_height: max(1px, root.height - 2 * root.track_inset);
+    property <length> thumb_height: min(root.track_height, max(24px, root.track_height * root.visible_height / max(1px, root.content_height)));
     property <length> max_scroll: max(0px, root.content_height - root.visible_height);
 
+    property <bool> dragging: drag.frozen;
+    property <length> display_thumb_height: root.dragging ? drag.grab_thumb_height : root.thumb_height;
+    property <length> display_max_scroll: root.dragging ? drag.grab_max_scroll : root.max_scroll;
+    property <length> display_track: max(1px, root.track_height - root.display_thumb_height);
+    property <length> display_thumb_y:
+        root.track_inset + min(root.display_track, max(0px,
+            root.display_track * (-root.content_y) / max(1px, root.display_max_scroll)));
+
     visible: root.overflow;
-    opacity: root.hovered || drag.pressed ? 1 : 0;
+    opacity: root.hovered || drag.has-hover || drag.pressed ? 1 : 0;
 
     animate opacity { duration: 120ms; }
 
     thumb := Rectangle {
         x: root.width - self.width;
         width: 6px;
-        height: root.thumb_height;
-        y: (root.height - root.thumb_height) * (-root.content_y) / max(1px, root.max_scroll);
-        border-radius: self.width / 3;
-        background: drag.pressed ? #00000044 : #00000022;
+        height: root.display_thumb_height;
+        y: root.display_thumb_y;
+        border-radius: self.width / 2;
+        background: root.dragging ? #00000044 : #00000022;
     }
 
     drag := TouchArea {
-        width: 12px;
-        x: thumb.x - (self.width - thumb.width) / 2;
-        enabled: root.overflow && (root.hovered || self.pressed);
+        x: 0;
+        y: 0;
+        enabled: root.overflow;
 
-        property <length> start_scroll;
-        property <length> start_y;
+        property <bool> frozen: false;
+        property <length> grab_y;
+        property <length> grab_thumb_y;
+        property <length> grab_thumb_height;
+        property <length> grab_track;
+        property <length> grab_max_scroll;
 
         pointer-event(event) => {
             if (event.button == PointerEventButton.left && event.kind == PointerEventKind.down) {
-                self.start_scroll = -root.content_y;
-                self.start_y = self.mouse-y;
+                self.grab_y = self.mouse-y;
+                self.grab_thumb_y = thumb.y - root.track_inset;
+                self.grab_thumb_height = root.thumb_height;
+                self.grab_track = max(1px, root.track_height - root.thumb_height);
+                self.grab_max_scroll = root.max_scroll;
+                self.frozen = true;
+                root.interaction_started();
+            } else if (event.kind == PointerEventKind.up || event.kind == PointerEventKind.cancel) {
+                self.frozen = false;
             }
         }
+
         moved => {
             if (self.pressed) {
-                root.content_y = -min(root.max_scroll, max(0px,
-                    self.start_scroll + (self.mouse-y - self.start_y)
-                    * root.max_scroll / max(1px, root.height - root.thumb_height)));
+                root.content_y = -min(self.grab_max_scroll, max(0px,
+                    (self.grab_thumb_y + (self.mouse-y - self.grab_y))
+                    * self.grab_max_scroll / self.grab_track));
             }
         }
     }

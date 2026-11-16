@@ -5,7 +5,7 @@ table "attachment" {
   column "hash" {
     type = blob
   }
-  column "mime" {
+  column "type" {
     type = text
   }
   column "data" {
@@ -14,12 +14,29 @@ table "attachment" {
   primary_key {
     columns = [column.hash]
   }
-  check "attachment_mime" {
-    expr = "mime IN ('file', 'image', 'video', 'audio')"
+  check "attachment_type" {
+    expr = "type IN ('file', 'image', 'video', 'audio')"
   }
 }
 
-table "profile" {
+table "identity" {
+  schema = schema.main
+  column "id" {
+    type = text
+  }
+  column "key" {
+    type = blob
+  }
+  primary_key {
+    columns = [column.id]
+  }
+  foreign_key "user_profile" {
+    columns     = [column.id]
+    ref_columns = [table.user_profile.column.id]
+  }
+}
+
+table "user_profile" {
   schema = schema.main
   column "id" {
     type = text
@@ -45,41 +62,24 @@ table "profile" {
   }
 }
 
-table "user" {
+table "contact" {
   schema = schema.main
-  column "id" {
-    type = text
-  }
-  column "key" {
-    type = blob
-  }
-  primary_key {
-    columns = [column.id]
-  }
-  foreign_key "user_profile" {
-    columns     = [column.id]
-    ref_columns = [table.profile.column.id]
-  }
-}
-
-table "user_contact" {
-  schema = schema.main
-  column "user_id" {
+  column "identity_id" {
     type = text
   }
   column "profile_id" {
     type = text
   }
   primary_key {
-    columns = [column.user_id, column.profile_id]
+    columns = [column.identity_id, column.profile_id]
   }
-  foreign_key "ref_user" {
-    columns     = [column.user_id]
-    ref_columns = [table.user.column.id]
+  foreign_key "ref_identity" {
+    columns     = [column.identity_id]
+    ref_columns = [table.identity.column.id]
   }
   foreign_key "ref_profile" {
     columns     = [column.profile_id]
-    ref_columns = [table.profile.column.id]
+    ref_columns = [table.user_profile.column.id]
   }
 }
 
@@ -88,7 +88,7 @@ table "conversation" {
   column "id" {
     type = text
   }
-  column "owner_user" {
+  column "owner_identity" {
     type = text
   }
   column "type" {
@@ -106,8 +106,8 @@ table "conversation" {
     columns = [column.id]
   }
   foreign_key "conversation_owner" {
-    columns     = [column.owner_user]
-    ref_columns = [table.user.column.id]
+    columns     = [column.owner_identity]
+    ref_columns = [table.identity.column.id]
   }
   foreign_key "conversation_avatar" {
     columns     = [column.avatar_hash]
@@ -115,6 +115,9 @@ table "conversation" {
   }
   check "conversation_type" {
     expr = "type IN ('private', 'group')"
+  }
+  index "idx_conversation_owner" {
+    columns = [column.owner_identity]
   }
 }
 
@@ -126,6 +129,10 @@ table "conversation_member" {
   column "member_id" {
     type = text
   }
+  column "last_read_message_id" {
+    type = integer
+    null = true
+  }
   primary_key {
     columns = [column.conversation_id, column.member_id]
   }
@@ -135,7 +142,10 @@ table "conversation_member" {
   }
   foreign_key "ref_member_profile" {
     columns     = [column.member_id]
-    ref_columns = [table.profile.column.id]
+    ref_columns = [table.user_profile.column.id]
+  }
+  index "idx_conversation_member_profile" {
+    columns = [column.member_id]
   }
 }
 
@@ -151,7 +161,7 @@ table "message" {
   column "sender_id" {
     type = text
   }
-  column "content" {
+  column "markdown" {
     type = text
   }
   column "timestamp" {

@@ -1,5 +1,5 @@
 [workspace]
-members = ["app", "android", "crates/*", "web/wasm/*"]
+members = ["app", "android/app/rust", "crates/*", "web/wasm/*"]
 
 [package]
 name = "pupu"
@@ -9,7 +9,8 @@ edition = "2024"
 [dependencies]
 app = { path = "app" }
 
-log = "0.4.34"
+log = "0.4.35"
 env_logger = "0.11.11"
-tokio = { version = "1.53.2", features = ["rt-multi-thread"] }
+eyre = "0.6.14"
+tokio = { version = "1.54.1", features = ["rt-multi-thread"] }
 directories = "6.0.0"

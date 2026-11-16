@@ -16,15 +16,16 @@ jobs:
       - name: 安装 bun
         uses: oven-sh/setup-bun@v2.2.0
       - name: 安装 rust
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: wasm32-unknown-unknown
+        run: |
+          rustup update stable
+          rustup default stable
+          rustup target add wasm32-unknown-unknown
       - name: Rust 缓存
         uses: Swatinem/rust-cache@v2.9.3
       - name: 安装 cargo-binstall
         uses: cargo-bins/cargo-binstall@v1.27.0
       - name: 安装 wasm-pack
-        run: cargo binstall wasm-pack@0.15.1 --no-confirm
+        run: cargo binstall wasm-pack --no-confirm
       - name: 安装依赖
         run: bun install
       - name: 构建
