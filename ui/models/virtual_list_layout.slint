@@ -1,0 +1,24 @@
+export struct VirtualListSlot {
+    index: int,
+    y: length,
+}
+
+export global PrivateListLayout {
+    in-out property <[VirtualListSlot]> slots;
+    in-out property <length> content_height;
+
+    callback reset(count: int);
+    callback set_count(count: int);
+    callback set_height(index: int, height: length);
+    callback set_viewport(offset: length, height: length);
+}
+
+export global GroupListLayout {
+    in-out property <[VirtualListSlot]> slots;
+    in-out property <length> content_height;
+
+    callback reset(count: int);
+    callback set_count(count: int);
+    callback set_height(index: int, height: length);
+    callback set_viewport(offset: length, height: length);
+}

@@ -1,0 +1,47 @@
+export component Avatar inherits Rectangle {
+    in property <length> size: 32px;
+    in property <length> font_size: 16px;
+    in property <string> text;
+    in property <image> image;
+    in property <bool> show_image: false;
+    in property <brush> fill: #e0e0e0;
+    in property <bool> show_presence: false;
+    in property <bool> online: false;
+    in property <length> presence_size: 8px;
+
+    width: root.size;
+    height: root.size;
+
+    Rectangle {
+        border-radius: self.width / 2;
+        clip: true;
+        background: root.fill;
+
+        if root.show_image: Image {
+            width: 100%;
+            height: 100%;
+            source: root.image;
+        }
+
+        if !root.show_image: Text {
+            text: root.text;
+            width: 100%;
+            height: 100%;
+            font-size: root.font_size;
+            font-weight: FontWeight.medium;
+            horizontal-alignment: center;
+            vertical-alignment: center;
+        }
+    }
+
+    if root.show_presence: Rectangle {
+        x: root.size - root.presence_size;
+        y: root.size - root.presence_size;
+        width: root.presence_size;
+        height: root.presence_size;
+        border-width: 1.5px;
+        border-color: #ffffff;
+        border-radius: self.width / 2;
+        background: root.online ? #3ca55c : #b8b8b8;
+    }
+}

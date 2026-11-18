@@ -1,11 +1,5 @@
-export struct ConversationItemData {
-    name: string,
-    avatar: image,
-    avatar_text: string,
-    latest_message: string,
-    time: string,
-    unread_count: int,
-}
+import { Avatar } from "./avatar.slint";
+import { ConversationItemData } from "../models/conversation.slint";
 
 export component ConversationListItem inherits Rectangle {
     in property <ConversationItemData> conversation;
@@ -15,6 +9,7 @@ export component ConversationListItem inherits Rectangle {
 
     height: 48px;
     border-radius: 8px;
+    clip: true;
 
     states [
         active when root.active: {
@@ -43,17 +38,9 @@ export component ConversationListItem inherits Rectangle {
         padding: 8px;
         spacing: 8px;
 
-        Rectangle {
-            width: 32px;
-            height: 32px;
-            border-radius: self.width / 2;
-            background: root.active ? #c0c0c0 : #e0e0e0;
-
-            Text {
-                text: root.conversation.avatar_text;
-                font-weight: FontWeight.medium;
-                font-size: 16px;
-            }
+        Avatar {
+            text: root.conversation.avatar_text;
+            fill: root.active ? #c0c0c0 : #e0e0e0;
         }
 
         VerticalLayout {
@@ -68,13 +55,14 @@ export component ConversationListItem inherits Rectangle {
             Text {
                 text: root.conversation.latest_message;
                 overflow: elide;
+                max-lines: 1;
                 color: #777777;
             }
         }
 
         VerticalLayout {
             cross-axis-alignment: end;
-            spacing: 4px;
+            spacing: 3px;
 
             Text {
                 text: root.conversation.time;
@@ -82,17 +70,22 @@ export component ConversationListItem inherits Rectangle {
                 color: #777777;
             }
 
-            Rectangle {
+            unread_badge := Rectangle {
                 visible: root.conversation.unread_count != 0;
-                width: 16px;
-                height: 16px;
-                border-radius: self.width / 2;
-                background: #aaaaaa;
+                width: max(17px, unread_text.preferred-width + 9px);
+                height: 17px;
+                border-radius: self.height / 2;
+                background: #333333;
 
-                Text {
+                unread_text := Text {
                     text: root.conversation.unread_count;
                     color: #ffffff;
+                    font-size: 10px;
                     font-weight: FontWeight.medium;
+                    width: parent.width;
+                    height: parent.height;
+                    horizontal-alignment: center;
+                    vertical-alignment: center;
                 }
             }
         }

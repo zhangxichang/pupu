@@ -1,4 +1,3 @@
-// TODO AI实现待审查
 #![cfg(all(target_family = "wasm", target_os = "unknown"))]
 
 use std::cell::RefCell;
@@ -111,8 +110,7 @@ fn query(connection: &Connection, sql: &str, params: &[Value]) -> Result<QueryRe
     let mut stmt = connection.prepare(sql)?;
     let columns = stmt
         .column_names()
-        .iter()
-        .map(|name| (*name).to_string())
+        .map(|name| name.to_string())
         .collect::<Vec<_>>();
     let column_count = columns.len();
     let params = params

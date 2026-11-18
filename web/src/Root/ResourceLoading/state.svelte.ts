@@ -1,4 +1,3 @@
-// TODO AI实现待审查
 import type { ResourceInfo, ResourceDependency, WasmInit } from "./types";
 import { resourceDefinitions } from "../../resources";
 

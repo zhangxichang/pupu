@@ -60,8 +60,13 @@ jobs:
     steps:
       - name: 检出
         uses: actions/checkout@v7.0.1
+      - name: 写入版本号
+        shell: bash
+        run: echo "${{ needs.check-release.outputs.version }}" > version
       - name: 安装 rust
-        uses: dtolnay/rust-toolchain@v1
+        run: |
+          rustup update stable
+          rustup default stable
       - name: rust 缓存
         uses: Swatinem/rust-cache@v2.9.3
       - name: 构建
@@ -85,8 +90,13 @@ jobs:
     steps:
       - name: 检出
         uses: actions/checkout@v7.0.1
+      - name: 写入版本号
+        shell: bash
+        run: echo "${{ needs.check-release.outputs.version }}" > version
       - name: 安装 rust
-        uses: dtolnay/rust-toolchain@v1
+        run: |
+          rustup update stable
+          rustup default stable
       - name: rust 缓存
         uses: Swatinem/rust-cache@v2.9.3
       - name: 构建
@@ -110,14 +120,18 @@ jobs:
     steps:
       - name: 检出
         uses: actions/checkout@v7.0.1
+      - name: 写入版本号
+        shell: bash
+        run: echo "${{ needs.check-release.outputs.version }}" > version
       - name: 安装 rust
-        uses: dtolnay/rust-toolchain@v1
-        with:
-          targets: aarch64-linux-android
+        run: |
+          rustup update stable
+          rustup default stable
+          rustup target add aarch64-linux-android
       - name: rust 缓存
         uses: Swatinem/rust-cache@v2.9.3
-      - name: 安装 jdk
-        uses: actions/setup-java@v6.1.0
+      - name: 安装 java
+        uses: actions/setup-java@v6.3.0
         with:
           distribution: temurin
           java-version: latest
@@ -132,7 +146,7 @@ jobs:
       - name: 安装 cargo-binstall
         uses: cargo-bins/cargo-binstall@v1.27.0
       - name: 安装 cargo-ndk
-        run: cargo binstall cargo-ndk@0.2.0 --no-confirm
+        run: cargo binstall cargo-ndk --no-confirm
       - name: 解码签名密钥
         env:
           ANDROID_KEYSTORE_FILE: ${{ secrets.ANDROID_KEYSTORE_FILE }}
@@ -147,14 +161,13 @@ jobs:
           ANDROID_KEYSTORE_KEYALIAS: ${{ secrets.ANDROID_KEYSTORE_KEYALIAS }}
           ANDROID_KEYSTORE_KEY_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_KEY_PASSWORD }}
         run: |
-          cd android/gradle
-          ./gradlew --no-daemon assembleRelease \
+          ./gradlew --no-daemon :android:app:assembleRelease \
             -PversionName="${{ needs.check-release.outputs.version }}" \
             -PversionCode="${{ github.run_number }}"
       - name: 收集产物
         run: |
           mkdir -p artifacts
-          cp android/gradle/app/build/outputs/apk/release/app-release.apk artifacts/pupu-android-arm64.apk
+          cp android/app/build/outputs/apk/release/app-release.apk artifacts/pupu-android-arm64.apk
       - name: 上传产物
         uses: actions/upload-artifact@v7.0.2
         with:

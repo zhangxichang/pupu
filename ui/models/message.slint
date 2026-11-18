@@ -1,0 +1,18 @@
+export enum MessageKind {
+    Text,
+    File,
+    Image,
+}
+
+export struct MessageData {
+    id: int,
+    sender_name: string,
+    avatar_text: string,
+    time: string,
+    content: string,
+    file_name: string,
+    file_size: string,
+    kind: MessageKind,
+    is_self: bool,
+    read: bool,
+}

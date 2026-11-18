@@ -3,6 +3,7 @@ export component Button inherits Rectangle {
     in property <brush> pressed_background: #bbbbbb;
     in property <brush> hover_background: #dddddd;
     in property <bool> active: false;
+    in property <bool> enabled: true;
     in property <brush> active_background: #333333;
     in property <length> content-padding: 0px;
     in property <length> content-padding-left: root.content-padding;
@@ -47,6 +48,7 @@ export component Button inherits Rectangle {
     }
 
     touch := TouchArea {
+        enabled: root.enabled;
         mouse-cursor: pointer;
 
         clicked => {

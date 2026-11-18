@@ -1,0 +1,25 @@
+import { Icon, IconDisplay } from "../lib/lucide.slint";
+
+export component EmptyState inherits VerticalLayout {
+    in property <Icon> icon;
+    in property <string> text;
+    in property <length> icon_size: 36px;
+
+    width: 100%;
+    height: 100%;
+    alignment: center;
+    cross-axis-alignment: center;
+    spacing: 8px;
+
+    IconDisplay {
+        icon: root.icon;
+        size: root.icon_size;
+        stroke: #cccccc;
+    }
+
+    Text {
+        text: root.text;
+        font-size: 12px;
+        color: #999999;
+    }
+}

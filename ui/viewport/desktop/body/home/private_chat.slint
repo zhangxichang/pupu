@@ -1,0 +1,200 @@
+import { ChatComposer } from "../../../../components/chat_composer.slint";
+import { ChatHeader } from "../../../../components/chat_header.slint";
+import { ConversationSidebar } from "../../../../components/conversation_sidebar.slint";
+import { EmptyState } from "../../../../components/empty_state.slint";
+import { VirtualList } from "../../../../components/virtual_list.slint";
+import { IconSet } from "../../../../lib/lucide.slint";
+import { ConversationItemData } from "../../../../models/conversation.slint";
+import { MessageData, MessageKind } from "../../../../models/message.slint";
+import { PrivateListLayout } from "../../../../models/virtual_list_layout.slint";
+
+export component PrivateChat inherits HorizontalLayout {
+    in-out property <[ConversationItemData]> conversations: [];
+    in-out property <int> current_conversation: -1;
+
+    in-out property <[bool]> presence: [
+        true,
+        false,
+        true,
+        false,
+        true,
+        false,
+        true,
+        false,
+        true,
+        false,
+        true,
+        false,
+        true,
+        false,
+        true,
+        false,
+        true,
+        false,
+        true,
+        false,
+        true,
+        false,
+        true,
+        false,
+        true,
+        false,
+        true,
+        false,
+        true,
+        false,
+        true,
+        false,
+        true,
+        false,
+        true,
+        false,
+        true,
+        false,
+        true,
+        false
+    ];
+
+    property <bool> current_online:
+        root.current_conversation >= 0 && root.current_conversation < root.presence.length
+        ? root.presence[root.current_conversation]
+        : false;
+
+    property <ConversationItemData> current_conversation_data:
+        root.current_conversation >= 0 && root.current_conversation < root.conversations.length
+        ? root.conversations[root.current_conversation]
+        : { name: "", avatar_text: "", latest_message: "", time: "", unread_count: 0 };
+
+    property <bool> scroll_to_bottom: false;
+    in-out property <[[MessageData]]> threads: [];
+
+    in-out property <[MessageData]> messages: [];
+
+    property <int> loaded_conversation: -1;
+
+    changed current_conversation => {
+        if (root.current_conversation != root.loaded_conversation) {
+            if (root.loaded_conversation >= 0 && root.loaded_conversation < root.threads.length) {
+                root.threads[root.loaded_conversation] = root.messages;
+            }
+            if (root.current_conversation >= 0 && root.current_conversation < root.threads.length) {
+                root.messages = root.threads[root.current_conversation];
+            } else {
+                root.messages = [];
+            }
+
+            root.loaded_conversation = root.current_conversation;
+            root.scroll_to_bottom = false;
+            PrivateListLayout.reset(root.messages.length);
+            messages_view.content_y = 0;
+        }
+    }
+
+    ConversationSidebar {
+        title: "私聊";
+        search_placeholder: "搜索私聊会话";
+        conversations: root.conversations;
+        selected_index: root.current_conversation;
+
+        selected(index) => {
+            root.current_conversation = index;
+        }
+    }
+
+    Rectangle {
+        width: 1px;
+        background: #eeeeee;
+    }
+
+    Rectangle {
+        width: root.width - 251px;
+        clip: true;
+
+        chat_focus := FocusScope {
+
+            VerticalLayout {
+                width: 100%;
+                height: 100%;
+
+                ChatHeader {
+                    title: root.current_conversation_data.name;
+                    avatar_text: root.current_conversation_data.avatar_text;
+                    status_text: root.current_online ? "在线" : "离线";
+                    online: root.current_online;
+                }
+
+                Rectangle {
+                    height: 1px;
+                    background: #eeeeee;
+                }
+
+                VerticalLayout {
+                    vertical-stretch: 1;
+
+                    Rectangle {
+                        vertical-stretch: 1;
+                        max-height: 100000px;
+
+                        messages_view := VirtualList {
+                            width: 100%;
+                            height: 100%;
+                            messages: root.messages;
+                            slots: PrivateListLayout.slots;
+                            content_height: PrivateListLayout.content_height;
+                            scroll_to_bottom <=> root.scroll_to_bottom;
+
+                            set_height(index, height) => {
+                                PrivateListLayout.set_height(index, height);
+                            }
+                            set_viewport(offset, height) => {
+                                PrivateListLayout.set_viewport(offset, height);
+                            }
+                            pressed => { chat_focus.focus(); }
+                        }
+                    }
+                }
+
+                ChatComposer {
+                    send_requested(text) => {
+                        if (text != "") {
+                            root.scroll_to_bottom = true;
+                            root.messages.push({
+                                id: root.messages.length + 1,
+                                sender_name: "我",
+                                avatar_text: "我",
+                                time: "刚刚",
+                                content: text,
+                                file_name: "",
+                                file_size: "",
+                                kind: MessageKind.Text,
+                                is_self: true,
+                                read: true,
+                            });
+                            root.conversations[root.current_conversation] = {
+                                name: root.conversations[root.current_conversation].name,
+                                avatar_text: root.conversations[root.current_conversation].avatar_text,
+                                latest_message: text.replace-all("\n", " ").replace-all("\u{000d}", ""),
+                                time: "刚刚",
+                                unread_count: 0
+                            };
+                            PrivateListLayout.set_count(root.messages.length);
+                            root.scroll_to_bottom = true;
+                        }
+                    }
+                }
+            }
+
+            if root.current_conversation < 0: Rectangle {
+                background: #ffffff;
+
+                TouchArea {
+                }
+
+                EmptyState {
+                    icon: IconSet.MessageCircle;
+                    text: "选择一个会话开始聊天";
+                }
+            }
+        }
+    }
+}

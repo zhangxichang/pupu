@@ -4,44 +4,57 @@ version = "0.1.0"
 edition = "2024"
 
 [build-dependencies]
-slint-build = "1.18.1"
+slint-build = "1.19.0"
 
 [dependencies]
 storage = { path = "../crates/storage" }
+file-picker = { path = "../crates/file-picker" }
 
-log = "0.4.34"
+log = "0.4.35"
 eyre = "0.6.14"
+serde = { version = "1.0.229", features = ["derive"] }
+image = { version = "0.25.10", default-features = false, features = [
+    "png",
+    "jpeg",
+] }
+webbrowser = "1.2.7"
 
-# TODO 待未来实现插件功能
-# extism = "1.30.0"
+# extism = "1.41.0"
 
 [target.'cfg(any(target_os = "windows", target_os = "linux", target_os = "android"))'.dependencies]
-tokio = { version = "1.53.2", features = ["fs"] }
+tokio = { version = "1.54.1", features = ["rt", "fs"] }
+semver = "1.0.28"
+reqwest = { version = "0.13.5", default-features = false, features = [
+    "rustls",
+    "json",
+] }
 
 [target.'cfg(any(target_os = "windows", target_os = "linux"))'.dependencies]
-slint = { version = "1.18.1", default-features = false, features = [
+slint = { version = "1.19.0", default-features = false, features = [
     "compat-1-2",
     "unstable-winit-030",
     "unstable-wgpu-30",
     "renderer-skia",
-    "unstable-fontique-011",
+    "unstable-fontique-012",
 ] }
 
 [target.'cfg(target_os = "android")'.dependencies]
-slint = { version = "1.18.1", default-features = false, features = [
+slint = { version = "1.19.0", default-features = false, features = [
     "compat-1-2",
     "backend-android-activity-06",
     "unstable-wgpu-30",
-    "unstable-fontique-011",
+    "unstable-fontique-012",
 ] }
 
 [target.'cfg(all(target_family = "wasm", target_os = "unknown"))'.dependencies]
-lifecycle = { path = "../web/wasm/lifecycle" }
+ready-notify = { path = "../web/wasm/ready-notify" }
 
-slint = { version = "1.18.1", default-features = false, features = [
+slint = { version = "1.19.0", default-features = false, features = [
     "compat-1-2",
     "backend-winit",
     "renderer-femtovg",
-    "unstable-fontique-011",
+    "unstable-fontique-012",
 ] }
-opfs = "0.3.1"
+wasm-bindgen-futures = "0.4.80"
+tokio-fs-ext = "0.7.8"
+reqwest = { version = "0.13.5", default-features = false, features = ["json"] }
