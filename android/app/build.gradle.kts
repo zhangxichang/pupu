@@ -1,9 +1,3 @@
-plugins {
-    id("com.android.application")
-    id("rust-jni")
-    id("launcher-icon")
-}
-
 val releaseKeystorePath = optionalEnv("ANDROID_KEYSTORE_PATH")
 val releaseKeystorePassword = optionalEnv("ANDROID_KEYSTORE_PASSWORD")
 val releaseKeyAlias = optionalEnv("ANDROID_KEYSTORE_KEYALIAS")
@@ -17,6 +11,15 @@ fun optionalEnv(name: String): String? {
     return if (value.isNullOrBlank()) null else value
 }
 
+plugins {
+    id("com.android.application")
+    id("rust-jni")
+    id("launcher-icon")
+}
+repositories {
+    google()
+    mavenCentral()
+}
 android {
     namespace = "com.zhangxichang.pupu"
     ndkVersion = "30.0.16248370"
