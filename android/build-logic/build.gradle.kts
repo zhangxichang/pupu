@@ -8,6 +8,6 @@ repositories {
 }
 
 dependencies {
-    implementation("com.android.tools.build:gradle:9.4.1")
-    implementation("com.android.tools:sdk-common:32.4.1")
+    implementation("com.android.tools.build:gradle:9.5.1")
+    implementation("com.android.tools:sdk-common:32.5.1")
 }

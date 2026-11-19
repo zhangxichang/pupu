@@ -7,4 +7,5 @@
 /.ruff_cache/
 /.gradle/
 /build/
+
 /local.properties
