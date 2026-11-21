@@ -1,0 +1,70 @@
+import { Button } from "./button.slint";
+import { IconSet, IconDisplay } from "../lib/lucide.slint";
+import { Input } from "./input.slint";
+
+export component SidebarHeader inherits VerticalLayout {
+    in property <string> title;
+    in property <string> search_placeholder: "";
+    in property <bool> show_add: false;
+
+    callback add_clicked;
+
+    width: 100%;
+
+    HorizontalLayout {
+        height: 48px;
+        padding-left: 16px;
+        padding-right: 16px;
+        spacing: 10px;
+        cross-axis-alignment: center;
+
+        Text {
+            text: root.title;
+            font-size: 16px;
+            font-weight: FontWeight.semi-bold;
+            color: #222222;
+            vertical-alignment: center;
+        }
+
+        Rectangle {
+            width: 1px;
+            height: 18px;
+            background: #e5e5e5;
+        }
+
+        if root.search_placeholder != "": Input {
+            height: 28px;
+            border_radius: 4px;
+            normal_background: #eeeeee;
+            hover_background: #e0e0e0;
+            focus_border_width: 1px;
+            focus_border_color: #007aff;
+            placeholder: root.search_placeholder;
+        }
+
+        if root.show_add: Button {
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            normal_background: transparent;
+            hover_background: #f1f1f1;
+            pressed_background: #e5e5e5;
+            content-padding: 6px;
+
+            IconDisplay {
+                icon: IconSet.Plus;
+                size: 16px;
+                stroke: #555555;
+            }
+
+            clicked => {
+                root.add_clicked();
+            }
+        }
+    }
+
+    Rectangle {
+        height: 1px;
+        background: #eeeeee;
+    }
+}

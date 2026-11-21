@@ -1,0 +1,644 @@
+import { ListView } from "std-widgets.slint";
+import { Avatar } from "../../../../components/avatar.slint";
+import { Input } from "../../../../components/input.slint";
+import { PickOptions } from "../../../../models/file_picker.slint";
+import { EmptyState } from "../../../../components/empty_state.slint";
+import { HoverScrollBar } from "../../../../components/hover_scroll_bar.slint";
+import { SidebarHeader } from "../../../../components/sidebar_header.slint";
+import { ContactData } from "../../../../models/contact.slint";
+import { ContactListItem } from "../../../../components/contact_list_item.slint";
+import { Button } from "../../../../components/button.slint";
+import { IconSet, IconDisplay } from "../../../../lib/lucide.slint";
+
+export component Contact inherits HorizontalLayout {
+    in-out property <int> current_contact: -1;
+    in-out property <[ContactData]> contacts: [];
+    in-out property <bool> show_add: false;
+    in-out property <string> new_contact_name: "";
+    in-out property <string> new_contact_bio: "";
+    in-out property <string> new_contact_endpoint: "";
+    in property <image> new_contact_avatar_image;
+    in property <bool> new_contact_has_avatar: false;
+
+    callback message_requested(profile_id: string);
+    callback delete_requested(profile_id: string);
+    callback add_contact_requested(name: string, bio: string, endpoint_id: string);
+    callback cancel_add_requested;
+    callback accept_contact_requested(profile_id: string);
+    callback reject_contact_requested(profile_id: string);
+    callback pick_contact_avatar(options: PickOptions);
+
+    property <bool> has_contact:
+        root.current_contact >= 0 && root.current_contact < root.contacts.length;
+
+    property <ContactData> current_contact_data:
+        root.has_contact
+        ? root.contacts[root.current_contact]
+        : { id: "", name: "", avatar_text: "", signature: "", online: false, state: "" };
+
+    VerticalLayout {
+        width: 250px;
+
+        SidebarHeader {
+            title: "联系人";
+            search_placeholder: "搜索联系人";
+            show_add: true;
+
+            add_clicked => {
+                root.show_add = true;
+                root.current_contact = -1;
+            }
+        }
+
+        VerticalLayout {
+            vertical-stretch: 1;
+            padding: 8px;
+            spacing: 4px;
+
+            touch := TouchArea {
+                fs := FocusScope {
+                    focus-on-click: false;
+                    focus-on-tab-navigation: false;
+                }
+
+                pointer-event(event) => {
+                    if (event.button == PointerEventButton.left && event.kind == PointerEventKind.down) {
+                        fs.focus();
+                    }
+                }
+
+                list := ListView {
+                    vertical-scrollbar-policy: ScrollBarPolicy.always-off;
+
+                    for contact[index] in root.contacts: VerticalLayout {
+                        padding-top: 2px;
+                        padding-bottom: 2px;
+
+                        states [
+                            spacing_begin when index == 0: {
+                                padding-top: 0px;
+                                padding-bottom: 2px;
+                            }
+                            spacing_end when index == root.contacts.length - 1: {
+                                padding-top: 2px;
+                                padding-bottom: 0px;
+                            }
+                        ]
+
+                        ContactListItem {
+                            contact: contact;
+                            active: root.current_contact == index;
+
+                            clicked => {
+                                root.current_contact = index;
+                                root.show_add = false;
+                            }
+                        }
+                    }
+                }
+
+                HoverScrollBar {
+                    x: parent.width - 8px;
+                    width: 12px;
+                    height: parent.height;
+                    content_y <=> list.content-y;
+                    content_height: list.content-height;
+                    visible_height: list.visible-height;
+                    hovered: touch.has-hover;
+                    interaction_started => { fs.focus(); }
+                }
+            }
+        }
+    }
+
+    Rectangle {
+        width: 1px;
+        background: #eeeeee;
+    }
+
+    Rectangle {
+        width: root.width - 251px;
+        clip: true;
+
+        VerticalLayout {
+            width: 100%;
+            height: 100%;
+
+            HorizontalLayout {
+                height: 48px;
+                padding-left: 16px;
+                padding-right: 16px;
+                cross-axis-alignment: center;
+
+                Text {
+                    text: root.show_add ? "添加联系人" : "联系人资料";
+                    font-size: 14px;
+                    font-weight: FontWeight.semi-bold;
+                    color: #333333;
+                    vertical-alignment: center;
+                }
+            }
+
+            Rectangle {
+                height: 1px;
+                background: #eeeeee;
+            }
+
+            if root.show_add: Rectangle {
+                vertical-stretch: 1;
+                max-height: 100000px;
+
+                VerticalLayout {
+                    width: min(parent.width - 96px, 420px);
+                    height: 100%;
+                    alignment: center;
+                    spacing: 8px;
+
+                    Rectangle {
+                        width: 80px;
+                        height: 80px;
+                        border-radius: self.width / 2;
+                        background: avatar_touch.has-hover ? #d7d7d7 : #e0e0e0;
+                        clip: true;
+
+                        if root.new_contact_has_avatar: Image {
+                            width: 100%;
+                            height: 100%;
+                            source: root.new_contact_avatar_image;
+                        }
+
+                        if !root.new_contact_has_avatar: IconDisplay {
+                            icon: IconSet.User;
+                            size: 34px;
+                            stroke: #888888;
+                        }
+
+                        avatar_touch := TouchArea {
+                            mouse-cursor: pointer;
+
+                            clicked => {
+                                root.pick_contact_avatar({
+                                    title: "选择头像",
+                                    filters: [
+                                        { name: "图片", extensions: ["png", "jpg", "jpeg"] },
+                                    ],
+                                    mime_types: ["image/png", "image/jpeg"],
+                                });
+                            }
+                        }
+                    }
+
+                    Rectangle { height: 12px; }
+
+                    Text {
+                        width: 100%;
+                        text: "节点 ID";
+                        font-size: 11px;
+                        color: #666666;
+                    }
+
+                    Input {
+                        width: 100%;
+                        font_size: 13px;
+                        min_content_height: 40px;
+                        max_content_height: 40px;
+                        inner_padding_left: 10px;
+                        inner_padding_right: 10px;
+                        normal_background: #f4f4f4;
+                        hover_background: #eeeeee;
+                        focused_background: #ffffff;
+                        normal_border_width: 1px;
+                        normal_border_color: #e8e8e8;
+                        focus_border_width: 1px;
+                        focus_border_color: #007aff;
+                        border_radius: 8px;
+                        placeholder: "对方 64 位节点 ID";
+                        text <=> root.new_contact_endpoint;
+                    }
+
+                    Text {
+                        width: 100%;
+                        text: "姓名";
+                        font-size: 11px;
+                        color: #666666;
+                    }
+
+                    Input {
+                        width: 100%;
+                        font_size: 13px;
+                        min_content_height: 40px;
+                        max_content_height: 40px;
+                        inner_padding_left: 10px;
+                        inner_padding_right: 10px;
+                        normal_background: #f4f4f4;
+                        hover_background: #eeeeee;
+                        focused_background: #ffffff;
+                        normal_border_width: 1px;
+                        normal_border_color: #e8e8e8;
+                        focus_border_width: 1px;
+                        focus_border_color: #007aff;
+                        border_radius: 8px;
+                        placeholder: "输入姓名";
+                        text <=> root.new_contact_name;
+                    }
+
+                    Text {
+                        width: 100%;
+                        text: "签名";
+                        font-size: 11px;
+                        color: #666666;
+                    }
+
+                    Input {
+                        width: 100%;
+                        font_size: 13px;
+                        min_content_height: 40px;
+                        max_content_height: 40px;
+                        inner_padding_left: 10px;
+                        inner_padding_right: 10px;
+                        normal_background: #f4f4f4;
+                        hover_background: #eeeeee;
+                        focused_background: #ffffff;
+                        normal_border_width: 1px;
+                        normal_border_color: #e8e8e8;
+                        focus_border_width: 1px;
+                        focus_border_color: #007aff;
+                        border_radius: 8px;
+                        placeholder: "一句话介绍";
+                        text <=> root.new_contact_bio;
+                    }
+
+                    Rectangle { height: 10px; }
+
+                    HorizontalLayout {
+                        alignment: center;
+                        spacing: 8px;
+
+                        Button {
+                            height: 36px;
+                            border-radius: 8px;
+                            border-width: 1px;
+                            border-color: #e5e5e5;
+                            normal_background: #ffffff;
+                            hover_background: #f7f7f7;
+                            pressed_background: #eeeeee;
+                            content-padding-left: 16px;
+                            content-padding-right: 16px;
+
+                            Text {
+                                text: "取消";
+                                font-size: 12px;
+                                color: #333333;
+                            }
+
+                            clicked => {
+                                root.cancel_add_requested();
+                                root.show_add = false;
+                                root.new_contact_name = "";
+                                root.new_contact_bio = "";
+                                root.new_contact_endpoint = "";
+                            }
+                        }
+
+                        Button {
+                            height: 36px;
+                            border-radius: 8px;
+                            enabled: root.new_contact_name != "" && root.new_contact_endpoint != "";
+                            normal_background: root.new_contact_name != "" && root.new_contact_endpoint != "" ? #333333 : #d5d5d5;
+                            hover_background: root.new_contact_name != "" && root.new_contact_endpoint != "" ? #444444 : #d5d5d5;
+                            pressed_background: #222222;
+                            content-padding-left: 16px;
+                            content-padding-right: 16px;
+
+                            Text {
+                                text: "添加";
+                                font-size: 12px;
+                                color: #ffffff;
+                            }
+
+                            clicked => {
+                                if (root.new_contact_name != "" && root.new_contact_endpoint != "") {
+                                    root.add_contact_requested(root.new_contact_name, root.new_contact_bio, root.new_contact_endpoint);
+                                    root.show_add = false;
+                                    root.new_contact_name = "";
+                                    root.new_contact_bio = "";
+                                    root.new_contact_endpoint = "";
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            if !root.show_add && root.has_contact: Rectangle {
+                vertical-stretch: 1;
+                max-height: 100000px;
+
+                hover_touch := TouchArea {
+                }
+
+                detail_list := Flickable {
+                    mouse-drag-pan-enabled: false;
+                    content-width: self.width;
+                    content-height: detail_layout.preferred-height;
+
+                    detail_layout := VerticalLayout {
+                        width: parent.width;
+                        height: self.preferred-height;
+                        padding-top: 56px;
+                        padding-bottom: 40px;
+                        cross-axis-alignment: center;
+
+                        VerticalLayout {
+                            width: min(parent.width, 360px);
+                            cross-axis-alignment: center;
+
+                            Avatar {
+                                size: 80px;
+                                font_size: 28px;
+                                text: root.current_contact_data.avatar_text;
+                                image: root.current_contact_data.avatar;
+                                show_image: root.current_contact_data.has_avatar;
+                                fill: #e8e8e8;
+                            }
+
+                            Rectangle {
+                                height: 18px;
+                            }
+
+                            Text {
+                                text: root.current_contact_data.name;
+                                width: 100%;
+                                font-size: 22px;
+                                font-weight: FontWeight.semi-bold;
+                                color: #222222;
+                                horizontal-alignment: center;
+                            }
+
+                            Rectangle {
+                                height: 7px;
+                            }
+
+                            HorizontalLayout {
+                                spacing: 5px;
+                                cross-axis-alignment: center;
+
+                                Rectangle {
+                                    width: 6px;
+                                    height: 6px;
+                                    border-radius: self.width / 2;
+                                    background: root.current_contact_data.online ? #3ca55c : #b8b8b8;
+                                }
+
+                                Text {
+                                    text: root.current_contact_data.online ? "在线" : "离线";
+                                    font-size: 11px;
+                                    color: #777777;
+                                }
+                            }
+
+                            Rectangle {
+                                height: 7px;
+                            }
+
+                            Text {
+                                text: root.current_contact_data.signature;
+                                width: 300px;
+                                font-size: 12px;
+                                color: #888888;
+                                horizontal-alignment: center;
+                                overflow: elide;
+                                max-lines: 2;
+                            }
+
+                            Rectangle {
+                                height: 10px;
+                            }
+
+                            if root.current_contact_data.state == "pending_in": Text {
+                                text: "对方请求添加你为联系人";
+                                font-size: 11px;
+                                color: #e08a00;
+                            }
+
+                            if root.current_contact_data.state == "pending_out": Text {
+                                text: "等待对方接受";
+                                font-size: 11px;
+                                color: #999999;
+                            }
+
+                            if root.current_contact_data.state == "rejected": Text {
+                                text: "请求已被拒绝";
+                                font-size: 11px;
+                                color: #d9534f;
+                            }
+
+                            Rectangle {
+                                height: 16px;
+                            }
+
+                            if root.current_contact_data.state == "pending_in": HorizontalLayout {
+                                spacing: 8px;
+                                alignment: center;
+
+                                Button {
+                                    height: 34px;
+                                    border-radius: 6px;
+                                    normal_background: #333333;
+                                    hover_background: #444444;
+                                    pressed_background: #222222;
+                                    content-padding-left: 16px;
+                                    content-padding-right: 16px;
+
+                                    Text {
+                                        text: "接受";
+                                        font-size: 12px;
+                                        color: #ffffff;
+                                    }
+
+                                    clicked => {
+                                        root.accept_contact_requested(root.current_contact_data.id);
+                                    }
+                                }
+
+                                Button {
+                                    height: 34px;
+                                    border-radius: 6px;
+                                    border-width: 1px;
+                                    border-color: #e5e5e5;
+                                    normal_background: #ffffff;
+                                    hover_background: #f7f7f7;
+                                    pressed_background: #eeeeee;
+                                    content-padding-left: 16px;
+                                    content-padding-right: 16px;
+
+                                    Text {
+                                        text: "拒绝";
+                                        font-size: 12px;
+                                        color: #333333;
+                                    }
+
+                                    clicked => {
+                                        root.reject_contact_requested(root.current_contact_data.id);
+                                    }
+                                }
+                            }
+
+                            Rectangle {
+                                height: 26px;
+                            }
+
+                            if root.current_contact_data.state == "accepted": HorizontalLayout {
+                                spacing: 8px;
+                                alignment: center;
+                                cross-axis-alignment: center;
+
+                                Button {
+                                    height: 34px;
+                                    border-radius: 6px;
+                                    normal_background: #333333;
+                                    hover_background: #444444;
+                                    pressed_background: #222222;
+                                    content-padding-left: 14px;
+                                    content-padding-right: 14px;
+                                    content-spacing: 6px;
+
+                                    IconDisplay {
+                                        icon: IconSet.MessageCircle;
+                                        size: 15px;
+                                    }
+
+                                    Text {
+                                        text: "发消息";
+                                        font-size: 12px;
+                                        font-weight: FontWeight.medium;
+                                        color: #ffffff;
+                                    }
+
+                                    clicked => {
+                                        if (root.has_contact) {
+                                            root.message_requested(root.current_contact_data.id);
+                                        }
+                                    }
+                                }
+
+                                Button {
+                                    height: 34px;
+                                    border-radius: 6px;
+                                    border-width: 1px;
+                                    border-color: #e5e5e5;
+                                    normal_background: #ffffff;
+                                    hover_background: #f7f7f7;
+                                    pressed_background: #eeeeee;
+                                    content-padding-left: 13px;
+                                    content-padding-right: 13px;
+                                    content-spacing: 6px;
+
+                                    IconDisplay {
+                                        icon: IconSet.Phone;
+                                        size: 15px;
+                                        stroke: #444444;
+                                    }
+
+                                    Text {
+                                        text: "语音通话";
+                                        font-size: 12px;
+                                        color: #333333;
+                                    }
+                                }
+
+                                Button {
+                                    height: 34px;
+                                    border-radius: 6px;
+                                    border-width: 1px;
+                                    border-color: #e5e5e5;
+                                    normal_background: #ffffff;
+                                    hover_background: #f7f7f7;
+                                    pressed_background: #eeeeee;
+                                    content-padding-left: 13px;
+                                    content-padding-right: 13px;
+                                    content-spacing: 6px;
+
+                                    IconDisplay {
+                                        icon: IconSet.Video;
+                                        size: 15px;
+                                        stroke: #444444;
+                                    }
+
+                                    Text {
+                                        text: "视频通话";
+                                        font-size: 12px;
+                                        color: #333333;
+                                    }
+                                }
+                            }
+
+                            Rectangle {
+                                height: 40px;
+                            }
+
+                            Rectangle {
+                                width: 280px;
+                                height: 1px;
+                                background: #eeeeee;
+                            }
+
+                            Rectangle {
+                                height: 14px;
+                            }
+
+                            if root.current_contact_data.state == "accepted": Button {
+                                height: 32px;
+                                border-radius: 6px;
+                                hover_background: #fdf2f2;
+                                pressed_background: #fbe6e6;
+                                content-padding-left: 10px;
+                                content-padding-right: 10px;
+                                content-spacing: 6px;
+
+                                IconDisplay {
+                                    icon: IconSet.Trash2;
+                                    size: 14px;
+                                    stroke: #d9534f;
+                                }
+
+                                Text {
+                                    text: "删除联系人";
+                                    font-size: 12px;
+                                    color: #d9534f;
+                                }
+
+                                clicked => {
+                                    if (root.has_contact) {
+                                        root.delete_requested(root.current_contact_data.id);
+                                    }
+                                    root.current_contact = -1;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                HoverScrollBar {
+                    x: parent.width - 18px;
+                    width: 12px;
+                    height: parent.height;
+                    content_y <=> detail_list.content-y;
+                    content_height: detail_list.content-height;
+                    visible_height: detail_list.height;
+                    hovered: hover_touch.has-hover;
+                }
+            }
+
+            if !root.show_add && !root.has_contact: Rectangle {
+                vertical-stretch: 1;
+                max-height: 100000px;
+
+                EmptyState {
+                    icon: IconSet.Contact;
+                    text: "选择一个联系人查看详情";
+                }
+            }
+        }
+    }
+}

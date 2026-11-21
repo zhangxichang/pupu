@@ -27,6 +27,13 @@ impl PickedFile {
     }
 }
 impl FilePickerBackend for PickedFile {
+    fn file_name(&self) -> String {
+        self.path
+            .file_name()
+            .map(|name| name.to_string_lossy().into_owned())
+            .unwrap_or_else(|| "文件".to_string())
+    }
+
     fn read_stream(&self) -> impl Stream<Item = Result<Vec<u8>>> {
         async_stream::try_stream! {
             let mut file = File::open(&self.path).await?;

@@ -20,7 +20,7 @@ log = "0.4.35"
 jni = "0.22.4"
 ndk-context = "0.1.1"
 parking_lot = "0.13.0"
-tokio = { version = "1.54.1", features = ["sync", "fs", "io-util"] }
+tokio = { version = "1.54.1", features = ["sync", "fs", "io-util", "time"] }
 
 [target.'cfg(all(target_family = "wasm", target_os = "unknown"))'.dependencies]
 rfd = { version = "0.18.0", default-features = false, features = [

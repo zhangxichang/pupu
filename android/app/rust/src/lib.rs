@@ -4,8 +4,9 @@ mod jni_bridge;
 
 use std::borrow::Cow;
 
-use app::{AppConfig, paths::AppPaths};
+use app::AppConfig;
 use eyre::{Result, eyre};
+use paths::AppPaths;
 use slint::android::AndroidApp;
 
 #[unsafe(no_mangle)]
@@ -39,6 +40,7 @@ async fn async_main(app: AndroidApp) -> Result<()> {
         data_dir,
     };
     paths.build().await?;
+    file_picker::android::set_activity(app.activity_as_ptr());
     slint::android::init(app)?;
     app::main(AppConfig {
         paths,

@@ -1,4 +1,5 @@
 #![cfg(all(target_family = "wasm", target_os = "unknown"))]
+
 use std::{
     future::Future,
     path::PathBuf,
@@ -8,34 +9,29 @@ use std::{
 
 use eyre::{Result, eyre};
 use gloo_worker::oneshot::{Oneshot, OneshotBridge, OneshotSpawner};
+use sea_query::OptionEnum;
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
 
-use crate::StorageBackend;
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct QueryResult {
-    pub columns: Vec<String>,
-    pub rows: Vec<Vec<Value>>,
-}
+use crate::{QueryResult, SqlValue, Statement, StorageBackend};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct StorageCommand {
-    pub data_dir: String,
+pub struct StorageStatement {
     pub sql: String,
-    pub params: Vec<Value>,
+    pub params: Vec<SqlValue>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum StorageRequest {
-    Ping,
-    Execute(StorageCommand),
-    Query(StorageCommand),
+    Open { data_dir: String },
+    Execute(StorageStatement),
+    Query(StorageStatement),
+    Batch { statements: Vec<StorageStatement> },
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum StoragePayload {
     Ok,
+    Affected(u64),
     Rows(QueryResult),
     Error(String),
 }
@@ -60,7 +56,6 @@ impl Oneshot for ClientStorageWorker {
 
 pub struct Storage {
     bridge: OneshotBridge<ClientStorageWorker>,
-    data_dir: String,
 }
 impl Storage {
     pub async fn open(worker_url: impl Into<String>, data_dir: PathBuf) -> Result<Self> {
@@ -69,58 +64,111 @@ impl Storage {
             .with_loader(true)
             .spawn(&worker_url);
 
-        match bridge.run(StorageRequest::Ping).await {
+        match bridge
+            .run(StorageRequest::Open {
+                data_dir: data_dir.to_string_lossy().into_owned(),
+            })
+            .await
+        {
             StoragePayload::Ok => {}
             StoragePayload::Error(err) => return Err(eyre!(err)),
-            StoragePayload::Rows(_) => return Err(eyre!("unexpected Rows response")),
+            _ => return Err(eyre!("unexpected response")),
         }
 
-        Ok(Self {
-            bridge,
-            data_dir: data_dir.to_string_lossy().into_owned(),
-        })
+        Ok(Self { bridge })
     }
 }
 
-impl StorageBackend for Storage {}
+fn to_sql_value(value: &sea_query::Value) -> Result<SqlValue> {
+    Ok(match value {
+        sea_query::Value::Bool(Some(value)) => SqlValue::Integer(if *value { 1 } else { 0 }),
+        sea_query::Value::TinyInt(Some(value)) => SqlValue::Integer(i64::from(*value)),
+        sea_query::Value::SmallInt(Some(value)) => SqlValue::Integer(i64::from(*value)),
+        sea_query::Value::Int(Some(value)) => SqlValue::Integer(i64::from(*value)),
+        sea_query::Value::BigInt(Some(value)) => SqlValue::Integer(*value),
+        sea_query::Value::TinyUnsigned(Some(value)) => SqlValue::Integer(i64::from(*value)),
+        sea_query::Value::SmallUnsigned(Some(value)) => SqlValue::Integer(i64::from(*value)),
+        sea_query::Value::Unsigned(Some(value)) => SqlValue::Integer(i64::from(*value)),
+        sea_query::Value::BigUnsigned(Some(value)) => {
+            SqlValue::Integer(i64::try_from(*value).map_err(|_| eyre!("整数超出 SQLite 范围"))?)
+        }
+        sea_query::Value::Float(Some(value)) => SqlValue::Real(f64::from(*value)),
+        sea_query::Value::Double(Some(value)) => SqlValue::Real(*value),
+        sea_query::Value::String(Some(value)) => SqlValue::Text(value.clone()),
+        sea_query::Value::Enum(OptionEnum::Some(value)) => SqlValue::Text(value.value.to_string()),
+        sea_query::Value::Char(Some(value)) => SqlValue::Text(value.to_string()),
+        sea_query::Value::Bytes(Some(value)) => SqlValue::Blob(value.clone()),
+        sea_query::Value::Enum(OptionEnum::None(_))
+        | sea_query::Value::Bool(None)
+        | sea_query::Value::TinyInt(None)
+        | sea_query::Value::SmallInt(None)
+        | sea_query::Value::Int(None)
+        | sea_query::Value::BigInt(None)
+        | sea_query::Value::TinyUnsigned(None)
+        | sea_query::Value::SmallUnsigned(None)
+        | sea_query::Value::Unsigned(None)
+        | sea_query::Value::BigUnsigned(None)
+        | sea_query::Value::Float(None)
+        | sea_query::Value::Double(None)
+        | sea_query::Value::String(None)
+        | sea_query::Value::Char(None)
+        | sea_query::Value::Bytes(None) => SqlValue::Null,
+    })
+}
+
+fn storage_statement(statement: Statement) -> Result<StorageStatement> {
+    Ok(StorageStatement {
+        sql: statement.sql,
+        params: statement
+            .values
+            .0
+            .iter()
+            .map(to_sql_value)
+            .collect::<Result<Vec<_>>>()?,
+    })
+}
 
 impl Storage {
-    pub async fn execute(
-        &mut self,
-        sql: impl Into<String>,
-        params: Vec<Value>,
-    ) -> eyre::Result<()> {
+    async fn run_query(&mut self, statement: Statement) -> Result<QueryResult> {
         match self
             .bridge
-            .run(StorageRequest::Execute(StorageCommand {
-                data_dir: self.data_dir.clone(),
-                sql: sql.into(),
-                params,
-            }))
-            .await
-        {
-            StoragePayload::Ok => Ok(()),
-            StoragePayload::Error(err) => Err(eyre::eyre!(err)),
-            StoragePayload::Rows(_) => Err(eyre::eyre!("unexpected Rows response")),
-        }
-    }
-    pub async fn query(
-        &mut self,
-        sql: impl Into<String>,
-        params: Vec<Value>,
-    ) -> eyre::Result<QueryResult> {
-        match self
-            .bridge
-            .run(StorageRequest::Query(StorageCommand {
-                data_dir: self.data_dir.clone(),
-                sql: sql.into(),
-                params,
-            }))
+            .run(StorageRequest::Query(storage_statement(statement)?))
             .await
         {
             StoragePayload::Rows(result) => Ok(result),
-            StoragePayload::Error(err) => Err(eyre::eyre!(err)),
-            StoragePayload::Ok => Err(eyre::eyre!("unexpected Ok response")),
+            StoragePayload::Error(err) => Err(eyre!(err)),
+            _ => Err(eyre!("unexpected response")),
         }
+    }
+}
+
+impl StorageBackend for Storage {
+    async fn execute(&mut self, statement: Statement) -> Result<u64> {
+        match self
+            .bridge
+            .run(StorageRequest::Execute(storage_statement(statement)?))
+            .await
+        {
+            StoragePayload::Affected(rows) => Ok(rows),
+            StoragePayload::Error(err) => Err(eyre!(err)),
+            _ => Err(eyre!("unexpected response")),
+        }
+    }
+    async fn query(&mut self, statement: Statement) -> Result<QueryResult> {
+        self.run_query(statement).await
+    }
+    async fn execute_batch(&mut self, statements: Vec<Statement>) -> Result<()> {
+        let statements = statements
+            .into_iter()
+            .map(storage_statement)
+            .collect::<Result<Vec<_>>>()?;
+        match self.bridge.run(StorageRequest::Batch { statements }).await {
+            StoragePayload::Ok => Ok(()),
+            StoragePayload::Error(err) => Err(eyre!(err)),
+            _ => Err(eyre!("unexpected response")),
+        }
+    }
+    async fn execute_returning(&mut self, statement: Statement) -> Result<QueryResult> {
+        self.run_query(statement).await
     }
 }

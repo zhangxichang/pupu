@@ -1,0 +1,30 @@
+export enum MessageAttachmentKind {
+    Image,
+    File,
+}
+
+export struct MessageAttachmentData {
+    kind: MessageAttachmentKind,
+    name: string,
+    size: string,
+    hash: string,
+    image: image,
+    has_image: bool,
+}
+
+export struct MessageData {
+    id: int,
+    sender_name: string,
+    avatar: image,
+    avatar_text: string,
+    has_avatar: bool,
+    time: string,
+    markdown: string,
+    body: styled-text,
+    has_body: bool,
+    attachments: [MessageAttachmentData],
+    attachment_height: length,
+    is_self: bool,
+    read: bool,
+    status: string,
+}

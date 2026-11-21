@@ -1,0 +1,126 @@
+import { Avatar } from "./avatar.slint";
+import { Button } from "./button.slint";
+import { IconSet, IconDisplay } from "../lib/lucide.slint";
+
+export component ChatHeader inherits HorizontalLayout {
+    in property <string> title;
+    in property <string> avatar_text;
+    in property <image> avatar_image;
+    in property <bool> has_avatar: false;
+    in property <string> status_text;
+    in property <bool> online;
+    in property <bool> show_presence: true;
+    in property <bool> show_status: true;
+
+    callback voice_call_clicked;
+    callback video_call_clicked;
+    callback more_clicked;
+
+    height: 48px;
+    padding-left: 12px;
+    padding-right: 12px;
+    spacing: 8px;
+    cross-axis-alignment: center;
+
+    Avatar {
+        size: 30px;
+        font_size: 13px;
+        text: root.avatar_text;
+        image: root.avatar_image;
+        show_image: root.has_avatar;
+    }
+
+    VerticalLayout {
+        horizontal-stretch: 0;
+        spacing: 2px;
+
+        Text {
+            text: root.title;
+            font-size: 14px;
+            font-weight: FontWeight.semi-bold;
+        }
+
+        if root.show_status: HorizontalLayout {
+            spacing: 4px;
+            cross-axis-alignment: center;
+
+            if root.show_presence: Rectangle {
+                width: 5px;
+                height: 5px;
+                border-radius: self.width / 2;
+                background: root.online ? #3ca55c : #b8b8b8;
+            }
+
+            Text {
+                text: root.status_text;
+                font-size: 10px;
+                color: #777777;
+            }
+        }
+    }
+
+    Rectangle { }
+
+    HorizontalLayout {
+        horizontal-stretch: 0;
+        spacing: 1px;
+        cross-axis-alignment: center;
+
+        Button {
+            content-padding: 7px;
+            border-radius: 6px;
+            pressed_background: #e5e5e5;
+            hover_background: #f1f1f1;
+
+            IconDisplay {
+                icon: IconSet.Phone;
+                size: 18px;
+                stroke: #555555;
+            }
+
+            clicked => { root.voice_call_clicked(); }
+        }
+
+        Button {
+            content-padding: 7px;
+            border-radius: 6px;
+            pressed_background: #e5e5e5;
+            hover_background: #f1f1f1;
+
+            IconDisplay {
+                icon: IconSet.Video;
+                size: 18px;
+                stroke: #555555;
+            }
+
+            clicked => { root.video_call_clicked(); }
+        }
+
+        HorizontalLayout {
+            padding-left: 5px;
+            padding-right: 5px;
+            cross-axis-alignment: center;
+
+            Rectangle {
+                width: 1px;
+                height: 18px;
+                background: #eeeeee;
+            }
+        }
+
+        Button {
+            content-padding: 7px;
+            border-radius: 6px;
+            pressed_background: #e5e5e5;
+            hover_background: #f1f1f1;
+
+            IconDisplay {
+                icon: IconSet.Ellipsis;
+                size: 18px;
+                stroke: #555555;
+            }
+
+            clicked => { root.more_clicked(); }
+        }
+    }
+}

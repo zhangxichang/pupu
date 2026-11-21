@@ -1,9 +1,11 @@
 package com.zhangxichang.pupu;
 
 import android.app.Activity;
+import android.database.Cursor;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.ParcelFileDescriptor;
+import android.provider.OpenableColumns;
 
 public final class FilePicker {
     static {
@@ -53,16 +55,37 @@ public final class FilePicker {
             return;
         }
         if (resultCode != Activity.RESULT_OK || data == null || data.getData() == null) {
-            nativeOnFilePicked(PICK_CANCELED, -1);
+            nativeOnFilePicked(PICK_CANCELED, -1, "");
             return;
         }
         Uri uri = data.getData();
         int fd = openFileDescriptor(activity, uri);
         if (fd < 0) {
-            nativeOnFilePicked(PICK_FAILED, -1);
+            nativeOnFilePicked(PICK_FAILED, -1, "");
             return;
         }
-        nativeOnFilePicked(PICK_PICKED, fd);
+        nativeOnFilePicked(PICK_PICKED, fd, queryDisplayName(activity, uri));
+    }
+
+    private static String queryDisplayName(Activity activity, Uri uri) {
+        try (Cursor cursor = activity.getContentResolver().query(
+                uri,
+                new String[]{OpenableColumns.DISPLAY_NAME},
+                null,
+                null,
+                null)) {
+            if (cursor != null && cursor.moveToFirst()) {
+                int index = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
+                if (index >= 0) {
+                    String name = cursor.getString(index);
+                    if (name != null && !name.isEmpty()) {
+                        return name;
+                    }
+                }
+            }
+        } catch (Exception ignored) {
+        }
+        return "文件";
     }
 
     private static int openFileDescriptor(Activity activity, Uri uri) {
@@ -77,5 +100,5 @@ public final class FilePicker {
         }
     }
 
-    private static native void nativeOnFilePicked(int status, int fd);
+    private static native void nativeOnFilePicked(int status, int fd, String name);
 }
