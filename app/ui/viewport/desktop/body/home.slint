@@ -1,0 +1,278 @@
+import { Button } from "../../../components/button.slint";
+import { IconSet, IconDisplay } from "../../../lib/lucide.slint";
+import { PrivateChat } from "./home/private_chat.slint";
+import { GroupChat } from "./home/group_chat.slint";
+import { Contact } from "./home/contact.slint";
+import { Settings } from "./home/settings.slint";
+import {
+    Contributor,
+    ContributorStatus,
+} from "../../../models/contributor.slint";
+import { ContactData } from "../../../models/contact.slint";
+import { ConversationItemData } from "../../../models/conversation.slint";
+import { MessageData } from "../../../models/message.slint";
+import { GroupMemberData } from "../../../models/group_member.slint";
+import { PickOptions } from "../../../models/file_picker.slint";
+
+enum ViewType { PrivateChat, GroupChat, Contact, Settings }
+
+export component Home inherits HorizontalLayout {
+    in-out property <ViewType> current_view: ViewType.PrivateChat;
+    in property <[ContactData]> contacts: [];
+    in-out property <[ConversationItemData]> private_conversations: [];
+    in-out property <[MessageData]> private_messages: [];
+    in-out property <[ConversationItemData]> group_conversations: [];
+    in-out property <[MessageData]> group_messages: [];
+    in-out property <[GroupMemberData]> group_members: [];
+    in-out property <int> private_conversation: -1;
+    in-out property <int> group_conversation: -1;
+    in-out property <int> contact_selection: -1;
+    in-out property <string> private_draft: "";
+    in-out property <string> group_draft: "";
+    in property <image> new_contact_avatar_image;
+    in property <bool> new_contact_has_avatar: false;
+    in property <image> new_group_avatar_image;
+    in property <bool> new_group_has_avatar: false;
+    in property <string> app_version;
+    in-out property <string> node_id: "";
+    in property <[Contributor]> contributors;
+    in property <ContributorStatus> contributor_status: ContributorStatus.Loading;
+    in property <bool> show_version: true;
+    in property <bool> enabled_update_check: false;
+
+    callback pick_contact_avatar(options: PickOptions);
+    callback contact_add_requested(name: string, bio: string, endpoint_id: string);
+    callback contact_add_cancelled;
+    callback pick_group_avatar(options: PickOptions);
+    callback group_create_requested(name: string);
+    callback group_create_cancelled;
+    callback contact_message_requested(profile_id: string);
+    callback contact_delete_requested(profile_id: string);
+    callback contact_accept_requested(profile_id: string);
+    callback contact_reject_requested(profile_id: string);
+    callback private_conversation_selected(conversation_id: string);
+    callback group_conversation_selected(conversation_id: string);
+    callback private_message_send_requested(conversation_id: string, markdown: string);
+    callback group_message_send_requested(conversation_id: string, markdown: string);
+    callback private_file_requested(conversation_id: string);
+    callback private_image_requested(conversation_id: string);
+    callback group_file_requested(conversation_id: string);
+    callback group_image_requested(conversation_id: string);
+    callback check_update_requested;
+    callback open_url(url: string);
+    callback copy_node_id;
+
+    VerticalLayout {
+        padding: 6px;
+        cross-axis-alignment: center;
+        spacing: 4px;
+
+        Button {
+            content-padding: 4px;
+            border-radius: 10px;
+            active: current_view == ViewType.PrivateChat;
+
+            IconDisplay {
+                icon: IconSet.MessageCircle;
+                size: 30px;
+                stroke: current_view == ViewType.PrivateChat ? #ffffff : #888888;
+            }
+
+            clicked => { current_view = ViewType.PrivateChat; }
+        }
+
+        Button {
+            content-padding: 4px;
+            border-radius: 10px;
+            active: current_view == ViewType.GroupChat;
+
+            IconDisplay {
+                icon: IconSet.Users;
+                size: 30px;
+                stroke: current_view == ViewType.GroupChat ? #ffffff : #888888;
+            }
+
+            clicked => { current_view = ViewType.GroupChat; }
+        }
+
+        Button {
+            content-padding: 4px;
+            border-radius: 10px;
+            active: current_view == ViewType.Contact;
+
+            IconDisplay {
+                icon: IconSet.Contact;
+                size: 30px;
+                stroke: current_view == ViewType.Contact ? #ffffff : #888888;
+            }
+
+            clicked => { current_view = ViewType.Contact; }
+        }
+
+        Rectangle { }
+
+        Button {
+            content-padding: 4px;
+            border-radius: 10px;
+            active: current_view == ViewType.Settings;
+
+            IconDisplay {
+                icon: IconSet.Settings;
+                size: 30px;
+                stroke: current_view == ViewType.Settings ? #ffffff : #888888;
+            }
+
+            clicked => { current_view = ViewType.Settings; }
+        }
+    }
+
+    Rectangle {
+        width: 1px;
+        background: #eeeeee;
+    }
+
+    Rectangle {
+        width: parent.width - 49px;
+
+        PrivateChat {
+            visible: root.current_view == ViewType.PrivateChat;
+            width: 100%;
+            height: 100%;
+            conversations: root.private_conversations;
+            messages: root.private_messages;
+            draft <=> root.private_draft;
+            current_conversation <=> root.private_conversation;
+
+            conversation_selected(conversation_id) => {
+                root.private_conversation_selected(conversation_id);
+            }
+
+            message_send_requested(conversation_id, markdown) => {
+                root.private_message_send_requested(conversation_id, markdown);
+            }
+
+            file_requested(conversation_id) => {
+                root.private_file_requested(conversation_id);
+            }
+
+            image_requested(conversation_id) => {
+                root.private_image_requested(conversation_id);
+            }
+
+            link_clicked(url) => {
+                root.open_url(url);
+            }
+        }
+
+        GroupChat {
+            visible: root.current_view == ViewType.GroupChat;
+            width: 100%;
+            height: 100%;
+            conversations: root.group_conversations;
+            messages: root.group_messages;
+            members: root.group_members;
+            contacts: root.contacts;
+            draft <=> root.group_draft;
+            current_conversation <=> root.group_conversation;
+            new_group_avatar_image: root.new_group_avatar_image;
+            new_group_has_avatar: root.new_group_has_avatar;
+
+            pick_group_avatar(options) => {
+                root.pick_group_avatar(options);
+            }
+
+            create_group_requested(name) => {
+                root.group_create_requested(name);
+            }
+
+            cancel_create_requested => {
+                root.group_create_cancelled();
+            }
+
+            conversation_selected(conversation_id) => {
+                root.group_conversation_selected(conversation_id);
+            }
+
+            message_send_requested(conversation_id, markdown) => {
+                root.group_message_send_requested(conversation_id, markdown);
+            }
+
+            file_requested(conversation_id) => {
+                root.group_file_requested(conversation_id);
+            }
+
+            image_requested(conversation_id) => {
+                root.group_image_requested(conversation_id);
+            }
+
+            link_clicked(url) => {
+                root.open_url(url);
+            }
+        }
+
+        Contact {
+            visible: root.current_view == ViewType.Contact;
+            width: 100%;
+            height: 100%;
+            contacts: root.contacts;
+            current_contact <=> root.contact_selection;
+            new_contact_avatar_image: root.new_contact_avatar_image;
+            new_contact_has_avatar: root.new_contact_has_avatar;
+
+            pick_contact_avatar(options) => {
+                root.pick_contact_avatar(options);
+            }
+
+            add_contact_requested(name, bio, endpoint_id) => {
+                root.contact_add_requested(name, bio, endpoint_id);
+            }
+
+            accept_contact_requested(profile_id) => {
+                root.contact_accept_requested(profile_id);
+            }
+
+            reject_contact_requested(profile_id) => {
+                root.contact_reject_requested(profile_id);
+            }
+
+            cancel_add_requested => {
+                root.contact_add_cancelled();
+            }
+
+            message_requested(profile_id) => {
+                root.private_conversation = -1;
+                root.private_draft = "";
+                root.current_view = ViewType.PrivateChat;
+                root.contact_message_requested(profile_id);
+            }
+
+            delete_requested(profile_id) => {
+                root.contact_delete_requested(profile_id);
+            }
+        }
+
+        Settings {
+            visible: root.current_view == ViewType.Settings;
+            node_id: root.node_id;
+            width: 100%;
+            height: 100%;
+            app_version: root.app_version;
+            contributors: root.contributors;
+            contributor_status: root.contributor_status;
+            show_version: root.show_version;
+            enabled_update_check: root.enabled_update_check;
+
+            check_update_requested => {
+                root.check_update_requested();
+            }
+
+            copy_node_id => {
+                root.copy_node_id();
+            }
+
+            open_url(url) => {
+                root.open_url(url);
+            }
+        }
+    }
+}

@@ -1,0 +1,347 @@
+import { Button } from "../../../../components/button.slint";
+import { ChatComposer } from "../../../../components/chat_composer.slint";
+import { ChatHeader } from "../../../../components/chat_header.slint";
+import { ConversationSidebar } from "../../../../components/conversation_sidebar.slint";
+import { EmptyState } from "../../../../components/empty_state.slint";
+import { GroupMemberPanel } from "../../../../components/group_member_panel.slint";
+import { VirtualList } from "../../../../components/virtual_list.slint";
+import { IconSet, IconDisplay } from "../../../../lib/lucide.slint";
+import { Input } from "../../../../components/input.slint";
+import { ContactData } from "../../../../models/contact.slint";
+import { ConversationItemData } from "../../../../models/conversation.slint";
+import { GroupMemberData } from "../../../../models/group_member.slint";
+import { MessageData } from "../../../../models/message.slint";
+import { PickOptions } from "../../../../models/file_picker.slint";
+import { GroupListLayout } from "../../../../models/virtual_list_layout.slint";
+
+export component GroupChat inherits HorizontalLayout {
+    in-out property <[ConversationItemData]> conversations: [];
+    in-out property <int> current_conversation: -1;
+    in-out property <[MessageData]> messages: [];
+    in-out property <[GroupMemberData]> members: [];
+    in-out property <string> draft: "";
+    in-out property <bool> reset_view: false;
+    in property <[ContactData]> contacts: [];
+    in-out property <bool> show_add: false;
+    in-out property <string> new_group_name: "";
+    in property <image> new_group_avatar_image;
+    in property <bool> new_group_has_avatar: false;
+
+    callback conversation_selected(conversation_id: string);
+    callback create_group_requested(name: string);
+    callback cancel_create_requested;
+    callback pick_group_avatar(options: PickOptions);
+    callback message_send_requested(conversation_id: string, markdown: string);
+    callback file_requested(conversation_id: string);
+    callback image_requested(conversation_id: string);
+    callback link_clicked(url: string);
+
+    property <bool> has_conversation:
+        root.current_conversation >= 0 && root.current_conversation < root.conversations.length;
+
+    property <ConversationItemData> current_conversation_data:
+        root.has_conversation
+        ? root.conversations[root.current_conversation]
+        : { id: "", name: "", avatar_text: "", latest_message: "", time: "", unread_count: 0 };
+
+    property <bool> scroll_to_bottom: false;
+
+    changed current_conversation => {
+        root.scroll_to_bottom = false;
+        root.draft = "";
+        root.reset_view = true;
+        GroupListLayout.reset(root.messages.length);
+    }
+
+    changed messages => {
+        root.reset_view = true;
+        GroupListLayout.set_count(root.messages.length);
+        root.scroll_to_bottom = true;
+    }
+
+    ConversationSidebar {
+        title: "群聊";
+        search_placeholder: "搜索群聊会话";
+        conversations: root.conversations;
+        selected_index: root.current_conversation;
+        show_add: true;
+
+        add_clicked => {
+            root.show_add = true;
+            root.current_conversation = -1;
+        }
+
+        selected(index) => {
+            root.show_add = false;
+            root.draft = "";
+            root.current_conversation = index;
+            if (index >= 0 && index < root.conversations.length) {
+                root.conversation_selected(root.conversations[index].id);
+            }
+        }
+    }
+
+    Rectangle {
+        width: 1px;
+        background: #eeeeee;
+    }
+
+    Rectangle {
+        width: root.width - 251px;
+        clip: true;
+
+        chat_focus := FocusScope {
+
+            if root.show_add: Rectangle {
+                background: #ffffff;
+
+                VerticalLayout {
+                    width: min(parent.width - 96px, 420px);
+                    height: 100%;
+                    alignment: center;
+                    spacing: 8px;
+
+                    Text {
+                        width: 100%;
+                        text: "创建群聊";
+                        font-size: 16px;
+                        font-weight: FontWeight.semi-bold;
+                        color: #222222;
+                    }
+
+                    Text {
+                        width: 100%;
+                        text: "将从联系人中添加全部成员";
+                        font-size: 11px;
+                        color: #888888;
+                    }
+
+                    Rectangle { height: 8px; }
+
+                    Rectangle {
+                        width: 80px;
+                        height: 80px;
+                        border-radius: self.width / 2;
+                        background: group_avatar_touch.has-hover ? #d7d7d7 : #e0e0e0;
+                        clip: true;
+
+                        if root.new_group_has_avatar: Image {
+                            width: 100%;
+                            height: 100%;
+                            source: root.new_group_avatar_image;
+                        }
+
+                        if !root.new_group_has_avatar: IconDisplay {
+                            icon: IconSet.Users;
+                            size: 34px;
+                            stroke: #888888;
+                        }
+
+                        group_avatar_touch := TouchArea {
+                            mouse-cursor: pointer;
+
+                            clicked => {
+                                root.pick_group_avatar({
+                                    title: "选择群头像",
+                                    filters: [
+                                        { name: "图片", extensions: ["png", "jpg", "jpeg"] },
+                                    ],
+                                    mime_types: ["image/png", "image/jpeg"],
+                                });
+                            }
+                        }
+                    }
+
+                    Text {
+                        width: 100%;
+                        text: "群名称";
+                        font-size: 11px;
+                        color: #666666;
+                    }
+
+                    Input {
+                        width: 100%;
+                        font_size: 13px;
+                        min_content_height: 40px;
+                        max_content_height: 40px;
+                        inner_padding_left: 10px;
+                        inner_padding_right: 10px;
+                        normal_background: #f4f4f4;
+                        hover_background: #eeeeee;
+                        focused_background: #ffffff;
+                        normal_border_width: 1px;
+                        normal_border_color: #e8e8e8;
+                        focus_border_width: 1px;
+                        focus_border_color: #007aff;
+                        border_radius: 8px;
+                        placeholder: "输入群名称";
+                        text <=> root.new_group_name;
+                    }
+
+                    Text {
+                        width: 100%;
+                        text: root.contacts.length + " 位联系人";
+                        font-size: 11px;
+                        color: #888888;
+                    }
+
+                    Rectangle { height: 10px; }
+
+                    HorizontalLayout {
+                        alignment: center;
+                        spacing: 8px;
+
+                        Button {
+                            height: 36px;
+                            border-radius: 8px;
+                            border-width: 1px;
+                            border-color: #e5e5e5;
+                            normal_background: #ffffff;
+                            hover_background: #f7f7f7;
+                            pressed_background: #eeeeee;
+                            content-padding-left: 16px;
+                            content-padding-right: 16px;
+
+                            Text {
+                                text: "取消";
+                                font-size: 12px;
+                                color: #333333;
+                            }
+
+                            clicked => {
+                                root.cancel_create_requested();
+                                root.show_add = false;
+                                root.new_group_name = "";
+                            }
+                        }
+
+                        Button {
+                            height: 36px;
+                            border-radius: 8px;
+                            enabled: root.new_group_name != "" && root.contacts.length > 0;
+                            normal_background: root.new_group_name != "" && root.contacts.length > 0 ? #333333 : #d5d5d5;
+                            hover_background: root.new_group_name != "" && root.contacts.length > 0 ? #444444 : #d5d5d5;
+                            pressed_background: #222222;
+                            content-padding-left: 16px;
+                            content-padding-right: 16px;
+
+                            Text {
+                                text: "创建";
+                                font-size: 12px;
+                                color: #ffffff;
+                            }
+
+                            clicked => {
+                                if (root.new_group_name != "" && root.contacts.length > 0) {
+                                    root.create_group_requested(root.new_group_name);
+                                    root.show_add = false;
+                                    root.new_group_name = "";
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            if !root.show_add && root.has_conversation: VerticalLayout {
+                width: 100%;
+                height: 100%;
+
+                ChatHeader {
+                    title: root.current_conversation_data.name;
+                    avatar_text: root.current_conversation_data.avatar_text;
+                    avatar_image: root.current_conversation_data.avatar;
+                    has_avatar: root.current_conversation_data.has_avatar;
+                    status_text: root.members.length.to-string-unlocalized() + " 人";
+                    online: false;
+                    show_presence: false;
+                }
+
+                Rectangle {
+                    height: 1px;
+                    background: #eeeeee;
+                }
+
+                HorizontalLayout {
+                    width: 100%;
+                    vertical-stretch: 1;
+
+                    VerticalLayout {
+                        width: root.width - 472px;
+                        height: 100%;
+
+                        Rectangle {
+                            vertical-stretch: 1;
+                            max-height: 100000px;
+
+                            messages_view := VirtualList {
+                                width: 100%;
+                                height: 100%;
+                                messages: root.messages;
+                                slots: GroupListLayout.slots;
+                                content_height: GroupListLayout.content_height;
+                                group: true;
+                                scroll_to_bottom <=> root.scroll_to_bottom;
+                                reset_view <=> root.reset_view;
+
+                                set_height(index, height) => {
+                                    GroupListLayout.set_height(index, height);
+                                }
+                                set_viewport(offset, height) => {
+                                    GroupListLayout.set_viewport(offset, height);
+                                }
+                                pressed => { chat_focus.focus(); }
+                                link_clicked(url) => {
+                                    root.link_clicked(url);
+                                }
+                            }
+                        }
+
+                        ChatComposer {
+                            text <=> root.draft;
+
+                            send_requested(text) => {
+                                if (text != "") {
+                                    root.message_send_requested(root.current_conversation_data.id, text);
+                                }
+                            }
+
+                            attach_clicked => {
+                                root.file_requested(root.current_conversation_data.id);
+                            }
+
+                            image_clicked => {
+                                root.image_requested(root.current_conversation_data.id);
+                            }
+                        }
+                    }
+
+                    Rectangle {
+                        width: 1px;
+                        background: #eeeeee;
+                    }
+
+                    GroupMemberPanel {
+                        width: 220px;
+                        height: 100%;
+                        members: root.members;
+                        pressed => { chat_focus.focus(); }
+                        scroll_started => { chat_focus.focus(); }
+                    }
+                }
+            }
+
+            if !root.show_add && !root.has_conversation: Rectangle {
+                background: #ffffff;
+
+                TouchArea {
+                }
+
+                EmptyState {
+                    icon: IconSet.MessageCircle;
+                    text: "选择一个会话开始聊天";
+                }
+            }
+        }
+    }
+}

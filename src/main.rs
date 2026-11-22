@@ -6,8 +6,9 @@
 
 use std::borrow::Cow;
 
-use app::{AppConfig, paths::AppPaths};
+use app::AppConfig;
 use eyre::{Result, eyre};
+use paths::AppPaths;
 
 fn main() {
     env_logger::builder()

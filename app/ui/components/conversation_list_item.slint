@@ -1,0 +1,95 @@
+import { Avatar } from "./avatar.slint";
+import { ConversationItemData } from "../models/conversation.slint";
+
+export component ConversationListItem inherits Rectangle {
+    in property <ConversationItemData> conversation;
+    in property <bool> active;
+
+    callback clicked;
+
+    height: 48px;
+    border-radius: 8px;
+    clip: true;
+
+    states [
+        active when root.active: {
+            background: #e0e0e0;
+        }
+        hover when touch.has-hover: {
+            background: #f4f4f4;
+        }
+    ]
+
+    fs := FocusScope {
+        focus-on-tab-navigation: false;
+    }
+
+    touch := TouchArea {
+        mouse-cursor: pointer;
+
+        clicked => {
+            fs.focus();
+            root.clicked();
+        }
+    }
+
+    HorizontalLayout {
+        cross-axis-alignment: center;
+        padding: 8px;
+        spacing: 8px;
+
+        Avatar {
+            text: root.conversation.avatar_text;
+            image: root.conversation.avatar;
+            show_image: root.conversation.has_avatar;
+            fill: root.active ? #c0c0c0 : #e0e0e0;
+        }
+
+        VerticalLayout {
+            spacing: 4px;
+
+            Text {
+                text: root.conversation.name;
+                font-size: 14px;
+                font-weight: FontWeight.medium;
+            }
+
+            Text {
+                text: root.conversation.latest_message;
+                overflow: elide;
+                max-lines: 1;
+                color: #777777;
+            }
+        }
+
+        VerticalLayout {
+            cross-axis-alignment: end;
+            spacing: 3px;
+
+            Text {
+                text: root.conversation.time;
+                font-size: 10px;
+                color: #777777;
+            }
+
+            unread_badge := Rectangle {
+                visible: root.conversation.unread_count != 0;
+                width: max(17px, unread_text.preferred-width + 9px);
+                height: 17px;
+                border-radius: self.height / 2;
+                background: #333333;
+
+                unread_text := Text {
+                    text: root.conversation.unread_count;
+                    color: #ffffff;
+                    font-size: 10px;
+                    font-weight: FontWeight.medium;
+                    width: parent.width;
+                    height: parent.height;
+                    horizontal-alignment: center;
+                    vertical-alignment: center;
+                }
+            }
+        }
+    }
+}

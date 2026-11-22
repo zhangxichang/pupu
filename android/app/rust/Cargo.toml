@@ -9,6 +9,7 @@ crate-type = ["cdylib"]
 
 [dependencies]
 app = { path = "../../../app" }
+paths = { path = "../../../crates/paths" }
 file-picker = { path = "../../../crates/file-picker" }
 
 log = "0.4.35"

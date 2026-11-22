@@ -1,7 +1,8 @@
 #![cfg(all(target_family = "wasm", target_os = "unknown"))]
 
-use app::{AppConfig, paths::AppPaths};
+use app::AppConfig;
 use eyre::Result;
+use paths::AppPaths;
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]

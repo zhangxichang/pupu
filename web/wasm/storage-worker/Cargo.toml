@@ -13,7 +13,6 @@ storage-migrations = { path = "../../../crates/storage-migrations" }
 wasm-bindgen = "0.2.130"
 eyre = "0.6.14"
 gloo-worker = { version = "0.7.0", features = ["futures"] }
-serde_json = "1.0.154"
 
 [target.'cfg(all(target_family = "wasm", target_os = "unknown"))'.dependencies]
 rusqlite = { version = "0.41.1", features = ["bundled"] }

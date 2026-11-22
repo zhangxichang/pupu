@@ -1,5 +1,12 @@
 [workspace]
-members = ["app", "android/app/rust", "crates/*", "web/wasm/*"]
+members = [
+    "android/app/rust",
+    "web/wasm/*",
+    "app",
+    "runtime",
+    "crates/*",
+    "test/*",
+]
 
 [package]
 name = "pupu"
@@ -8,6 +15,7 @@ edition = "2024"
 
 [dependencies]
 app = { path = "app" }
+paths = { path = "crates/paths" }
 
 log = "0.4.35"
 env_logger = "0.11.11"

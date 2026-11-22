@@ -7,8 +7,9 @@ edition = "2024"
 crate-type = ["cdylib"]
 
 [dependencies]
-app = { path = "../../../app" }
 ready-notify = { path = "../ready-notify" }
+app = { path = "../../../app" }
+paths = { path = "../../../crates/paths" }
 
 wasm-bindgen = "0.2.130"
 console_error_panic_hook = "0.1.7"

@@ -1,0 +1,194 @@
+import { Auth } from "./body/auth.slint";
+import { Home } from "./body/home.slint";
+import {
+    Contributor,
+    ContributorStatus,
+} from "../../models/contributor.slint";
+import { LoginAccount } from "../../models/account.slint";
+import { ContactData } from "../../models/contact.slint";
+import { ConversationItemData } from "../../models/conversation.slint";
+import { MessageData } from "../../models/message.slint";
+import { GroupMemberData } from "../../models/group_member.slint";
+import { PickOptions } from "../../models/file_picker.slint";
+
+export component Body inherits Rectangle {
+    in property <[LoginAccount]> accounts: [];
+    in property <[ContactData]> contacts: [];
+    in-out property <bool> logged_in: false;
+    in-out property <[ConversationItemData]> private_conversations: [];
+    in-out property <[MessageData]> private_messages: [];
+    in-out property <[ConversationItemData]> group_conversations: [];
+    in-out property <[MessageData]> group_messages: [];
+    in-out property <[GroupMemberData]> group_members: [];
+    in-out property <int> private_conversation: -1;
+    in-out property <int> group_conversation: -1;
+    in-out property <string> private_draft: "";
+    in-out property <string> group_draft: "";
+    in-out property <image> register_avatar_image;
+    in-out property <bool> register_has_avatar: false;
+    in-out property <image> contact_avatar_image;
+    in-out property <bool> contact_has_avatar: false;
+    in-out property <image> group_avatar_image;
+    in-out property <bool> group_has_avatar: false;
+    in property <string> app_version;
+    in-out property <string> node_id: "";
+    in property <[Contributor]> contributors;
+    in property <ContributorStatus> contributor_status: ContributorStatus.Loading;
+    in property <bool> show_version: true;
+    in property <bool> enabled_update_check: false;
+
+    callback check_update_requested;
+    callback open_url(url: string);
+    callback copy_node_id;
+    callback pick_register_avatar(options: PickOptions);
+    callback login_requested(account_id: string);
+    callback register_requested(username: string);
+    callback pick_contact_avatar(options: PickOptions);
+    callback contact_add_requested(name: string, bio: string, endpoint_id: string);
+    callback contact_add_cancelled;
+    callback pick_group_avatar(options: PickOptions);
+    callback group_create_requested(name: string);
+    callback group_create_cancelled;
+    callback contact_message_requested(profile_id: string);
+    callback contact_delete_requested(profile_id: string);
+    callback contact_accept_requested(profile_id: string);
+    callback contact_reject_requested(profile_id: string);
+    callback private_conversation_selected(conversation_id: string);
+    callback group_conversation_selected(conversation_id: string);
+    callback private_message_send_requested(conversation_id: string, markdown: string);
+    callback group_message_send_requested(conversation_id: string, markdown: string);
+    callback private_file_requested(conversation_id: string);
+    callback private_image_requested(conversation_id: string);
+    callback group_file_requested(conversation_id: string);
+    callback group_image_requested(conversation_id: string);
+
+    if root.logged_in: Home {
+        width: 100%;
+        height: 100%;
+        contacts: root.contacts;
+        private_conversations: root.private_conversations;
+        private_messages: root.private_messages;
+        group_conversations: root.group_conversations;
+        group_messages: root.group_messages;
+        group_members: root.group_members;
+        private_conversation <=> root.private_conversation;
+        group_conversation <=> root.group_conversation;
+        private_draft <=> root.private_draft;
+        group_draft <=> root.group_draft;
+        new_contact_avatar_image: root.contact_avatar_image;
+        new_contact_has_avatar: root.contact_has_avatar;
+        new_group_avatar_image: root.group_avatar_image;
+        new_group_has_avatar: root.group_has_avatar;
+        app_version: root.app_version;
+        node_id <=> root.node_id;
+        contributors: root.contributors;
+        contributor_status: root.contributor_status;
+        show_version: root.show_version;
+        enabled_update_check: root.enabled_update_check;
+
+        check_update_requested => {
+            root.check_update_requested();
+        }
+
+        copy_node_id => {
+            root.copy_node_id();
+        }
+
+        open_url(url) => {
+            root.open_url(url);
+        }
+
+        pick_contact_avatar(options) => {
+            root.pick_contact_avatar(options);
+        }
+
+        contact_add_requested(name, bio, endpoint_id) => {
+            root.contact_add_requested(name, bio, endpoint_id);
+        }
+
+        contact_accept_requested(profile_id) => {
+            root.contact_accept_requested(profile_id);
+        }
+
+        contact_reject_requested(profile_id) => {
+            root.contact_reject_requested(profile_id);
+        }
+
+        contact_add_cancelled => {
+            root.contact_add_cancelled();
+        }
+
+        pick_group_avatar(options) => {
+            root.pick_group_avatar(options);
+        }
+
+        group_create_requested(name) => {
+            root.group_create_requested(name);
+        }
+
+        group_create_cancelled => {
+            root.group_create_cancelled();
+        }
+
+        contact_message_requested(profile_id) => {
+            root.contact_message_requested(profile_id);
+        }
+
+        contact_delete_requested(profile_id) => {
+            root.contact_delete_requested(profile_id);
+        }
+
+        private_conversation_selected(conversation_id) => {
+            root.private_conversation_selected(conversation_id);
+        }
+
+        group_conversation_selected(conversation_id) => {
+            root.group_conversation_selected(conversation_id);
+        }
+
+        private_message_send_requested(conversation_id, markdown) => {
+            root.private_message_send_requested(conversation_id, markdown);
+        }
+
+        group_message_send_requested(conversation_id, markdown) => {
+            root.group_message_send_requested(conversation_id, markdown);
+        }
+
+        private_file_requested(conversation_id) => {
+            root.private_file_requested(conversation_id);
+        }
+
+        private_image_requested(conversation_id) => {
+            root.private_image_requested(conversation_id);
+        }
+
+        group_file_requested(conversation_id) => {
+            root.group_file_requested(conversation_id);
+        }
+
+        group_image_requested(conversation_id) => {
+            root.group_image_requested(conversation_id);
+        }
+    }
+
+    if !root.logged_in: Auth {
+        width: 100%;
+        height: 100%;
+        accounts: root.accounts;
+        register_avatar_image <=> root.register_avatar_image;
+        register_has_avatar <=> root.register_has_avatar;
+
+        login_requested(account_id) => {
+            root.login_requested(account_id);
+            root.logged_in = true;
+        }
+
+        register_requested(username) => {
+            root.register_requested(username);
+        }
+
+        pick_register_avatar(options) => {
+            root.pick_register_avatar(options);
+        }
+    }
+}

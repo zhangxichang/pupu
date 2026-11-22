@@ -24,6 +24,10 @@ impl PickedFile {
     }
 }
 impl FilePickerBackend for PickedFile {
+    fn file_name(&self) -> String {
+        self.handle.file_name()
+    }
+
     fn read_stream(&self) -> impl Stream<Item = Result<Vec<u8>>> {
         async_stream::try_stream! {
             const CHUNK_SIZE: f64 = 64.0 * 1024.0;
